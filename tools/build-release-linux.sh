@@ -12,7 +12,7 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 build="$root/build/package-linux"
 desktop="$root/desktop"
 tauri="$desktop/src-tauri"
-version=0.1.0
+version=$(python3 -c "import json; print(json.load(open('$root/desktop/package.json'))['version'])" 2>/dev/null || echo unknown)
 if [[ -z "${TAURI_SIGNING_PRIVATE_KEY:-}" ]]; then
     if [[ -f "$root/.tools/signing/gramix.key" ]]; then
         export TAURI_SIGNING_PRIVATE_KEY="$root/.tools/signing/gramix.key"

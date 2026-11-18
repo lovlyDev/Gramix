@@ -13,7 +13,7 @@ $desktop = Join-Path $root "desktop"
 $tauri = Join-Path $desktop "src-tauri"
 $build = Join-Path $root "build/package-windows"
 $configPath = Join-Path $tauri "tauri.release.json"
-$version = "0.1.0"
+$version = (Get-Content (Join-Path $desktop "package.json") -Raw | ConvertFrom-Json).version
 if (-not $env:TAURI_SIGNING_PRIVATE_KEY) {
     $localKey = Join-Path $root ".tools/signing/gramix.key"
     if (Test-Path -LiteralPath $localKey) {
