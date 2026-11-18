@@ -1,11 +1,8 @@
 /*
- * Copyright (C) 2026 [COPYRIGHT HOLDER].
+ * Copyright (C) 2026 lovlydev.
  * SPDX-License-Identifier: AGPL-3.0-only
  *
- * This file is part of VANTIX.
- *
- * VANTIX is dual-licensed under the GNU Affero General
- * Public License v3.0 and a separate commercial license.
+ * This file is part of Gramix.
  *
  * See LICENSE and LICENSING.md for details.
  */
@@ -39,7 +36,7 @@ export default function LegalPanel() {
         <button type="button" onClick={() => setOpen(false)} aria-label="Закрыть сведения о лицензиях" style={{ float: "right" }}>×</button>
         <h2>О программе / Лицензии</h2>
         <p>VANTIX — Community Edition</p>
-        <p>Copyright (C) 2026 [COPYRIGHT HOLDER]. Юридическое имя правообладателя проверяется.</p>
+        <p>Copyright (C) 2026 lovlydev. Юридическое имя правообладателя проверяется.</p>
         <p>Собственный код предоставляется по GNU Affero General Public License version 3 only (AGPL-3.0-only). Гарантии предоставляются только в объёме, предусмотренном лицензией или отдельным договором.</p>
         <p><a href={exactSourceUrl} target="_blank" rel="noreferrer">Исходный код базовой ревизии сборки</a>: {sourceRevision || "ревизия не встроена"}. Для сборки с локальными изменениями дополнительно нужен соответствующий архив исходников.</p>
         <p><a href={docUrl("LICENSING.md")} target="_blank" rel="noreferrer">Коммерческая лицензия</a> предоставляется только по индивидуальному письменному договору. Условия сторонних компонентов сохраняются. Использование названия и логотипа описано в <a href={docUrl("TRADEMARKS.md")} target="_blank" rel="noreferrer">правилах бренда</a>.</p>
