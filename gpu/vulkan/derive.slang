@@ -1,4 +1,13 @@
-// VANTIX Vulkan seed derivation. One invocation handles one BIP39 phrase.
+/*
+ * Copyright (C) 2026 lovlydev.
+ * SPDX-License-Identifier: AGPL-3.0-only
+ *
+ * This file is part of Gramix.
+ *
+ * See LICENSE for details.
+ */
+
+// Gramix Vulkan seed derivation. One invocation handles one BIP39 phrase.
 // SHA-512 follows FIPS 180-4; all arithmetic is unsigned modulo 2^64.
 // The host verifies every exported match with its independent OpenSSL path.
 

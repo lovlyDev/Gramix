@@ -1,3 +1,10 @@
+# Copyright (C) 2026 lovlydev.
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# This file is part of Gramix.
+#
+# See LICENSE for details.
+
 param([string]$BuildDirectory = "build/vendor-validation")
 
 $ErrorActionPreference = "Stop"
@@ -27,7 +34,7 @@ if (-not $cmake) {
 Push-Location $projectRoot
 try {
     New-Item -ItemType Directory -Force -Path $buildPath | Out-Null
-    "VANTIX vendor validation $(Get-Date -Format o)" | Set-Content -LiteralPath $report
+    "Gramix vendor validation $(Get-Date -Format o)" | Set-Content -LiteralPath $report
     "OS: $([System.Environment]::OSVersion.VersionString)" | Add-Content -LiteralPath $report
     "CMake: $cmakePath" | Add-Content -LiteralPath $report
     $configureOutput = & $cmakePath -S . -B $buildPath "-DCMAKE_TOOLCHAIN_FILE=$toolchain" 2>&1
@@ -36,9 +43,9 @@ try {
     $buildOutput = & $cmakePath --build $buildPath --config Release --parallel 8 2>&1
     $buildOutput | Tee-Object -FilePath $report -Append
     if ($LASTEXITCODE -ne 0) { throw "Сборка завершилась с ошибкой." }
-    $exe = Join-Path $buildPath "Release/vantix.exe"
-    if (-not (Test-Path -LiteralPath $exe)) { $exe = Join-Path $buildPath "vantix.exe" }
-    if (-not (Test-Path -LiteralPath $exe)) { throw "vantix.exe не найден после сборки." }
+    $exe = Join-Path $buildPath "Release/gramix.exe"
+    if (-not (Test-Path -LiteralPath $exe)) { $exe = Join-Path $buildPath "gramix.exe" }
+    if (-not (Test-Path -LiteralPath $exe)) { throw "gramix.exe не найден после сборки." }
 
     $devices = & $exe --devices-json
     if ($LASTEXITCODE -ne 0) { throw "Определение устройств завершилось с ошибкой." }

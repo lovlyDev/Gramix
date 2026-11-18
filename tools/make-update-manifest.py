@@ -1,3 +1,10 @@
+# Copyright (C) 2026 lovlydev.
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# This file is part of Gramix.
+#
+# See LICENSE for details.
+
 """Build Tauri's static updater manifest from signed release assets."""
 
 import argparse
@@ -13,11 +20,11 @@ def main() -> None:
     args = parser.parse_args()
     if not args.version.startswith("v") or args.version.count(".") != 2:
         parser.error("version must be a v-prefixed semantic version")
-    if args.repository != "lovlyDev/VANTIX":
+    if args.repository != "lovlyDev/Gramix":
         parser.error("unexpected release repository")
 
     files = {
-        "windows-x86_64": list(args.assets.glob("VANTIX_*_x64-setup.exe")),
+        "windows-x86_64": list(args.assets.glob("Gramix_*_x64-setup.exe")),
         "linux-x86_64": list(args.assets.glob("*.AppImage")),
     }
     platforms = {}

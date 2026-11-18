@@ -1,0 +1,35 @@
+# Сборщик статистики сайта gram.lovlydev.ru: Umami + PostgreSQL с жёсткими лимитами памяти.
+# Слушает только 127.0.0.1; наружу его публикует nginx (см. nginx.conf.example).
+name: gramix-telemetry
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    mem_limit: 192m
+    environment:
+      POSTGRES_DB: umami
+      POSTGRES_USER: umami
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?задайте POSTGRES_PASSWORD в .env}
+    command: ["postgres", "-c", "shared_buffers=32MB", "-c", "max_connections=20", "-c", "work_mem=2MB"]
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U umami -d umami"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  umami:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    restart: unless-stopped
+    mem_limit: 320m
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://umami:${POSTGRES_PASSWORD}@db:5432/umami
+      APP_SECRET: ${APP_SECRET:?задайте APP_SECRET в .env}
+      DISABLE_TELEMETRY: "1"
+      DISABLE_UPDATES: "1"
+      NODE_OPTIONS: --max-old-space-size=256
+    ports:
+      - "127.0.0.1:3010:3000"

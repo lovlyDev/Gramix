@@ -1,8 +1,16 @@
-import { useEffect, useRef, useState } from "react";
+/*
+ * Copyright (C) 2026 lovlydev.
+ * SPDX-License-Identifier: AGPL-3.0-only
+ *
+ * This file is part of Gramix.
+ *
+ * See LICENSE for details.
+ */
+
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import * as Tabs from "@radix-ui/react-tabs";
 import * as Switch from "@radix-ui/react-switch";
 import * as Dialog from "@radix-ui/react-dialog";
-import * as Select from "@radix-ui/react-select";
 import { Command, type Child } from "@tauri-apps/plugin-shell";
 import { appDataDir, join, resourceDir } from "@tauri-apps/api/path";
 import { isTauri } from "@tauri-apps/api/core";
@@ -10,63 +18,45 @@ import { invoke } from "@tauri-apps/api/core";
 import { check, type Update } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { getVersion } from "@tauri-apps/api/app";
+import { ArrowRight, Cpu, Folder, Pause, Play,
+  RefreshCw, ShieldCheck, Square, Zap } from "lucide-react";
 import RateChart from "./RateChart";
+import AddressInspector from "./features/address-inspector/AddressInspector";
+import WalletGenerator from "./features/wallet-generator/WalletGenerator";
+import WalletSecurity from "./features/wallet-security/WalletSecurity";
+import BocExplorer from "./features/boc-explorer/BocExplorer";
+import TransactionDecoder from "./features/transaction-decoder/TransactionDecoder";
+import ContractInspector from "./features/contract-inspector/ContractInspector";
+import ContractVanity from "./features/contract-vanity/ContractVanity";
+import GpuBenchmark from "./features/gpu-benchmark/GpuBenchmark";
+import Overview from "./features/overview/Overview";
+import WorkspaceSettings from "./features/settings/WorkspaceSettings";
+import ToolNavigation, { ToolIcon, isToolId, isWorkspaceId, toolTitles, type ToolId, type WorkspaceId } from "./components/ToolNavigation";
+import UiSelect from "./components/ui/Select";
 import { useApp, type Backend, type Device, type ValidatedBackend } from "./store";
+import { platform } from "@platform";
+import { ConsentBanner, telemetry } from "@telemetry";
+import { parsePath, pathFor } from "./lib/links";
+import type { VanityHandle } from "./platform/types";
+import PrivacyPage from "./features/privacy/PrivacyPage";
+import SiteFooter from "./components/SiteFooter";
 
-const sidecar = "binaries/vantix";
+const sidecar = "binaries/gramix";
+const web = __WEB__;
+const initialLocation = web ? parsePath(window.location.pathname) : null;
+const ContractBuilder = lazy(() => import("./features/contract-builder/BuilderWorkspace"));
+const DeveloperCli = lazy(() => import("./features/developer-cli/CliWorkspace"));
+const ContractSandbox = lazy(() => import("./features/contract-sandbox/SandboxWorkspace"));
 const isLinux = typeof navigator !== "undefined" && /Linux/i.test(navigator.userAgent);
 const fmt = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 });
 const apiLabel: Record<string, string> = {
   CPU: "CPU", Vulkan: "Vulkan Compute", CUDA: "CUDA", HIP: "HIP / ROCm"
 };
 
-function Icon({ name, size = 20 }: { name: string; size?: number }) {
-  const paths: Record<string, string> = {
-    bolt: "M13 2 3 14h8l-1 8 11-12h-8l1-8Z",
-    chip: "M6 6h12v12H6zM9 9h6v6H9zM9 2v4m6-4v4M9 18v4m6-4v4M2 9h4m-4 6h4m12-6h4m-4 6h4",
-    search: "m20 20-4.2-4.2M10.5 17a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13Z",
-    tune: "M4 7h16M4 17h16M8 4v6m8 4v6",
-    shield: "M12 2 4 6v6c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6l-8-4Zm-4 10 3 3 5-6",
-    folder: "M3 6h7l2 2h9v11H3V6Z",
-    stop: "M6 6h12v12H6z",
-    arrow: "M5 12h14m-6-6 6 6-6 6",
-    refresh: "M20 7v5h-5M4 17v-5h5M6 9a7 7 0 0 1 12-2l2 2M4 15l2 2a7 7 0 0 0 12-2",
-    chevron: "m6 9 6 6 6-6",
-    pause: "M8 5v14m8-14v14",
-    play: "m8 5 11 7-11 7V5Z",
-  };
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-    stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"
-    aria-hidden="true"><path d={paths[name]} /></svg>;
-}
-
-type Choice = { value: string; label: string };
-function ChoiceSelect({ value, onValueChange, options, disabled = false, label }: {
-  value: string; onValueChange: (value: string) => void;
-  options: Choice[]; disabled?: boolean; label: string;
-}) {
-  return <Select.Root value={value} onValueChange={onValueChange} disabled={disabled}>
-    <Select.Trigger className="choice-trigger" aria-label={label}>
-      <Select.Value />
-      <Select.Icon className="choice-chevron"><Icon name="chevron" size={16} /></Select.Icon>
-    </Select.Trigger>
-    <Select.Portal>
-      <Select.Content className="choice-content" position="popper" sideOffset={5} collisionPadding={12}>
-        <Select.Viewport className="choice-viewport">
-          {options.map((item) => <Select.Item className="choice-item" key={item.value} value={item.value}>
-            <Select.ItemText>{item.label}</Select.ItemText>
-            <Select.ItemIndicator className="choice-check">✓</Select.ItemIndicator>
-          </Select.Item>)}
-        </Select.Viewport>
-      </Select.Content>
-    </Select.Portal>
-  </Select.Root>;
-}
-
 function DeviceCard({ device, backends }: { device: Device; backends: ValidatedBackend[] }) {
   const isCpu = device.apis.includes("CPU");
   return <div className="device-card">
-    <div className={"device-icon " + (isCpu ? "cpu" : "gpu")}><Icon name="chip" size={23} /></div>
+    <div className={"device-icon " + (isCpu ? "cpu" : "gpu")}><Cpu size={23} /></div>
     <div className="device-copy">
       <div className="device-name">{device.name}</div>
       <div className="device-meta">{device.vendor}
@@ -102,8 +92,83 @@ export default function App() {
   const [updateError, setUpdateError] = useState("");
   const [updateBusy, setUpdateBusy] = useState(false);
   const [installedVersion, setInstalledVersion] = useState("");
+  const [recentTools, setRecentTools] = useState<ToolId[]>(() => {
+    try {
+      const stored: unknown = JSON.parse(localStorage.getItem("gramix.ui.recentTools") || "[]");
+      return Array.isArray(stored) ? stored.filter((id): id is ToolId =>
+        typeof id === "string" && isToolId(id)).slice(0, 4) : [];
+    } catch { return []; }
+  });
+  const [activeTool, setActiveTool] = useState<WorkspaceId>(() => {
+    const initial = web ? initialLocation!.workspace : window.location.hash.slice(1);
+    const legacy = web ? window.location.hash.slice(1) : "";
+    if (web && isWorkspaceId(legacy)) return legacy;
+    return isWorkspaceId(initial) ? initial : "overview";
+  });
+  const vanity = useRef<VanityHandle | null>(null);
+  const foundPhrase = useRef<string | null>(null);
+  const vanityStarted = useRef(0);
+  useEffect(() => {
+    if (!web) return;
+    // Старые ссылки вида /#tool и прямые ссылки /address/… открываются как обычные страницы.
+    if (window.location.hash && isWorkspaceId(window.location.hash.slice(1)))
+      window.history.replaceState(null, "", pathFor(window.location.hash.slice(1)));
+    const target = initialLocation?.target;
+    if (target) window.setTimeout(() => window.dispatchEvent(new CustomEvent(target.event, { detail: target.detail })), 50);
+    const follow = () => {
+      const next = parsePath(window.location.pathname);
+      if (isWorkspaceId(next.workspace)) setActiveTool(next.workspace);
+      if (next.target) window.dispatchEvent(new CustomEvent(next.target.event, { detail: next.target.detail }));
+    };
+    window.addEventListener("popstate", follow);
+    return () => window.removeEventListener("popstate", follow);
+  }, []);
+  useEffect(() => {
+    document.title = activeTool === "overview" ? "Gramix — инструменты GRAM"
+      : `${activeTool === "settings" ? "Настройки" : activeTool === "privacy" ? "Конфиденциальность"
+        : toolTitles[activeTool as ToolId]} · Gramix`;
+    telemetry.track({ name: "page_view", path: window.location.pathname, tool: activeTool });
+  }, [activeTool]);
+  useEffect(() => {
+    const clearRecent = () => setRecentTools([]);
+    window.addEventListener("gramix:clear-recent-tools", clearRecent);
+    return () => window.removeEventListener("gramix:clear-recent-tools", clearRecent);
+  }, []);
+  const [visitedWorkspaces, setVisitedWorkspaces] = useState<WorkspaceId[]>([]);
+  useEffect(() => {
+    if (!["contract-sandbox", "contract-builder", "developer-cli"].includes(activeTool)) return;
+    setVisitedWorkspaces((current) => current.includes(activeTool) ? current : [...current, activeTool]);
+  }, [activeTool]);
+  useEffect(() => {
+    const followHash = () => {
+      const target = window.location.hash.slice(1);
+      if (isWorkspaceId(target)) {
+        setActiveTool(target);
+        if (web) window.history.replaceState(null, "", pathFor(target));
+        document.querySelector(".main")?.scrollTo(0, 0);
+      }
+    };
+    window.addEventListener("hashchange", followHash);
+    return () => window.removeEventListener("hashchange", followHash);
+  }, []);
+  function openTool(tool: WorkspaceId) {
+    setActiveTool(tool);
+    if (isToolId(tool)) setRecentTools((current) => {
+      const next = [tool, ...current.filter((id) => id !== tool)].slice(0, 4);
+      localStorage.setItem("gramix.ui.recentTools", JSON.stringify(next));
+      return next;
+    });
+    if (web) {
+      if (window.location.pathname !== pathFor(tool)) window.history.pushState(null, "", pathFor(tool));
+    } else window.history.replaceState(null, "", `#${tool}`);
+    document.querySelector(".main")?.scrollTo(0, 0);
+  }
   const running = app.status === "running" || app.status === "paused" ||
     app.status === "initializing" || app.status === "stopping";
+  useEffect(() => {
+    localStorage.setItem("gramix.compute.gpuDuty", String(app.gpuDuty));
+    localStorage.setItem("gramix.compute.cpuThreads", String(app.cpuThreads));
+  }, [app.gpuDuty, app.cpuThreads]);
   const verifiedGpuIds = new Set(app.validatedBackends
     .filter((backend) => backend.api !== "CPU").map((backend) => backend.device_id));
   const hasGpu = verifiedGpuIds.size > 0;
@@ -121,12 +186,19 @@ export default function App() {
   }, [app.status]);
 
   async function options(includePassword = false) {
-    const env: Record<string, string> = { VANTIX_RESOURCE_DIR: await resourceDir() };
-    if (includePassword && isLinux) env.VANTIX_WALLET_PASSWORD = walletPassword;
+    const env: Record<string, string> = { GRAMIX_RESOURCE_DIR: await resourceDir() };
+    if (includePassword && isLinux) env.GRAMIX_WALLET_PASSWORD = walletPassword;
     return { env };
   }
 
   async function refreshDevices() {
+    if (web) {
+      const threads = platform.browserThreads?.() ?? 1;
+      app.set({ devices: [{ id: "browser", name: `Браузер · ${threads} потоков`, vendor: "Web Worker, CPU",
+        driver: "", memory_bytes: 0, apis: ["CPU"] }],
+        validatedBackends: [{ api: "CPU", device_id: "browser", name: "Браузер" }], selectedDeviceId: "" });
+      return;
+    }
     if (!isTauri()) {
       return;
     }
@@ -157,6 +229,10 @@ export default function App() {
     let cancelled = false;
     async function findUpdate() {
       try {
+        if ((await getVersion()).includes("-dev.")) {
+          if (!cancelled) setUpdateState("Пробная сборка: автообновление отключено.");
+          return;
+        }
         if (!await invoke<boolean>("supports_self_update")) {
           if (!cancelled) setUpdateState("DEB обновляется через пакетный менеджер.");
           return;
@@ -173,10 +249,14 @@ export default function App() {
     void findUpdate();
     return () => { cancelled = true; };
   }, []);
-  useEffect(() => () => { void child.current?.write("STOP\n"); }, []);
+  useEffect(() => () => { vanity.current?.stop(); void child.current?.write("STOP\n"); }, []);
 
   async function checkUpdate() {
     if (!isTauri() || updateBusy) return;
+    if (installedVersion.includes("-dev.")) {
+      setUpdateState("Пробная сборка: автообновление отключено.");
+      return;
+    }
     setUpdateBusy(true);
     setUpdateError("");
     setUpdateState("Проверка версии…");
@@ -241,13 +321,41 @@ export default function App() {
         app.set({ checked: Number(match[1]) });
         app.addSample(Number(match[2]));
       }
-    } else if (value.startsWith("VANTIX error: ")) {
-      app.set({ error: value.slice("VANTIX error: ".length) });
+    } else if (value.startsWith("Gramix error: ")) {
+      app.set({ error: value.slice("Gramix error: ".length) });
     }
+  }
+
+  function startInBrowser() {
+    const threadLimit = platform.browserThreads?.() ?? 1;
+    const threads = app.cpuThreads > 0 ? Math.min(app.cpuThreads, threadLimit) : threadLimit;
+    app.set({ status: "running", checked: 0, rate: 0, samples: [], resultPath: "", error: "" });
+    setElapsed(0);
+    foundPhrase.current = null;
+    vanityStarted.current = performance.now();
+    telemetry.track({ name: "vanity_started", pattern: app.pattern, mode: app.matchMode, scheme: app.scheme,
+      wallet: app.wallet, threads });
+    let lastSample = 0;
+    vanity.current = platform.startVanity!({ pattern: app.pattern, mode: app.matchMode, ignoreCase: app.ignoreCase,
+      scheme: app.scheme, version: app.wallet, threads }, {
+      onProgress: (checked, rate) => {
+        app.set({ checked });
+        if (performance.now() - lastSample > 950) { lastSample = performance.now(); app.addSample(rate); }
+      },
+      onFound: (wallet) => {
+        vanity.current = null;
+        foundPhrase.current = wallet.phrase;
+        app.set({ status: "finished", rate: 0, resultPath: wallet.address });
+        telemetry.track({ name: "vanity_stopped", found: true, checked: useApp.getState().checked,
+          seconds: Math.round((performance.now() - vanityStarted.current) / 1000) });
+      },
+      onError: (message) => { vanity.current = null; app.set({ status: "error", error: message, rate: 0 }); },
+    });
   }
 
   async function start() {
     if (!valid || running) return;
+    if (web) { startInBrowser(); return; }
     if (app.scheme === "24" && ["vulkan", "cuda", "hip"].includes(app.backend)) {
       app.set({ error: "Для 24 слов пока выберите CPU или Auto." });
       return;
@@ -271,6 +379,7 @@ export default function App() {
       if (app.ignoreCase) args.push("--ignore-case");
       if (app.selectedDeviceId && app.backend !== "cpu")
         args.push("--device", app.selectedDeviceId);
+      if (app.cpuThreads > 0) args.push("--threads", String(app.cpuThreads));
       if (retune) args.push("--retune");
       const command = Command.sidecar(sidecar, args, await options(true));
       command.stdout.on("data", (chunk) => {
@@ -280,7 +389,7 @@ export default function App() {
         lines.forEach(handleLine);
       });
       command.stderr.on("data", (line) => {
-        if (line.includes("VANTIX error: ")) app.set({ error: line.trim() });
+        if (line.includes("Gramix error: ")) app.set({ error: line.trim() });
       });
       command.on("close", (event) => {
         handleLine(pending.current);
@@ -297,6 +406,13 @@ export default function App() {
   }
 
   async function stop() {
+    if (web) {
+      vanity.current?.stop(); vanity.current = null;
+      app.set({ status: "finished", rate: 0 });
+      telemetry.track({ name: "vanity_stopped", found: false, checked: useApp.getState().checked,
+        seconds: Math.round((performance.now() - vanityStarted.current) / 1000) });
+      return;
+    }
     const process = child.current;
     if (!process) return;
     stopRequested.current = true;
@@ -311,6 +427,12 @@ export default function App() {
   }
 
   async function togglePause() {
+    if (web && vanity.current) {
+      const wasPaused = app.status === "paused";
+      if (wasPaused) vanity.current.resume(); else vanity.current.pause();
+      app.set({ status: wasPaused ? "running" : "paused", rate: wasPaused ? app.rate : 0 });
+      return;
+    }
     if (!child.current || (app.status !== "running" && app.status !== "paused")) return;
     const wasPaused = app.status === "paused";
     try {
@@ -323,6 +445,10 @@ export default function App() {
 
   async function reveal() {
     if (!app.resultPath || revealing) return;
+    if (web) {
+      if (!foundPhrase.current) { app.set({ error: "Фраза уже удалена из памяти страницы." }); return; }
+      setRecoveryPhrase(foundPhrase.current); setRevealOpen(true); return;
+    }
     if (!walletPasswordReady) {
       app.set({ error: "Введите пароль кошелька в настройках, чтобы открыть фразу." });
       return;
@@ -343,28 +469,40 @@ export default function App() {
     }
   }
 
-  return <div className="app-shell">
-    <main className="main" id="generator">
-      <header className="topbar">
-        <div className="top-brand"><strong>VANTI<span>X</span></strong><span className="brand-divider"/><span className="product-label">TON COMPUTE</span></div>
-        <div className="top-right"><span className="local-label"><Icon name="shield" size={14}/> Локальные вычисления</span>
-          <div className={"status-badge " + (app.status === "running" ? "live" : "")}><span className="status-light"/>
-            {app.status === "paused" ? "Пауза" : app.status === "initializing" ? "Подготовка" : app.status === "stopping" ? "Остановка" : app.status === "running" ? "Поиск активен" : "Готово"}</div></div>
-      </header>
-      <div className="content">
+  const wide = ["contract-sandbox", "contract-builder", "developer-cli"].includes(activeTool);
+  const statusLabel = app.status === "paused" ? "Пауза" : app.status === "initializing" ? "Подготовка"
+    : app.status === "stopping" ? "Остановка" : app.status === "running" ? "Поиск активен" : "Готово";
+  return <div className={"app-shell" + (wide ? " is-wide" : "")}>
+    <div className="main" id="generator">
+      <ToolNavigation active={activeTool} onSelect={openTool}
+        live={running && activeTool !== "generator" ? { label: statusLabel, value: fmt.format(app.rate) + " адр/с" } : null}/>
+      <main className={"content wrap" + (wide ? " wide" : "") + (activeTool === "overview" ? " home-content" : "")}>
+        {activeTool !== "overview" && <div className="page-title">
+          <div className="screen-heading">{isToolId(activeTool) && <ToolIcon tool={activeTool} className="screen-tool-icon" size={34} />}
+            <strong>{activeTool === "settings" ? "Настройки" : activeTool === "privacy" ? "Конфиденциальность" : toolTitles[activeTool as ToolId]}</strong></div>
+          <div className="page-meta">
+            <span className="badge"><ShieldCheck size={13}/>
+              {["address-inspector", "transaction-decoder", "contract-inspector"].includes(activeTool)
+                ? "Сеть: по запросу" : "Локально"}</span>
+            {activeTool === "generator" &&
+              <span className={"badge status-badge " + (app.status === "running" ? "ok live" : "")}><span className="status-light"/>{statusLabel}</span>}
+          </div>
+        </div>}
+        <div className="tool-screen workspace-screen" hidden={activeTool !== "overview"}>
+          <Overview devices={app.devices} backends={app.validatedBackends} recent={recentTools}
+            searchStatus={app.status} checked={app.checked} rate={app.rate} version={installedVersion}
+            onOpen={openTool} onRefresh={() => void refreshDevices()}
+            onPause={() => void togglePause()} onSettings={() => openTool("settings")} /></div>
+        {web && <div className="tool-screen workspace-screen" hidden={activeTool !== "privacy"}><PrivacyPage /></div>}
+        <div className="tool-screen workspace-screen" hidden={activeTool !== "settings"}>
+          <WorkspaceSettings devices={app.devices} backends={app.validatedBackends}
+            version={installedVersion} updateState={updateError || updateState}
+            updateBusy={updateBusy} canInstallUpdate={Boolean(availableUpdate) && !running}
+            onRefreshDevices={() => void refreshDevices()} onCheckUpdate={() => void checkUpdate()}
+            onInstallUpdate={() => void installUpdate()} /></div>
+        <div className="vanity-screen" hidden={activeTool !== "generator"}>
         <div className="intro"><h1>Поиск адреса</h1>
-          <p>TON · Задайте фрагмент адреса, остальное VANTIX проверит локально</p>
-        </div>
-        <div className="update-bar" role="status">
-          <div className="update-bar-copy"><strong>VANTIX {installedVersion}</strong>
-            <span>{updateError || updateState || (availableUpdate
-              ? `Доступно обновление ${availableUpdate.version}` : "Обновления проверяются автоматически")}</span></div>
-          {availableUpdate && <button className="update-install" disabled={running || updateBusy}
-            title={running ? "Остановите поиск перед обновлением" : undefined}
-            onClick={() => void installUpdate()}>{updateBusy ? "Обновление…" : "Установить"}</button>}
-          <button className={"icon-button refresh-button " + (updateBusy ? "is-refreshing" : "")}
-            title="Проверить обновления" aria-label="Проверить обновления" disabled={updateBusy}
-            onClick={() => void checkUpdate()}><Icon name="refresh" size={17}/></button>
+          <p>GRAM · Задайте фрагмент адреса, остальное Gramix проверит локально</p>
         </div>
         <div className="dashboard-grid">
           <section className="panel search-panel">
@@ -375,39 +513,39 @@ export default function App() {
                 value={app.pattern} maxLength={48}
                 onChange={(event) => app.set({ pattern: event.target.value })}
                 placeholder="например, lucky" disabled={running}/></div>
-            <div className="field-help">В TON-адресе доступны латинские буквы, цифры, «-» и «_».</div>
+            <div className="field-help">В GRAM-адресе доступны латинские буквы, цифры, «-» и «_».</div>
             <div className="field-row">
               <div className="field-column"><span className="field-label">Совпадение</span>
-                <ChoiceSelect label="Тип совпадения" value={app.matchMode} disabled={running}
+                <UiSelect label="Тип совпадения" value={app.matchMode} disabled={running}
                   onValueChange={(value) => app.set({ matchMode: value as typeof app.matchMode })}
                   options={[{ value: "contains", label: "Содержит слово" }, { value: "prefix", label: "Начинается с" }, { value: "suffix", label: "Заканчивается на" }]}/></div>
               <div className="field-column"><span className="field-label">Кошелёк</span>
-                <ChoiceSelect label="Версия кошелька" value={app.wallet} disabled={running}
+                <UiSelect label="Версия кошелька" value={app.wallet} disabled={running}
                   onValueChange={(value) => app.set({ wallet: value as typeof app.wallet })}
                   options={[{ value: "v5", label: "Wallet V5R1" }, { value: "v4", label: "Wallet V4R2" }]}/></div>
             </div>
             <div className="toggle-row"><div><strong>Не учитывать регистр</strong>
-              <span>Например, «ton» найдёт «TON»</span></div>
+              <span>Например, «gram» найдёт «GRAM»</span></div>
               <Switch.Root className="switch" aria-label="Не учитывать регистр" checked={app.ignoreCase} disabled={running}
                 onCheckedChange={(value) => app.set({ ignoreCase: value })}><Switch.Thumb className="switch-thumb"/></Switch.Root></div>
             {running ? <div className="action-split">
               <button className="pause-button" onClick={() => void togglePause()}
                 disabled={app.status === "initializing" || app.status === "stopping"}>
-                <Icon name={app.status === "paused" ? "play" : "pause"} size={18}/>
+                {app.status === "paused" ? <Play size={18}/> : <Pause size={18}/>}
                 {app.status === "paused" ? "Продолжить" : "Пауза"}</button>
               <button className="stop-button" onClick={() => void stop()}
                 disabled={app.status === "stopping" || app.status === "initializing"}>
-                <Icon name="stop" size={18}/> Стоп</button></div>
+                <Square size={18}/> Стоп</button></div>
               : <button className="primary-button" onClick={() => void start()} disabled={!valid}>
-                  <Icon name="bolt" size={19}/> Начать поиск <Icon name="arrow" size={18}/>
+                  <Zap size={19}/> Начать поиск <ArrowRight size={18}/>
                 </button>}
-            {!validPattern && app.pattern && <p className="validation">Используйте только символы TON-адреса.</p>}
+            {!validPattern && app.pattern && <p className="validation">Используйте только символы GRAM-адреса.</p>}
             {isLinux && !walletPasswordReady && <p className="validation">Задайте пароль кошелька от 12 символов в настройках.</p>}
           </section>
 
           <section className="panel monitor-panel">
-            <div className="panel-heading"><div><h2>Поиск в реальном времени</h2><p>Скорость полных TON-адресов</p></div>
-              <span className={"monitor-pill " + (app.status === "running" ? "active" : "")}>{app.status === "paused" ? "PAUSED" : app.status === "running" ? "LIVE" : "IDLE"}</span></div>
+            <div className="panel-heading"><div><h2>Поиск в реальном времени</h2><p>Скорость полных GRAM-адресов</p></div>
+              <span className={"monitor-pill " + (app.status === "running" ? "active" : "")}>{app.status === "paused" ? "Пауза" : app.status === "running" ? "Поиск" : "Ожидание"}</span></div>
             <div className="stats-row"><div className="speed-stat"><span>СКОРОСТЬ</span><strong>{fmt.format(app.rate)}<small> адресов/с</small></strong></div>
               <div><span>ПРОВЕРЕНО</span><strong>{fmt.format(app.checked)}</strong></div>
               <div><span>ВРЕМЯ ПОИСКА</span><strong>{Math.floor(elapsed / 60).toString().padStart(2, "0")}:{(elapsed % 60).toString().padStart(2, "0")}</strong></div></div>
@@ -417,8 +555,8 @@ export default function App() {
                 : <div className="chart-empty"><span className="chart-empty-line"/>
                     <span>{running ? "Подготовка данных…" : "График появится после запуска"}</span>
                   </div>}</div>
-            {app.resultPath && <div className="result-box"><Icon name="folder" size={18}/>
-              <div><strong>Кошелёк найден и сохранён</strong><span>{app.resultPath}</span>
+            {app.resultPath && <div className="result-box"><Folder size={18}/>
+              <div><strong>{web ? "Адрес найден" : "Кошелёк найден и сохранён"}</strong><span>{app.resultPath}</span>
                 <button className="reveal-button" onClick={() => void reveal()}>
                   Показать фразу восстановления</button></div></div>}
             {app.error && <div className="error-box">{app.error}</div>}
@@ -429,13 +567,13 @@ export default function App() {
           <div className="panel-heading"><div><h2>Вычислительные устройства</h2><p>Обнаруженные API проходят проверку при запуске поиска</p></div>
             <button className={"icon-button refresh-button " + (refreshing ? "is-refreshing" : "")}
               title="Обновить устройства" aria-label="Обновить устройства" disabled={refreshing}
-              onClick={() => void refreshDevices()}><Icon name="refresh" size={18}/></button></div>
+              onClick={() => void refreshDevices()}><RefreshCw size={18}/></button></div>
           <div className="device-grid">{app.devices.length
             ? app.devices.map((device) => <DeviceCard key={device.id} device={device}
                 backends={app.validatedBackends}/>)
             : <div className="empty-devices">{refreshing ? "Поиск устройств…" : "Устройства пока не обнаружены"}</div>}</div>
           {hasGpu && <div className="device-selector"><span className="field-label">GPU для поиска</span>
-            <ChoiceSelect label="GPU для поиска" value={app.selectedDeviceId || "all"}
+            <UiSelect label="GPU для поиска" value={app.selectedDeviceId || "all"}
               disabled={running} onValueChange={(value) => {
                 const id = value === "all" ? "" : value;
                 const api = app.backend.toUpperCase();
@@ -460,7 +598,7 @@ export default function App() {
             <Tabs.Content value="engine" className="tab-content">
               <div className="setting-row"><div><strong>Вычислительный режим</strong>
                 <span>Auto проверяет и выбирает быструю конфигурацию</span></div>
-                <ChoiceSelect label="Вычислительный режим" value={app.backend} disabled={running}
+                <UiSelect label="Вычислительный режим" value={app.backend} disabled={running}
                   onValueChange={(value) => app.set({ backend: value as Backend })}
                   options={[{ value: "auto", label: "Auto" }, { value: "cpu", label: "CPU" },
                     ...(app.scheme === "12" && hasBackend("Vulkan") ? [{ value: "vulkan", label: "Vulkan Compute" }] : []),
@@ -480,44 +618,69 @@ export default function App() {
             </Tabs.Content>
             <Tabs.Content value="wallet" className="tab-content">
               <div className="setting-row"><div><strong>Фраза восстановления</strong>
-                <span>12 слов — BIP39/SLIP-0010; 24 слова — TON Native</span></div>
-                <ChoiceSelect label="Фраза восстановления" value={app.scheme} disabled={running}
+                <span>12 слов — BIP39/SLIP-0010; 24 слова — GRAM Native</span></div>
+                <UiSelect label="Фраза восстановления" value={app.scheme} disabled={running}
                   onValueChange={(value) => app.set({ scheme: value as typeof app.scheme,
                     backend: value === "24" && ["vulkan", "cuda", "hip"].includes(app.backend)
                       ? "auto" : app.backend })}
-                  options={[{ value: "12", label: "12 слов · Multichain" }, { value: "24", label: "24 слова · TON Native" }]}/></div>
+                  options={[{ value: "12", label: "12 слов · Multichain" }, { value: "24", label: "24 слова · GRAM Native" }]}/></div>
               {isLinux && <div className="setting-row"><div><strong>Пароль кошелька</strong>
                 <span>Шифрует найденную фразу; храните пароль отдельно. Он не сохраняется приложением.</span></div>
                 <input className="wallet-password" type="password" autoComplete="new-password"
                   minLength={12} maxLength={1024} value={walletPassword} disabled={running}
                   onChange={(event) => setWalletPassword(event.target.value)}
                   placeholder="Не менее 12 символов" aria-label="Пароль кошелька"/></div>}
-              <div className="info-strip"><Icon name="shield" size={17}/>
+              <div className="info-strip"><ShieldCheck size={17}/>
                 Фраза восстановления сохраняется локально вместе с найденным адресом. Не передавайте её другим людям.</div>
             </Tabs.Content>
           </Tabs.Root>
         </section>
-      </div>
-    </main>
+        </div>
+        <div className="tool-screen" hidden={activeTool !== "wallet-generator"}><WalletGenerator /></div>
+        <div className="tool-screen" hidden={activeTool !== "wallet-security"}><WalletSecurity /></div>
+        <div className="tool-screen" hidden={activeTool !== "address-inspector"}><AddressInspector /></div>
+        <div className="tool-screen" hidden={activeTool !== "boc-explorer"}><BocExplorer /></div>
+        <div className="tool-screen" hidden={activeTool !== "transaction-decoder"}><TransactionDecoder /></div>
+        <div className="tool-screen" hidden={activeTool !== "contract-inspector"}><ContractInspector /></div>
+        <div className="tool-screen" hidden={activeTool !== "contract-vanity"}><ContractVanity /></div>
+        <div className="tool-screen" hidden={activeTool !== "gpu-benchmark"}><GpuBenchmark /></div>
+        <div className="tool-screen" hidden={activeTool !== "contract-sandbox"}>
+          {(activeTool === "contract-sandbox" || visitedWorkspaces.includes("contract-sandbox")) &&
+            <Suspense fallback={<p>Загружаю Sandbox…</p>}>
+            <ContractSandbox /></Suspense>}</div>
+        <div className="tool-screen" hidden={activeTool !== "contract-builder"}>
+          {(activeTool === "contract-builder" || visitedWorkspaces.includes("contract-builder")) &&
+            <Suspense fallback={<p>Загружаю редактор…</p>}>
+            <ContractBuilder /></Suspense>}</div>
+        <div className="tool-screen" hidden={activeTool !== "developer-cli"}>
+          {(activeTool === "developer-cli" || visitedWorkspaces.includes("developer-cli")) &&
+            <Suspense fallback={<p>Загружаю терминал…</p>}>
+            <DeveloperCli /></Suspense>}</div>
+      </main>
+      {web && <SiteFooter onOpen={openTool} />}
+    </div>
     <Dialog.Root open={revealOpen} onOpenChange={(open) => {
       setRevealOpen(open);
       if (!open) setRecoveryPhrase("");
     }}>
       <Dialog.Portal>
         <Dialog.Overlay className="dialog-overlay"/>
-        <Dialog.Content className="dialog-content">
-          <div className="dialog-shield"><Icon name="shield" size={23}/></div>
+        <Dialog.Content className="dialog-content" data-telemetry-off="">
+          <div className="dialog-shield"><ShieldCheck size={23}/></div>
           <Dialog.Title>Фраза восстановления</Dialog.Title>
           <Dialog.Description>Любой, кто увидит эти слова, сможет управлять кошельком. Сохраните их в безопасном месте.</Dialog.Description>
           {revealing ? <div className="phrase-loading">Расшифровка и проверка адреса…</div>
             : <div className="phrase-grid">{recoveryPhrase.split(" ").map((word, index) =>
               <div className="phrase-word" key={index}><span>{index + 1}</span>{word}</div>)}</div>}
-          <div className="dialog-foot"><span>{isLinux
+          <div className="dialog-foot"><span>{web
+            ? "Фраза есть только в памяти этой вкладки. Запишите её и закройте окно."
+            : isLinux
             ? "Файл зашифрован вашим паролем."
             : "Файл зашифрован для вашей учётной записи Windows."}</span>
             <Dialog.Close className="dialog-close">Закрыть</Dialog.Close></div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
+    <ConsentBanner onPrivacy={() => openTool("privacy")} />
   </div>;
 }

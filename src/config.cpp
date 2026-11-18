@@ -1,11 +1,20 @@
-#include "vantix/config.hpp"
+/*
+ * Copyright (C) 2026 lovlydev.
+ * SPDX-License-Identifier: AGPL-3.0-only
+ *
+ * This file is part of Gramix.
+ *
+ * See LICENSE for details.
+ */
+
+#include "gramix/config.hpp"
 
 #include <toml++/toml.hpp>
 
 #include <cstdint>
 #include <stdexcept>
 
-namespace vantix {
+namespace gramix {
 
 AppConfig load_config(const std::string& path) {
     const auto file = toml::parse_file(path);
@@ -47,4 +56,4 @@ AppConfig load_config(const std::string& path) {
     return config;
 }
 
-}  // namespace vantix
+}  // namespace gramix

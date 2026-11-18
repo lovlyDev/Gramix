@@ -1,3 +1,12 @@
+/*
+ * Copyright (C) 2026 lovlydev.
+ * SPDX-License-Identifier: AGPL-3.0-only
+ *
+ * This file is part of Gramix.
+ *
+ * See LICENSE for details.
+ */
+
 // SHA-512 with explicit 32-bit high/low words for GPUs with slow Int64.
 // uint2.x is the high word and uint2.y is the low word.
 static const uint2 K32[80] = {

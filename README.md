@@ -1,82 +1,68 @@
-# VANTIX
+# Gramix
 
-Я разрабатываю VANTIX — генератор TON-адресов с заданным фрагментом. Вычислительное ядро написано на C++23, приложение для Windows и Linux — на Tauri и React. В выпуске 0.1.0 доступны CPU и Vulkan Compute. Исходники CUDA/HIP есть в проекте, но их модули не входят в установщики: сборка и работа на поддерживаемых видеокартах ещё не проверены.
+English | [Русский](README.ru.md)
 
-## Скачать и установить
+Gramix (formerly VANTIX) is my toolkit for the GRAM network: a vanity address generator with a C++23 compute core and a Tauri/React desktop app for Windows and Linux. Release 0.1.0, published as VANTIX, includes CPU and Vulkan Compute modes. CUDA and HIP sources are present, but their modules are absent from the installers and have not been validated on supported GPUs.
 
-На странице [выпуска 0.1.0](https://github.com/lovlyDev/VANTIX/releases/tag/v0.1.0) доступны:
+## Download
 
-- VANTIX_0.1.0_x64-setup.exe — установщик Windows;
-- VANTIX_0.1.0_amd64.deb — пакет Linux;
-- VANTIX_0.1.0_amd64.AppImage — переносимый пакет Linux;
-- SHA256SUMS.txt — контрольные суммы.
+[Release 0.1.0](https://github.com/lovlyDev/Gramix/releases/tag/v0.1.0) provides a Windows NSIS installer (`GRAMIX_0.1.0_x64-setup.exe`), Linux DEB (`GRAMIX_0.1.0_amd64.deb`), Linux AppImage (`GRAMIX_0.1.0_amd64.AppImage`), and `SHA256SUMS.txt`.
 
-При запуске приложение обнаруживает устройства и проверяет вычислительные режимы. Режим Auto выбирает самую быструю проверенную конфигурацию. Движок и GPU можно выбрать вручную.
+The app detects devices, tests available compute modes, and lets you choose automatic or manual mode selection. The 12-word search can use Vulkan Compute, with results rechecked on CPU. The 24-word search uses CPU. Multiple physical GPUs have not yet been hardware-validated together. The Windows installer is not publisher certificate signed.
 
-## Возможности
+## Features
 
-- Кошельки TON V5R1 и V4R2; фразы восстановления на 12 или 24 слова.
-- Поиск фрагмента в начале, конце или любой части адреса, в том числе без учёта регистра.
-- Параллельный поиск на CPU, Vulkan Compute для 12-словной схемы и гибридный режим CPU/GPU. Результат GPU повторно проверяется на CPU.
-- Автоматическая калибровка и кэш профиля для оборудования и драйвера.
-- Пауза и остановка поиска, график скорости, выбор устройства и нагрузки GPU.
-- Шифрование найденной фразы: DPAPI на Windows, AES-256-GCM с паролем на Linux.
-- Подписанные обновления приложения для Windows и Linux AppImage; DEB обновляется через менеджер пакетов.
+- GRAM Wallet V5R1 and V4R2; 12- and 24-word recovery phrases.
+- Prefix, suffix, or substring search, with an optional case-insensitive mode.
+- CPU, Vulkan Compute, and hybrid CPU/GPU modes where validated.
+- Pause/resume, device selection, speed chart, and GPU load control.
+- Encrypted saved phrases: DPAPI on Windows and AES-256-GCM with a password on Linux.
+- Signed in-app updates for Windows NSIS and Linux AppImage; DEB updates through the package manager.
 
-Файл data/ton-english.txt содержит стандартный список слов для фразы восстановления. Он **не ограничивает** фрагмент, который можно искать в адресе. Адрес допускает латинские буквы, цифры, «-» и «_».
+The `data/ton-english.txt` mnemonic list is unrelated to the allowed address search substring. It is the BIP-39 English word list under the MIT license; see [NOTICE.md](NOTICE.md).
 
-## Ограничения выпуска
+## Build from Source
 
-- CUDA и HIP реализованы в исходниках, но не собраны и не проверены на поддерживаемых видеокартах; их модулей нет в установщиках 0.1.0.
-- Работа нескольких физических GPU вместе пока не подтверждена аппаратной проверкой.
-- Для 24-словной схемы используется CPU.
-- Windows установщик не подписан сертификатом издателя; SmartScreen может показать предупреждение.
-
-Подробности: [ТЗ для AMD и NVIDIA](docs/gpu-backends.md), [проверка CUDA/HIP](docs/vendor-validation.md), [процесс выпуска](docs/release.md).
-
-## Сборка из исходников
-
-Нужны компилятор C++23, CMake 3.24+, vcpkg, Node.js и Rust для приложения. Манифест vcpkg устанавливает OpenSSL 3, заголовки Vulkan, Volk, CLI11 и toml++. CUDA Toolkit и HIP SDK необязательны для CPU/Vulkan; при их наличии CMake пытается собрать независимые модули производителя.
+You need a C++23 compiler, CMake 3.24+, vcpkg, Node.js, and Rust for the desktop app. vcpkg installs OpenSSL 3, Vulkan headers, Volk, CLI11, and toml++. CUDA Toolkit and HIP SDK are optional for CPU/Vulkan builds.
 
 Windows:
 
-~~~powershell
+```powershell
 cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
 cmake --build build --config Release
 ctest --test-dir build -C Release --output-on-failure
-~~~
+```
 
 Linux:
 
-~~~bash
+```bash
 cmake -S . -B build -G Ninja -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
 cmake --build build
 ctest --test-dir build --output-on-failure
-~~~
+```
 
-Для автоматической проверки CUDA/HIP на совместимом компьютере предусмотрены tools/verify-vendor.ps1 и tools/verify-vendor.sh. Скрипты определяют оборудование и создают отчёт без ручного ввода архитектуры GPU.
+For the desktop frontend, run `npm ci` and `npm run build` in `desktop/`. Vendor backend validation is described in [docs/vendor-validation.md](docs/vendor-validation.md).
 
-## Командная строка
+## Command Line
 
-~~~text
-vantix --devices
-vantix --backends-json
-vantix --self-test
-vantix --benchmark
-vantix --contains lucky --ignore-case --mnemonic 12 --backend auto
-vantix --prefix UQabc --wallet v5 --max 100000 --out matches
-vantix --suffix xyz --wallet v4 --batch 16
-vantix --contains ton --backend hybrid --progress
-~~~
+```text
+gramix --devices
+gramix --backends-json
+gramix --self-test
+gramix --benchmark
+gramix --contains lucky --ignore-case --mnemonic 12 --backend auto
+gramix --prefix UQabc --wallet v5 --max 100000 --out matches
+```
 
-Совпадение проверяется по полному дружественному адресу основной сети. Без --max поиск продолжается до совпадения или остановки. Ключ --device ограничивает поиск выбранным GPU, а --backend задаёт режим вручную. CUDA/HIP появляются как варианты только после проверки их модулей на устройстве.
+A recovery phrase controls a wallet. Never use source test phrases for funds. The Linux app requires a password of at least 12 characters; the CLI reads `GRAMIX_WALLET_PASSWORD`. Losing the password prevents decryption of a saved result.
 
-Фраза восстановления даёт контроль над кошельком. На Linux приложение запрашивает пароль длиной от 12 символов; CLI читает его из переменной VANTIX_WALLET_PASSWORD. Пароль не сохраняется приложением, и при его потере расшифровать результат нельзя. Команда --reveal перед показом фразы проверяет сохранённый адрес. Тестовые фразы из исходников нельзя использовать для средств.
+## License
 
-## Источники по TON
+Gramix is free software under **AGPL-3.0-only**: see the [license text](LICENSE), [licensing notes](docs/LICENSING.md), [notices](NOTICE.md), [name and logo rules](TRADEMARKS.md), and [third-party components](docs/third-party/THIRD_PARTY.md).
 
-- [Описание кошельков TON](https://github.com/ton-blockchain/TEPs/blob/master/text/0003-wallets.md)
-- [Эталонная реализация мнемоники](https://github.com/ton-org/ton-crypto/blob/master/src/mnemonic/mnemonic.ts)
-- [Контракт Wallet V4R2](https://github.com/ton-org/ton/blob/master/src/wallets/v4/WalletContractV4.ts)
-- [Контракт Wallet V5R1](https://github.com/ton-org/ton/blob/master/src/wallets/v5r1/WalletContractV5R1.ts)
-- [Стандартный список слов](https://github.com/ton-org/ton-crypto/blob/master/src/mnemonic/wordlist.ts)
+## GRAM Protocol References
+
+- [Wallet specification](https://github.com/ton-blockchain/TEPs/blob/master/text/0003-wallets.md)
+- [Mnemonic reference](https://github.com/ton-org/ton-crypto/blob/master/src/mnemonic/mnemonic.ts)
+- [Wallet V4R2 contract](https://github.com/ton-org/ton/blob/master/src/wallets/v4/WalletContractV4.ts)
+- [Wallet V5R1 contract](https://github.com/ton-org/ton/blob/master/src/wallets/v5r1/WalletContractV5R1.ts)

@@ -1,5 +1,14 @@
-#include "vantix/ton.hpp"
-#include "vantix/resources.hpp"
+/*
+ * Copyright (C) 2026 lovlydev.
+ * SPDX-License-Identifier: AGPL-3.0-only
+ *
+ * This file is part of Gramix.
+ *
+ * See LICENSE for details.
+ */
+
+#include "gramix/ton.hpp"
+#include "gramix/resources.hpp"
 
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
@@ -15,7 +24,7 @@
 #include <stdexcept>
 #include <string_view>
 
-namespace vantix {
+namespace gramix {
 namespace {
 
 constexpr std::array<std::uint8_t, 32> v4_code_hash = {
@@ -373,4 +382,4 @@ WalletCandidate candidate_from_mnemonic(
     return candidate;
 }
 
-}  // namespace vantix
+}  // namespace gramix

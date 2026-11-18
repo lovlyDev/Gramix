@@ -1,4 +1,13 @@
-#include "vantix/compute.hpp"
+/*
+ * Copyright (C) 2026 lovlydev.
+ * SPDX-License-Identifier: AGPL-3.0-only
+ *
+ * This file is part of Gramix.
+ *
+ * See LICENSE for details.
+ */
+
+#include "gramix/compute.hpp"
 
 #include <openssl/crypto.h>
 
@@ -11,7 +20,7 @@
 #include <string_view>
 #include <thread>
 
-namespace vantix {
+namespace gramix {
 
 BackendInfo CpuBackend::info() const {
     return {std::string("OpenSSL CPU ") +
@@ -110,6 +119,12 @@ std::vector<TuningResult> AutoTuner::benchmark(
             ? std::max(1u, std::thread::hardware_concurrency()) : 1u;
         const auto batch = backend->info().api == ComputeApi::cpu ? 16u
             : backend->info().api == ComputeApi::vulkan ? 64u : 128u;
+        try {
+            backend->run_batch(batch, SearchPattern{"Z", "", "", false},
+                               [](WalletCandidate&&) {});
+        } catch (...) {
+            continue;
+        }
         const auto started = std::chrono::steady_clock::now();
         const auto deadline = started + duration;
         std::atomic<std::uint64_t> count = 0;
@@ -160,4 +175,4 @@ std::string api_name(ComputeApi api) {
     return "Unknown";
 }
 
-}  // namespace vantix
+}  // namespace gramix

@@ -1,17 +1,19 @@
-# Автоматическая проверка CUDA и HIP
+# Automated CUDA and HIP Validation
 
-На Windows запустите из корня проекта одну команду:
+English | [Русский](vendor-validation.ru.md)
+
+On Windows, run one command from the project root:
 
 ```powershell
 pwsh -File tools/verify-vendor.ps1
 ```
 
-Если установлен только Windows PowerShell, используйте `powershell -File tools/verify-vendor.ps1`. Скрипт сам обнаруживает компиляторы CUDA и HIP, берёт архитектуру AMD из `hipInfo`, собирает подходящие модули, определяет GPU и проверяет каждый доступный CUDA/HIP backend на эталонной фразе и коротком поиске. Вводить модель карты, `gfx` или архитектуру CUDA не требуется. Отчёт сохраняется в `build/vendor-validation/vendor-report.txt`; отправьте именно этот файл и вывод сборки, если сборка остановилась до создания отчёта.
+With only Windows PowerShell installed, use `powershell -File tools/verify-vendor.ps1`. The script detects the CUDA and HIP compilers, reads the AMD architecture from `hipInfo`, builds the matching modules, detects the GPUs, and checks every available CUDA/HIP backend against the reference phrase and a short search. No card model, `gfx` target, or CUDA architecture needs to be entered. The report is written to `build/vendor-validation/vendor-report.txt`; send that file, plus the build output if the build stopped before the report.
 
-На Linux запустите `bash tools/verify-vendor.sh`. Скрипт также сам выбирает доступные модули и устройства и записывает отчёт в `build/vendor-validation/vendor-report.txt`.
+On Linux, run `bash tools/verify-vendor.sh`. It also picks the available modules and devices and writes the report to `build/vendor-validation/vendor-report.txt`.
 
-Перед запуском нужны совместимые драйвер, SDK соответствующего производителя, C++ toolchain и vcpkg. CUDA и HIP независимы: для проверки NVIDIA не требуется HIP SDK, для AMD не требуется CUDA Toolkit. Если SDK или карта несовместимы, отчёт отмечает `UNAVAILABLE`, приложение продолжает работать через Vulkan или CPU. Проверяйте поддержку конкретной AMD GPU по [матрице HIP SDK](https://rocm.docs.amd.com/projects/install-on-windows/en/latest/reference/system-requirements.html). AMD RX 6650 XT на основной машине VANTIX не входит в матрицу HIP SDK 7.2.0 для Windows.
+You need a compatible driver, the vendor SDK, a C++ toolchain, and vcpkg. CUDA and HIP are independent: NVIDIA validation does not need the HIP SDK, and AMD validation does not need the CUDA Toolkit. If the SDK or card is incompatible, the report shows `UNAVAILABLE` and the app keeps working through Vulkan or the CPU. Check AMD support in the [HIP SDK matrix](https://rocm.docs.amd.com/projects/install-on-windows/en/latest/reference/system-requirements.html); the RX 6650 XT on the main Gramix machine is not in the HIP SDK 7.2.0 matrix for Windows.
 
-Windows HIP SDK не поддерживает CMake HIP language, поэтому проект автоматически вызывает `hipcc` для отдельной DLL. На Linux сборка HIP использует CMake HIP language. После проверки сравнивайте только скорость **полной генерации проверенных TON-адресов**, которую печатает `--benchmark`.
+The Windows HIP SDK does not support the CMake HIP language, so the project calls `hipcc` for a separate DLL. On Linux the HIP build uses the CMake HIP language. After validation, compare only the speed of **complete verified GRAM address generation** printed by `--benchmark`.
 
-CUDA/HIP реализованы в исходниках, но не подтверждены на подходящем оборудовании и не включены в установщики 0.1.0. Я добавлю их в релиз после успешной сборки, проверки эталонных векторов, короткого поиска и сохранения кошелька на поддерживаемой карте.
+CUDA/HIP are implemented in source but not confirmed on suitable hardware and not included in the installers. I will add them to a release after a successful build, reference vectors, a short search, and wallet saving on a supported card.

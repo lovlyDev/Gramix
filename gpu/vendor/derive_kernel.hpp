@@ -1,10 +1,19 @@
+/*
+ * Copyright (C) 2026 lovlydev.
+ * SPDX-License-Identifier: AGPL-3.0-only
+ *
+ * This file is part of Gramix.
+ *
+ * See LICENSE for details.
+ */
+
 #pragma once
 
 #include <cstdint>
 
 // Shared CUDA/HIP implementation. One thread derives the Ed25519 seed for one
 // BIP39-12 phrase using PBKDF2-HMAC-SHA512 and hardened SLIP-0010 m/44'/607'/0'.
-namespace vantix_gpu {
+namespace gramix_gpu {
 __device__ __constant__ std::uint64_t sha512_k[80] = {
 #include "../vulkan/sha512_constants.slang"
 };
@@ -146,4 +155,4 @@ __global__ void derive_kernel(const unsigned char* input, unsigned char* output,
     }
     for (unsigned i = 0; i < 32; ++i) output[id * 32 + i] = current[i];
 }
-}  // namespace vantix_gpu
+}  // namespace gramix_gpu

@@ -1,3 +1,12 @@
+/*
+ * Copyright (C) 2026 lovlydev.
+ * SPDX-License-Identifier: AGPL-3.0-only
+ *
+ * This file is part of Gramix.
+ *
+ * See LICENSE for details.
+ */
+
     uint2(0x428a2f98u, 0xd728ae22u), uint2(0x71374491u, 0x23ef65cdu),
     uint2(0xb5c0fbcfu, 0xec4d3b2fu), uint2(0xe9b5dba5u, 0x8189dbbcu),
     uint2(0x3956c25bu, 0xf348b538u), uint2(0x59f111f1u, 0xb605d019u),

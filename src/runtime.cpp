@@ -1,4 +1,14 @@
-#include "vantix/compute.hpp"
+/*
+ * Copyright (C) 2026 lovlydev.
+ * SPDX-License-Identifier: AGPL-3.0-only
+ *
+ * This file is part of Gramix.
+ *
+ * See LICENSE for details.
+ */
+
+#include "gramix/resources.hpp"
+#include "gramix/compute.hpp"
 
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
@@ -28,7 +38,7 @@
 #include <wincrypt.h>
 #endif
 
-namespace vantix {
+namespace gramix {
 void SearchPattern::validate() const {
     const auto allowed = [](const std::string& part) {
         return part.size() <= 48 &&
@@ -66,10 +76,10 @@ std::string base64_encode(const std::uint8_t* data, std::size_t size) {
 
 #ifndef _WIN32
 const char* linux_wallet_password() {
-    const auto* password = std::getenv("VANTIX_WALLET_PASSWORD");
+    const auto* password = environment_value("WALLET_PASSWORD");
     if (!password || std::strlen(password) < 12 || std::strlen(password) > 1024)
         throw std::runtime_error(
-            "Linux wallet encryption requires VANTIX_WALLET_PASSWORD (12..1024 characters)");
+            "Linux wallet encryption requires GRAMIX_WALLET_PASSWORD (12..1024 characters)");
     return password;
 }
 
@@ -158,7 +168,7 @@ std::string protect_mnemonic(const std::string& mnemonic) {
     DATA_BLOB input{static_cast<DWORD>(mnemonic.size()),
                     reinterpret_cast<BYTE*>(const_cast<char*>(mnemonic.data()))};
     DATA_BLOB encrypted{};
-    if (!CryptProtectData(&input, L"VANTIX TON recovery phrase", nullptr,
+    if (!CryptProtectData(&input, L"Gramix TON recovery phrase", nullptr,
                           nullptr, nullptr, CRYPTPROTECT_UI_FORBIDDEN, &encrypted))
         throw std::runtime_error("Windows wallet encryption failed");
     try {
@@ -239,6 +249,13 @@ std::filesystem::path save_match(
 
 }  // namespace
 
+std::filesystem::path save_wallet_candidate(
+    const WalletCandidate& candidate, const std::filesystem::path& output_directory) {
+    SearchOptions options;
+    options.output_directory = output_directory.string();
+    return save_match(candidate, options);
+}
+
 std::string reveal_saved_mnemonic(const std::string& file_path) {
     std::ifstream input(file_path, std::ios::binary | std::ios::ate);
     if (!input || input.tellg() > 16384)
@@ -264,10 +281,17 @@ std::string reveal_saved_mnemonic(const std::string& file_path) {
     auto phrase = unprotect_mnemonic(fields.at("mnemonic_aes256gcm"));
 #endif
     try {
-        const auto candidate = candidate_from_mnemonic(phrase, wallet, scheme);
+        if (!(scheme == MnemonicScheme::multichain12
+                  ? is_valid_multichain_mnemonic(phrase)
+                  : is_valid_ton_mnemonic(phrase)))
+            throw std::runtime_error("Saved wallet mnemonic failed validation");
+        auto candidate = candidate_from_mnemonic(phrase, wallet, scheme);
         if (candidate.address != fields.at("address") ||
-            hex(candidate.public_key) != fields.at("public_key"))
+            hex(candidate.public_key) != fields.at("public_key")) {
+            OPENSSL_cleanse(candidate.mnemonic.data(), candidate.mnemonic.size());
             throw std::runtime_error("Saved wallet failed address verification");
+        }
+        OPENSSL_cleanse(candidate.mnemonic.data(), candidate.mnemonic.size());
     } catch (...) {
         OPENSSL_cleanse(phrase.data(), phrase.size());
         throw;
@@ -404,4 +428,4 @@ std::uint64_t ComputeScheduler::search(
     return monitor.total();
 }
 
-}  // namespace vantix
+}  // namespace gramix

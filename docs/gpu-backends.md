@@ -1,61 +1,63 @@
-# VANTIX: вычислительные движки AMD и NVIDIA
+# Gramix Compute Engines for AMD and NVIDIA
 
-Я развиваю три независимых пути вычислений: CPU, универсальный Vulkan Compute и специализированные CUDA/HIP. Выпуск 0.1.0 включает проверенные CPU и Vulkan. Исходники CUDA/HIP уже есть, но их модули не входят в установщики 0.1.0 и пока не подтверждены на видеокартах производителя.
+English | [Русский](gpu-backends.ru.md)
 
-## Общие требования
+I develop three independent compute paths: CPU, portable Vulkan Compute, and vendor-specific CUDA/HIP. Releases ship the verified CPU and Vulkan engines. CUDA/HIP sources exist, but their modules are not included in the installers and have not been validated on vendor hardware.
 
-- CPU служит эталоном для фразы восстановления, PBKDF2-HMAC-SHA512, SLIP-0010, Ed25519, TON StateInit и кодирования адреса.
-- Любой GPU-движок допускается к поиску только после совпадения результатов с эталонными векторами CPU на конкретном устройстве.
-- Сравнивается скорость генерации и проверки **полных TON-адресов**, а не отдельная операция PBKDF2.
-- Одна физическая GPU учитывается один раз, даже если её обнаружили Vulkan и CUDA/HIP. Одновременная работа двух API на ней требует отдельного измерения.
-- Для каждого устройства используются независимые случайные кандидаты. Буферы выделяются заранее; пакеты обрабатываются асинхронно, с ограничением памяти.
-- Найденный кошелёк сохраняется до объявления результата, а совпадение GPU повторно проверяется на CPU.
-- Профиль калибровки зависит от GPU, драйвера, ОС, версии движка и шейдера, типа кошелька и схемы фразы. При изменении этих данных калибровка повторяется.
-- Ошибка GPU приводит к попытке использовать Vulkan на том же устройстве, затем CPU. Отсутствие SDK другого производителя не мешает сборке и запуску.
+## Common Rules
+
+- The CPU is the reference for the recovery phrase, PBKDF2-HMAC-SHA512, SLIP-0010, Ed25519, wallet StateInit, and address encoding.
+- A GPU engine may search only after it reproduces the CPU reference vectors on that specific device.
+- Speed is measured as **complete GRAM addresses** generated and checked, not as a single PBKDF2 step.
+- One physical GPU is counted once, even if both Vulkan and CUDA/HIP detect it. Running two APIs on it at once needs a separate measurement.
+- Every device uses independent random candidates. Buffers are allocated up front; batches run asynchronously with a memory limit.
+- A found wallet is saved before the result is announced, and every GPU match is re-checked on the CPU.
+- The tuning profile depends on the GPU, driver, OS, engine and shader version, wallet type, and phrase scheme. Any change triggers a new calibration.
+- A GPU failure falls back to Vulkan on the same device, then to the CPU. A missing SDK from another vendor never blocks the build or launch.
 
 ## AMD
 
-### Совместимость
+### Compatibility
 
-Vulkan Compute — основной путь для совместимых Radeon. HIP/ROCm включается только на сочетании GPU, ОС, драйвера и версии SDK из официальной матрицы AMD, после чего проходит тестовые вычисления. Обнаружение HIP runtime само по себе не означает поддержку поиска.
+Vulkan Compute is the main path for compatible Radeon cards. HIP/ROCm is enabled only for a GPU, OS, driver, and SDK combination listed in AMD's official matrix, and only after it passes the test computations. Detecting the HIP runtime does not by itself mean search support.
 
-На моей Windows-машине RX 6650 XT не поддерживается HIP SDK 7.2.0 для Windows; здесь доступен Vulkan или CPU. На Linux совместимость определяется установленной версией ROCm и дистрибутивом, а не только идентификатором AMD.
+On my Windows machine the RX 6650 XT is not supported by HIP SDK 7.2.0 for Windows, so Vulkan or the CPU is used there. On Linux, compatibility depends on the installed ROCm version and distribution, not just on the AMD device ID.
 
-### План оптимизации
+### Optimization Plan
 
-1. Сравнить 32-битную и 64-битную реализацию SHA-512 на RDNA2 по скорости полного поиска. Экспериментальный 32-битный шейдер пока слишком долго компилируется драйвером и не используется в рабочем режиме.
-2. Подбирать размер пакета, число активных потоков, регистры и размер волны отдельно для архитектуры GPU.
-3. На поддерживаемом ROCm/HIP собрать отдельный модуль HIP с пакетными PBKDF2-HMAC-SHA512 и SLIP-0010. Модуль должен пройти те же эталонные векторы и измерение, что Vulkan.
-4. Перекрывать передачу кандидатов, вычисления и чтение результата через асинхронные очереди и двойную буферизацию.
-5. Переносить Ed25519, StateInit и SHA-256 на GPU только после доказанного ускорения полного поиска; проверку совпадения на CPU сохранить.
+1. Compare 32-bit and 64-bit SHA-512 on RDNA2 by full search speed. The experimental 32-bit shader still takes too long to compile in the driver and is not used in production.
+2. Tune batch size, active threads, registers, and wave size per GPU architecture.
+3. On supported ROCm/HIP, build a separate HIP module with batched PBKDF2-HMAC-SHA512 and SLIP-0010. It must pass the same reference vectors and measurement as Vulkan.
+4. Overlap candidate upload, computation, and result readback with asynchronous queues and double buffering.
+5. Move Ed25519, StateInit, and SHA-256 to the GPU only after a proven full-search speedup; keep the CPU match check.
 
-На RX 6650 XT локальное кэширование постоянных состояний HMAC ускорило короткий замер Vulkan примерно с 302 до 631 адреса/с. CPU того же ПК показал около 6700 адресов/с, поэтому режим Auto должен предпочесть CPU. Этот результат нельзя переносить на другие GPU и драйверы.
+On the RX 6650 XT, caching constant HMAC states locally sped up a short Vulkan run from about 302 to 631 addresses/s. The CPU of the same PC reached about 6,700 addresses/s, so Auto should prefer the CPU there. These numbers do not carry over to other GPUs or drivers.
 
-### Проверка AMD
+### AMD Validation
 
-- RX 6650 XT на Windows: Vulkan проходит тестовый вектор; HIP не предлагается как проверенный движок; Auto выбирает по скорости полного поиска.
-- Поддерживаемая AMD GPU: HIP и Vulkan проходят векторы и короткий поиск, выбираются вручную, а Auto выбирает самый быстрый проверенный режим.
+- RX 6650 XT on Windows: Vulkan passes the test vector; HIP is not offered as a verified engine; Auto chooses by full search speed.
+- A supported AMD GPU: HIP and Vulkan pass the vectors and a short search, can be selected manually, and Auto picks the fastest verified mode.
 
 ## NVIDIA
 
-1. Vulkan остаётся универсальным режимом. CUDA — независимый необязательный модуль, собираемый с CUDA Toolkit и загружаемый при доступном драйвере.
-2. CUDA-ядро пакетно выполняет PBKDF2-HMAC-SHA512 и SLIP-0010. Конфигурация запуска, регистры, буферы и потоки подбираются по архитектуре. Если используется NVRTC, необходимые компоненты должны поставляться с приложением или явно указываться как зависимость.
-3. CUDA и Vulkan сравниваются на одной видеокарте на одинаковых входных данных по скорости готовых TON-адресов. Каждый режим сначала проходит векторы CPU и повторную проверку совпадения.
-4. При ошибке CUDA поиск переключается на Vulkan, затем на CPU; сохранённый кошелёк не теряется.
+1. Vulkan stays the portable mode. CUDA is an independent optional module built with the CUDA Toolkit and loaded when a driver is available.
+2. The CUDA kernel runs batched PBKDF2-HMAC-SHA512 and SLIP-0010. Launch configuration, registers, buffers, and streams are tuned per architecture. If NVRTC is used, its components must ship with the app or be declared as a dependency.
+3. CUDA and Vulkan are compared on the same card with the same inputs by the speed of finished GRAM addresses. Each mode first passes the CPU vectors and the repeated match check.
+4. On a CUDA failure the search falls back to Vulkan, then to the CPU; a saved wallet is never lost.
 
-### Проверка NVIDIA
+### NVIDIA Validation
 
-- CUDA и Vulkan собираются независимо и проходят проверку на настоящей NVIDIA GPU.
-- Отсутствие CUDA не мешает запуску Vulkan или CPU.
-- Ручной выбор предлагает только проверенные движки; Auto выбирает самый быстрый по полному поиску.
+- CUDA and Vulkan build independently and pass checks on a real NVIDIA GPU.
+- A missing CUDA installation does not prevent Vulkan or CPU from running.
+- Manual selection offers only verified engines; Auto picks the fastest by full search.
 
-## Состояние выпуска
+## Status
 
-В 0.1.0 выполнены Windows/Linux упаковка, безопасное сохранение кошелька и поиск CPU/Vulkan. CUDA/HIP, работа нескольких физических GPU и перенос полного криптографического конвейера на GPU остаются неподтверждёнными. Установщик Windows сам по себе не доказывает выполнение этих пунктов.
+Windows/Linux packaging, safe wallet storage, and CPU/Vulkan search are done. CUDA/HIP, multiple physical GPUs, and moving the whole cryptographic pipeline to the GPU remain unverified. A Windows installer alone does not prove these items.
 
-## Источники
+## Sources
 
-- [Совместимость HIP SDK для Windows](https://rocm.docs.amd.com/projects/install-on-windows/en/latest/reference/system-requirements.html)
-- [Компиляция HIP во время выполнения](https://rocm.docs.amd.com/projects/HIP/en/latest/how-to/hip_rtc.html)
-- [Компиляция CUDA во время выполнения](https://docs.nvidia.com/cuda/nvrtc/)
-- [Драйвер и runtime CUDA](https://docs.nvidia.com/cuda/cuda-runtime-api/driver-vs-runtime-api.html)
+- [HIP SDK compatibility on Windows](https://rocm.docs.amd.com/projects/install-on-windows/en/latest/reference/system-requirements.html)
+- [HIP runtime compilation](https://rocm.docs.amd.com/projects/HIP/en/latest/how-to/hip_rtc.html)
+- [CUDA runtime compilation](https://docs.nvidia.com/cuda/nvrtc/)
+- [CUDA driver and runtime](https://docs.nvidia.com/cuda/cuda-runtime-api/driver-vs-runtime-api.html)

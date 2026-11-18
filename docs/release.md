@@ -1,27 +1,29 @@
-# Выпуск VANTIX 0.1.0
+# Releasing Gramix
 
-Я выпускаю 0.1.0 как первую публичную версию с CPU и Vulkan Compute. Исходники CUDA/HIP входят в проект, но соответствующие модули не входят в установщики: для них ещё нет проверки сборки и работы на поддерживаемых видеокартах. Это ограничение указано в примечаниях к выпуску.
+English | [Русский](release.ru.md)
 
-Пользователь устанавливает готовый пакет из GitHub Releases. CMake, Node.js, Rust и компиляторы GPU нужны только сборочной системе, а не пользователю. При запуске VANTIX определяет CPU и GPU, проверяет доступные вычислительные движки и в режиме Auto выбирает самый быстрый проверенный режим. Ручной выбор доступен в настройках. Для CUDA/HIP на пользовательском ПК необходим совместимый драйвер и runtime; если их нет, работают Vulkan или CPU.
+Users install a ready package from GitHub Releases. CMake, Node.js, Rust, and GPU compilers are needed only by the build system. On launch Gramix detects the CPU and GPUs, verifies the available compute engines, and in Auto mode picks the fastest verified one; manual selection is available in Settings. CUDA/HIP modules are not included in the installers until they pass hardware validation.
 
-## Автоматическая сборка
+## Automated Build
 
-Workflow [release.yml](../.github/workflows/release.yml) запускается после создания тега `v0.1.0`. Сначала выполняется [Quality](../.github/workflows/ci.yml), затем отдельно собираются Windows NSIS и Linux DEB/AppImage. Публикация начинается только при успешных заданиях на обеих ОС. Workflow сначала создаёт черновик GitHub Release, загружает установщики, подписи обновлений, `latest.json` и `SHA256SUMS.txt`, затем открывает релиз. Ручной запуск workflow собирает те же пакеты как артефакты для проверки и не публикует их.
+The [release.yml](../.github/workflows/release.yml) workflow starts when a `vX.Y.Z` tag is pushed. It first runs [Quality](../.github/workflows/ci.yml), then builds the Windows NSIS installer and the Linux DEB/AppImage separately. Publishing starts only if both platforms succeed. The workflow creates a draft GitHub Release with the installers, update signatures, `latest.json`, and `SHA256SUMS.txt`, using `docs/release-notes-vX.Y.Z.md` as the description. A manual run builds the same packages as artifacts for testing and publishes nothing.
 
-Сборочные сценарии [Windows](../tools/build-release-windows.ps1) и [Linux](../tools/build-release-linux.sh) пересобирают C++ ядро, выполняют эталонные проверки, копируют свежий sidecar и добавляют к установщику список слов и Vulkan-шейдер. CUDA/HIP-модули включаются, только если соответствующий SDK позволил их собрать. Пользователю не требуется вводить модель GPU или архитектуру. Доступность модулей определяется при запуске и подтверждается криптографическим self-test.
+The [Windows](../tools/build-release-windows.ps1) and [Linux](../tools/build-release-linux.sh) build scripts rebuild the C++ core, run the reference checks, copy the fresh `gramix` sidecar, and add the word list and Vulkan shader. CUDA/HIP modules are included only if the corresponding SDK built them. Module availability is detected at launch and confirmed by a cryptographic self-test.
 
-Проверочный запуск workflow `36338536703` успешно собрал Windows NSIS, Linux DEB и AppImage с подписями обновлений. Он не подтверждает CUDA/HIP на аппаратуре производителя.
+[check-version.py](../tools/check-version.py) checks that CMake, npm, Cargo, Tauri, and the Git tag carry the same version. Local package build: `pwsh -File tools/build-release-windows.ps1` on Windows, `bash tools/build-release-linux.sh` on Linux.
 
-Номер версии проверяется [check-version.py](../tools/check-version.py) в CMake, npm, Cargo, Tauri и теге Git. Для локальной проверки Windows-пакета: `pwsh -File tools/build-release-windows.ps1`. Для Linux: `bash tools/build-release-linux.sh`.
+## Website
 
-## Подписанные обновления
+The [Site](../.github/workflows/pages.yml) workflow builds `npm run build:web` on every push to `main` and publishes it to GitHub Pages at gram.lovlydev.ru. The repository variables `TELEMETRY_URL` and `TELEMETRY_SITE_ID` connect the statistics collector; without them the site sends nothing and shows no consent banner.
 
-Tauri проверяет `latest.json` последнего GitHub Release. На Windows и в Linux AppImage приложение показывает доступную версию и устанавливает её после остановки поиска. Linux DEB обновляется через пакетный менеджер. [make-update-manifest.py](../tools/make-update-manifest.py) берёт подписи `.sig` из собранных артефактов и создаёт ссылки на оба установщика. Подпись обновлений Tauri отличается от подписи Windows-кода.
+## Signed Updates
 
-Ключ обновлений хранится локально в игнорируемой Git папке `.tools/signing/vantix.key` и в GitHub Actions Secret `TAURI_SIGNING_PRIVATE_KEY`. Публичный ключ встроен в конфигурацию Tauri. Приватный ключ требуется для каждого будущего обновления; его потеря лишит существующих пользователей возможности обновиться через приложение. Перед публикацией ключ нужно резервировать в защищённом хранилище владельца проекта.
+Tauri reads `latest.json` from the latest GitHub Release. On Windows and in the Linux AppImage the app shows the new version and installs it after the search stops. The Linux DEB is updated by the package manager. [make-update-manifest.py](../tools/make-update-manifest.py) takes the `.sig` signatures from the build artifacts and links both installers. The Tauri update signature is separate from Windows code signing.
 
-## Условия публикации
+The update key is stored locally in the Git-ignored `.tools/signing/` folder and in the GitHub Actions secret `TAURI_SIGNING_PRIVATE_KEY`. The public key is embedded in the Tauri configuration. The private key is required for every future update; losing it would prevent existing users from updating in-app, so it must be backed up in the owner's secure storage.
 
-Для выпуска 0.1.0 требуются успешные сборки Windows/Linux и проверки CPU/Vulkan. На Linux результат шифруется паролем пользователя; пароль нужно сохранить отдельно. CUDA/HIP для этого выпуска обозначены как непроверенные и не включены в пакеты. Когда я буду заявлять их поддержку, сначала проведу [аппаратную проверку](vendor-validation.md) на поддерживаемой карте. RX 6650 XT на моей Windows-машине не может подтвердить HIP SDK для Windows.
+## Publishing Conditions
 
-Windows установщик может запросить загрузку WebView2 Runtime, если его нет в системе; Tauri выполняет эту проверку автоматически. Подпись Windows-кода пока не настроена, поэтому SmartScreen может показывать предупреждение для нового издателя.
+A release needs successful Windows/Linux builds and CPU/Vulkan checks. On Linux the result is encrypted with the user's password, which must be kept separately. Before claiming CUDA/HIP support I run the [hardware validation](vendor-validation.md) on a supported card.
+
+The Windows installer may download WebView2 Runtime if it is missing; Tauri handles that automatically. Windows code signing is not configured yet, so SmartScreen may warn about a new publisher.
