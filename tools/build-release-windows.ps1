@@ -118,7 +118,7 @@ try {
         try {
             Invoke-Checked "npm" @("run", "tauri", "--", "build", "--config", "src-tauri/tauri.release.json")
         } finally { Pop-Location }
-        $installer = Join-Path $tauri "target/release/bundle/nsis/GRAMIX_${version}_x64-setup.exe"
+        $installer = Join-Path $tauri "target/release/bundle/nsis/Gramix_${version}_x64-setup.exe"
         if (-not (Test-Path -LiteralPath $installer)) { throw "NSIS installer is missing" }
         if (-not (Test-Path -LiteralPath "$installer.sig")) { throw "Signed update artifact is missing" }
         Get-FileHash -LiteralPath $installer -Algorithm SHA256 |

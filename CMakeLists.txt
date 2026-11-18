@@ -6,7 +6,7 @@
 # See LICENSE and LICENSING.md for details.
 
 cmake_minimum_required(VERSION 3.24)
-project(Gramix VERSION 0.1.0 LANGUAGES CXX)
+project(Gramix VERSION 0.2.0 LANGUAGES CXX)
 
 include(CheckLanguage)
 check_language(CUDA)

@@ -10,7 +10,7 @@
 // Подвал сайта. Ссылка на исходники именно той сборки — требование раздела 13 AGPLv3.
 import type { WorkspaceId } from "./ToolNavigation";
 
-const repository = "https://github.com/lovlyDev/Gramix";
+const repository = "https://github.com/lovlyDev/VANTIX";
 
 export default function SiteFooter({ onOpen }: { onOpen: (id: WorkspaceId) => void }) {
   const commit = __COMMIT__;

@@ -14,7 +14,7 @@ export default function PrivacyPage() {
       <p>Как сайт gram.lovlydev.ru обращается с данными. Приложение Gramix телеметрию не собирает.</p></div></div>
     <div className="card privacy-card"><div className="card-body">
       <h3>Кто обрабатывает данные</h3>
-      <p>Сайт ведёт автор Gramix (lovlydev). Связаться можно через <a href="https://github.com/lovlyDev/Gramix/issues" target="_blank" rel="noreferrer">GitHub</a>.</p>
+      <p>Сайт ведёт автор Gramix (lovlydev). Связаться можно через <a href="https://github.com/lovlyDev/VANTIX/issues" target="_blank" rel="noreferrer">GitHub</a>.</p>
       <h3>Что собирается и когда</h3>
       <p>Только после нажатия «Принять» в баннере. До этого и после отказа сайт статистику не отправляет.</p>
       <ul>

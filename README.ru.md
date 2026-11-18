@@ -12,7 +12,7 @@ Gramix — свободная программа на условиях **AGPL-3.
 
 ## Скачать и установить
 
-На странице [выпуска 0.1.0](https://github.com/lovlyDev/Gramix/releases/tag/v0.1.0) доступны:
+На странице [выпуска 0.1.0](https://github.com/lovlyDev/VANTIX/releases/tag/v0.1.0) доступны:
 
 - GRAMIX_0.1.0_x64-setup.exe — установщик Windows;
 - GRAMIX_0.1.0_amd64.deb — пакет Linux;

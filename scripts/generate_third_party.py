@@ -17,7 +17,7 @@ import urllib.request
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 CACHE = ROOT / "licenses/cargo-license-cache.json"
-USER_AGENT = "Gramix license inventory (https://github.com/lovlyDev/Gramix)"
+USER_AGENT = "Gramix license inventory (https://github.com/lovlyDev/VANTIX)"
 
 
 def fetch_json(url):

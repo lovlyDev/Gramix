@@ -74,8 +74,8 @@ jobs:
         with:
           name: gramix-${{ matrix.platform }}
           path: |
-            desktop/src-tauri/target/release/bundle/nsis/GRAMIX_*_x64-setup.exe
-            desktop/src-tauri/target/release/bundle/nsis/GRAMIX_*_x64-setup.exe.sig
+            desktop/src-tauri/target/release/bundle/nsis/Gramix_*_x64-setup.exe
+            desktop/src-tauri/target/release/bundle/nsis/Gramix_*_x64-setup.exe.sig
           if-no-files-found: error
       - name: Upload Linux installers
         if: runner.os == 'Linux'
@@ -118,6 +118,6 @@ jobs:
           cd release-ready
           sha256sum * > SHA256SUMS.txt
           cd ..
-          gh release create "$RELEASE_TAG" --verify-tag --draft --title "Gramix ${RELEASE_TAG#v}" --notes-file docs/release-notes-v0.1.0.md
+          gh release create "$RELEASE_TAG" --verify-tag --draft --title "Gramix ${RELEASE_TAG#v}" --notes-file "docs/release-notes-${RELEASE_TAG}.md"
           gh release upload "$RELEASE_TAG" release-ready/*
           gh release edit "$RELEASE_TAG" --draft=false --latest
