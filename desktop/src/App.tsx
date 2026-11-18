@@ -43,6 +43,7 @@ import PrivacyPage from "./features/privacy/PrivacyPage";
 import SiteFooter from "./components/SiteFooter";
 import ToolBoundary from "./components/ToolBoundary";
 import AppSidebar from "./components/AppSidebar";
+import Notices from "./components/Notices";
 
 const sidecar = "binaries/gramix";
 const web = __WEB__;
@@ -705,6 +706,6 @@ export default function App() {
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
-    <ConsentBanner onPrivacy={() => openTool("privacy")} />
+    <Notices /><ConsentBanner onPrivacy={() => openTool("privacy")} />
   </>;
 }

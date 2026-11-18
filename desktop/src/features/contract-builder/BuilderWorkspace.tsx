@@ -19,6 +19,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { Download, FileCode2, FilePlus2, FolderOpen, Pencil, Play, Trash2, Upload } from "lucide-react";
 import { decodeBocText, parseBocBytes } from "../boc-explorer/bocService";
 import { parseTolkProject, validTolkPath } from "./builderProject";
+import { saveFile } from "../../lib/save";
 
 (self as typeof self & { MonacoEnvironment?: { getWorker: () => Worker } }).MonacoEnvironment = {
   getWorker: () => new EditorWorker(),
@@ -31,10 +32,7 @@ type Project = Record<string, string>;
 const starter = "fun onInternalMessage(_: InMessage) {}\n";
 
 function saveDownload(name: string, data: string, type = "application/json") {
-  const url = URL.createObjectURL(new Blob([data], { type }));
-  const anchor = document.createElement("a");
-  anchor.href = url; anchor.download = name; anchor.click();
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  void saveFile(name, data, type);
 }
 
 function registerTolk(editor: typeof monaco) {

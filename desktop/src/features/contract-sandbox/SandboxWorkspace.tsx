@@ -15,6 +15,7 @@ import { telemetry } from "@telemetry";
 import { Download, FilePlus2, Play, RotateCcw, Square, Upload } from "lucide-react";
 import Select from "../../components/ui/Select";
 import CopyButton from "../../components/ui/CopyButton";
+import { saveFile } from "../../lib/save";
 
 type Step = { from: string; to: string; amountTon: string };
 type Scenario = { title: string; accounts: string[]; steps: Step[] };
@@ -30,9 +31,7 @@ const example: Scenario = { title: "Перевод и восстановлени
   steps: [{ from: "alice", to: "bob", amountTon: "0.1" }] };
 
 function download(name: string, content: unknown) {
-  const url = URL.createObjectURL(new Blob([JSON.stringify(content, null, 2)], { type: "application/json" }));
-  const anchor = document.createElement("a"); anchor.href = url; anchor.download = name; anchor.click();
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  void saveFile(name, JSON.stringify(content, null, 2), "application/json");
 }
 
 function validate(scenario: Scenario) {

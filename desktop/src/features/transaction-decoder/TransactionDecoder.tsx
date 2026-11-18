@@ -23,6 +23,7 @@ import { decodeTransactionBoc, type DecodedMessage,
 import Checkbox from "../../components/ui/Checkbox";
 import Select from "../../components/ui/Select";
 import CopyButton from "../../components/ui/CopyButton";
+import { saveFile } from "../../lib/save";
 
 type RemoteTransaction = {
   source: "OpenTonAPI";
@@ -132,13 +133,7 @@ export default function TransactionDecoder() {
 
   function exportJson() {
     if (!transaction) return;
-    const url = URL.createObjectURL(new Blob([JSON.stringify({ transaction, remote }, null, 2)],
-      { type: "application/json" }));
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `gramix-transaction-${transaction.hash}.json`;
-    link.click();
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    void saveFile(`gramix-transaction-${transaction.hash}.json`, JSON.stringify({ transaction, remote }, null, 2), "application/json");
   }
 
   function clearInput() {

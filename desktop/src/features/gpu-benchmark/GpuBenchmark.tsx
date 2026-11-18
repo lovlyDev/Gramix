@@ -21,6 +21,7 @@ import CopyButton from "../../components/ui/CopyButton";
 import { platform } from "@platform";
 import { readBenchmarkHistory, saveBenchmarkHistory,
   type BenchmarkReport, type BenchmarkResult } from "./benchmarkHistory";
+import { saveFile } from "../../lib/save";
 
 type Report = BenchmarkReport;
 
@@ -170,10 +171,7 @@ export default function GpuBenchmark() {
         ...reports.flatMap((report) => report.results.map((item) =>
           [report.measuredAt, item.api, item.device_id, item.name, item.addresses_per_second]
             .map((value) => `"${String(value).replaceAll('"', '""')}"`).join(",")))].join("\n");
-    const url = URL.createObjectURL(new Blob([body], { type: format === "json" ? "application/json" : "text/csv" }));
-    const link = document.createElement("a"); link.href = url;
-    link.download = `gramix-benchmark.${format}`; link.click();
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    void saveFile(`gramix-benchmark.${format}`, body, format === "json" ? "application/json" : "text/csv");
   }
 
   const chosen = rows.find((row) => rowId(row) === selected) ?? rows[0];

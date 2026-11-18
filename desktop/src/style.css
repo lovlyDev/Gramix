@@ -1372,3 +1372,11 @@ button.status-live { height: 22px; padding: 0 9px; border: 0; border-radius: 11p
 .update-notes ul { margin: 0; padding-left: 18px; }
 .update-hint { margin-top: 12px; color: var(--text-muted); font-size: 13px; }
 @media (max-width: 900px) { .app-sidebar .side-update > span { display: none; } .app-sidebar .side-update { justify-content: center; } }
+.app-notice { position: fixed; bottom: 40px; left: 50%; z-index: 80; display: flex; align-items: center; gap: 9px;
+  max-width: min(640px, calc(100vw - 32px)); padding: 10px 14px; border-radius: 12px; background: var(--surface-raised);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .35); color: var(--text); font-size: 13.5px; transform: translateX(-50%);
+  animation: fade-up .18s var(--ease); cursor: pointer; }
+.app-notice span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.app-notice svg { flex: none; }
+.app-notice.ok svg { color: var(--success); }
+.app-notice.error svg { color: #ff453a; }

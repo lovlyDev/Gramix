@@ -12,6 +12,7 @@ mod transaction_api;
 mod contract_api;
 mod sandbox_api;
 mod builder_api;
+mod export_api;
 
 #[tauri::command]
 fn supports_self_update(app: tauri::AppHandle) -> bool {
@@ -64,6 +65,7 @@ pub fn run() {
             sandbox_api::run_sandbox_demo,
             sandbox_api::cancel_sandbox,
             builder_api::compile_tolk,
+            export_api::save_export,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Gramix");

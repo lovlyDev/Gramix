@@ -21,6 +21,7 @@ import Select from "../../components/ui/Select";
 import Checkbox from "../../components/ui/Checkbox";
 import CopyButton from "../../components/ui/CopyButton";
 import { platform } from "@platform";
+import { saveFile } from "../../lib/save";
 
 type Mode = "file" | "phrase" | "compare";
 type PublicResult = { source: "local"; verified: boolean; address: string; raw: string;
@@ -186,10 +187,7 @@ export default function WalletSecurity() {
       method: resultMode, verified: result.verified, address: result.address, raw: result.raw,
       public_key: result.public_key, ...(expected ? { expected_address: expected,
         matches_expected: result.matches_expected } : {}) };
-    const url = URL.createObjectURL(new Blob([JSON.stringify(report, null, 2)], { type: "application/json" }));
-    const anchor = document.createElement("a");
-    anchor.href = url; anchor.download = `gramix-wallet-check-${Date.now()}.json`; anchor.click();
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    void saveFile(`gramix-wallet-check-${Date.now()}.json`, JSON.stringify(report, null, 2), "application/json");
   }
 
   function inspectAddress() {

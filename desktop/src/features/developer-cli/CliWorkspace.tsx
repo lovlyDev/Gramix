@@ -18,6 +18,7 @@ import "@xterm/xterm/css/xterm.css";
 import { Check, Copy, Download, Play, Search, Square, Trash2 } from "lucide-react";
 import { useApp } from "../../store";
 import Select from "../../components/ui/Select";
+import { saveFile } from "../../lib/save";
 
 const commands = [
   { id: "devices", label: "Устройства", group: "Диагностика", args: ["--devices-json"],
@@ -130,10 +131,7 @@ export default function CliWorkspace() {
 
   function download() {
     if (!output.current) return;
-    const url = URL.createObjectURL(new Blob([output.current], { type: "text/plain;charset=utf-8" }));
-    const link = document.createElement("a"); link.href = url;
-    link.download = `gramix-cli-${selected}.txt`; link.click();
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    void saveFile(`gramix-cli-${selected}.txt`, output.current, "text/plain;charset=utf-8");
   }
 
   return <section className="cli-workspace" id="developer-cli" aria-label="Developer CLI">

@@ -18,6 +18,7 @@ import { telemetry } from "@telemetry";
 import { decodeBocText, parseBocBytes } from "../boc-explorer/bocService";
 import Checkbox from "../../components/ui/Checkbox";
 import CopyButton from "../../components/ui/CopyButton";
+import { saveFile } from "../../lib/save";
 
 type ContractAccount = {
   source: "OpenTonAPI";
@@ -188,10 +189,7 @@ export default function ContractInspector() {
       code_hash: codeHash || null, data_hash: dataHash || null,
       last_transaction_lt: account.last_transaction_lt,
       last_transaction_hash: account.last_transaction_hash, received_at: account.received_at };
-    const url = URL.createObjectURL(new Blob([JSON.stringify(report, null, 2)], { type: "application/json" }));
-    const link = document.createElement("a"); link.href = url;
-    link.download = `gramix-contract-${Date.now()}.json`; link.click();
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    void saveFile(`gramix-contract-${Date.now()}.json`, JSON.stringify(report, null, 2), "application/json");
   }
 
   return <section className="contract-inspector" id="contract-inspector" aria-labelledby="contract-title">

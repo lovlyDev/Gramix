@@ -10,6 +10,7 @@
 import { useRef } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { QRCodeSVG } from "qrcode.react";
+import { saveFile } from "../lib/save";
 
 export default function PublicAddressQr({ address, label = "Показать QR" }: {
   address: string; label?: string;
@@ -19,12 +20,7 @@ export default function PublicAddressQr({ address, label = "Показать QR"
     const svg = qr.current?.querySelector("svg");
     if (!svg) return;
     const content = new XMLSerializer().serializeToString(svg);
-    const url = URL.createObjectURL(new Blob([content], { type: "image/svg+xml;charset=utf-8" }));
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "gramix-public-address.svg";
-    link.click();
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    void saveFile("gramix-public-address.svg", content, "image/svg+xml;charset=utf-8");
   }
   return <Dialog.Root><Dialog.Trigger type="button" className="qr-trigger">{label}</Dialog.Trigger>
     <Dialog.Portal><Dialog.Overlay className="dialog-overlay" />

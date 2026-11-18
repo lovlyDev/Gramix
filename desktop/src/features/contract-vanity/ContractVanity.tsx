@@ -15,6 +15,7 @@ import { parseContractInput, verifyContractCandidate, type ContractCandidate } f
 import Checkbox from "../../components/ui/Checkbox";
 import Select from "../../components/ui/Select";
 import CopyButton from "../../components/ui/CopyButton";
+import { saveFile } from "../../lib/save";
 
 type Progress = { attempts: number; elapsedMs: number };
 type WorkerMessage = Progress & { type: "progress" | "found" | "stopped" | "exhausted" | "error";
@@ -123,10 +124,7 @@ export default function ContractVanity() {
   function exportStateInit() {
     if (!candidate) return;
     const bytes = Buffer.from(candidate.stateInitBocBase64, "base64");
-    const url = URL.createObjectURL(new Blob([bytes], { type: "application/octet-stream" }));
-    const link = document.createElement("a"); link.href = url;
-    link.download = `gramix-stateinit-${candidate.nonce}.boc`; link.click();
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    void saveFile(`gramix-stateinit-${candidate.nonce}.boc`, bytes, "application/octet-stream");
   }
 
   function exportJson() {
@@ -134,10 +132,7 @@ export default function ContractVanity() {
     const report = { source: "local", algorithm: "StateInit code/data; reserved first uint64 of data",
       suffix, format, attempts: progress.attempts, elapsedMs: progress.elapsedMs,
       verified: true, candidate };
-    const url = URL.createObjectURL(new Blob([JSON.stringify(report, null, 2)], { type: "application/json" }));
-    const link = document.createElement("a"); link.href = url;
-    link.download = `gramix-contract-${candidate.raw.split(":")[1]}.json`; link.click();
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    void saveFile(`gramix-contract-${candidate.raw.split(":")[1]}.json`, JSON.stringify(report, null, 2), "application/json");
   }
 
   return <section className="contract-vanity" id="contract-vanity" aria-labelledby="contract-vanity-title">

@@ -14,25 +14,17 @@ import { decodeBocText, MAX_BOC_BYTES, parseBocBytes,
   type BocDocument } from "./bocService";
 import Select from "../../components/ui/Select";
 import CopyButton from "../../components/ui/CopyButton";
+import { saveFile } from "../../lib/save";
 
 const ROW_HEIGHT = 54;
 const VIEW_HEIGHT = 330;
 
 function downloadJson(name: string, value: unknown) {
-  const url = URL.createObjectURL(new Blob([JSON.stringify(value, null, 2)],
-    { type: "application/json" }));
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = name;
-  link.click();
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  void saveFile(name, JSON.stringify(value, null, 2), "application/json");
 }
 function downloadBoc(value: string) {
   const bytes = Uint8Array.from(atob(value), (character) => character.charCodeAt(0));
-  const url = URL.createObjectURL(new Blob([bytes], { type: "application/octet-stream" }));
-  const link = document.createElement("a");
-  link.href = url; link.download = "gramix.boc"; link.click();
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  void saveFile("gramix.boc", bytes, "application/octet-stream");
 }
 
 export default function BocExplorer() {

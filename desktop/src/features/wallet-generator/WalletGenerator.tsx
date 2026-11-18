@@ -20,6 +20,7 @@ import Select from "../../components/ui/Select";
 import { Check, Copy, Wallet } from "lucide-react";
 import { Buffer } from "buffer";
 import { platform } from "@platform";
+import { saveFile } from "../../lib/save";
 
 type PublicWallet = {
   address: string;
@@ -290,11 +291,7 @@ export default function WalletGenerator() {
     const report = { source: "local", wallet: wallet.wallet, scheme: wallet.scheme,
       address: friendlyAddress,
       raw: wallet.raw, public_key: wallet.public_key, workchain: 0, network };
-    const url = URL.createObjectURL(new Blob([JSON.stringify(report, null, 2)],
-      { type: "application/json" }));
-    const link = document.createElement("a");
-    link.href = url; link.download = `gramix-wallet-public-${Date.now()}.json`; link.click();
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    void saveFile(`gramix-wallet-public-${Date.now()}.json`, JSON.stringify(report, null, 2), "application/json");
   }
 
   function verifyRecovery() {
