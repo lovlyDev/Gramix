@@ -4,7 +4,7 @@
  *
  * This file is part of Gramix.
  *
- * See LICENSE and LICENSING.md for details.
+ * See LICENSE for details.
  */
 
 // Один поток поиска адреса. Фраза найденного кошелька передаётся только в окно сайта.

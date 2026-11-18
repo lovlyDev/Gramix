@@ -3,7 +3,7 @@
 #
 # This file is part of Gramix.
 #
-# See LICENSE and LICENSING.md for details.
+# See LICENSE for details.
 
 """Fail if the desktop bundle contains the site telemetry collector or module."""
 import pathlib

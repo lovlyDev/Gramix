@@ -4,7 +4,7 @@
  *
  * This file is part of Gramix.
  *
- * See LICENSE and LICENSING.md for details.
+ * See LICENSE for details.
  */
 
 // Браузерный клиент OpenTonAPI с теми же проверками, что у команд приложения.

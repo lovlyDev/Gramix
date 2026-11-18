@@ -3,7 +3,7 @@
 #
 # This file is part of Gramix.
 #
-# See LICENSE and LICENSING.md for details.
+# See LICENSE for details.
 
 """Check that every locked npm and Cargo package is present in THIRD_PARTY."""
 
@@ -15,7 +15,7 @@ import tomllib
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-INVENTORY = ROOT / "licenses/THIRD_PARTY.md"
+INVENTORY = ROOT / "docs/third-party/THIRD_PARTY.md"
 
 
 def locked():

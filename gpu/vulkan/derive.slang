@@ -4,7 +4,7 @@
  *
  * This file is part of Gramix.
  *
- * See LICENSE and LICENSING.md for details.
+ * See LICENSE for details.
  */
 
 // Gramix Vulkan seed derivation. One invocation handles one BIP39 phrase.

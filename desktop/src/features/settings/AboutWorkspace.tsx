@@ -4,7 +4,7 @@
  *
  * This file is part of Gramix.
  *
- * See LICENSE and LICENSING.md for details.
+ * See LICENSE for details.
  */
 
 import { useState } from "react";
@@ -14,7 +14,7 @@ import { BookOpen, ExternalLink, FileText, Scale, ScrollText } from "lucide-reac
 import readmeRu from "../../../../README.ru.md?raw";
 import readmeEn from "../../../../README.md?raw";
 import license from "../../../../LICENSE?raw";
-import licensingRu from "../../../../LICENSING.ru.md?raw";
+import licensingRu from "../../../../docs/LICENSING.ru.md?raw";
 import noticeRu from "../../../../NOTICE.ru.md?raw";
 
 const repository = "https://github.com/lovlyDev/Gramix";

@@ -3,7 +3,7 @@
 #
 # This file is part of Gramix.
 #
-# See LICENSE and LICENSING.md for details.
+# See LICENSE for details.
 
 """Build Tauri's static updater manifest from signed release assets."""
 

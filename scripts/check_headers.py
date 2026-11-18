@@ -3,7 +3,7 @@
 #
 # This file is part of Gramix.
 #
-# See LICENSE and LICENSING.md for details.
+# See LICENSE for details.
 
 """Check and add headers only to files classified as project source."""
 
@@ -81,7 +81,7 @@ def make_header(path):
         "",
         "This file is part of Gramix.",
         "",
-        "See LICENSE and LICENSING.md for details.",
+        "See LICENSE for details.",
     ]
     if comment_style(path) == "hash":
         return "\n".join("# " + line if line else "#" for line in body) + "\n\n"
@@ -108,8 +108,8 @@ def check_one(path, fix):
             return f"{path}: existing SPDX {spdx.group(1)} needs manual review"
         if POLICY["copyright_holder"] not in copyright_match.group(3):
             return f"{path}: different copyright holder needs manual review"
-        if "LICENSE" not in beginning or "LICENSING.md" not in beginning:
-            return f"{path}: full project header needs LICENSE and LICENSING.md links"
+        if "LICENSE" not in beginning:
+            return f"{path}: full project header needs a LICENSE reference"
         return None
     if not fix:
         return f"{path}: missing project copyright and SPDX header"

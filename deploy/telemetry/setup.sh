@@ -4,7 +4,7 @@
 #
 # This file is part of Gramix.
 #
-# See LICENSE and LICENSING.md for details.
+# See LICENSE for details.
 
 # Ставит сборщик статистики в /opt/telemetry. Запуск на сервере:  sudo bash setup.sh [--remove-container ИМЯ]
 # Ничего не трогает в других проектах; --remove-container останавливает и удаляет указанный контейнер.

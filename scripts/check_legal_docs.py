@@ -3,7 +3,7 @@
 #
 # This file is part of Gramix.
 #
-# See LICENSE and LICENSING.md for details.
+# See LICENSE for details.
 
 """Check essential legal-document links and the exact AGPL text digest."""
 
@@ -16,10 +16,10 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 AGPL_SHA256 = "0d96a4ff68ad6d4b6f1f30f713b18d5184912ba8dd389f86aa7710db079abcb0"
 REQUIRED = [
-    "LICENSE", "LICENSING.md", "LICENSING.ru.md", "NOTICE.md", "NOTICE.ru.md",
+    "LICENSE", "docs/LICENSING.md", "docs/LICENSING.ru.md", "NOTICE.md", "NOTICE.ru.md",
     "TRADEMARKS.md", "TRADEMARKS.ru.md", "CONTRIBUTING.md", "CONTRIBUTING.ru.md",
     "README.md", "README.ru.md",
-    "licenses/THIRD_PARTY.md", "licenses/THIRD_PARTY.ru.md",
+    "docs/third-party/THIRD_PARTY.md", "docs/third-party/THIRD_PARTY.ru.md",
     "docs/LICENSE_FAQ.md", "docs/LICENSE_FAQ.ru.md",
     "docs/SOURCE_DISTRIBUTION.md", "docs/SOURCE_DISTRIBUTION.ru.md",
 ]

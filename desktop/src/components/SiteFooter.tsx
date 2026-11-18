@@ -4,7 +4,7 @@
  *
  * This file is part of Gramix.
  *
- * See LICENSE and LICENSING.md for details.
+ * See LICENSE for details.
  */
 
 // Подвал сайта. Ссылка на исходники именно той сборки — требование раздела 13 AGPLv3.

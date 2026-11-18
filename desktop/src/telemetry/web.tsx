@@ -4,7 +4,7 @@
  *
  * This file is part of Gramix.
  *
- * See LICENSE and LICENSING.md for details.
+ * See LICENSE for details.
  */
 
 // Телеметрия сайта gram.lovlydev.ru. Этот модуль подключается только в сборке сайта.

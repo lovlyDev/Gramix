@@ -4,7 +4,7 @@
  *
  * This file is part of Gramix.
  *
- * See LICENSE and LICENSING.md for details.
+ * See LICENSE for details.
  */
 
 // Gramix portable 32-bit SHA-512 Vulkan path. One invocation per BIP39 phrase.

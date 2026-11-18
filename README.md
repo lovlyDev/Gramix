@@ -1,8 +1,8 @@
 # Gramix
 
-Gramix (formerly VANTIX) is my toolkit for the GRAM network: a vanity address generator with a C++23 compute core and a Tauri/React desktop app for Windows and Linux. Release 0.1.0, published as VANTIX, includes CPU and Vulkan Compute modes. CUDA and HIP sources are present, but their modules are absent from the installers and have not been validated on supported GPUs.
+English | [Русский](README.ru.md)
 
-[Русский README](README.ru.md).
+Gramix (formerly VANTIX) is my toolkit for the GRAM network: a vanity address generator with a C++23 compute core and a Tauri/React desktop app for Windows and Linux. Release 0.1.0, published as VANTIX, includes CPU and Vulkan Compute modes. CUDA and HIP sources are present, but their modules are absent from the installers and have not been validated on supported GPUs.
 
 ## Download
 
@@ -58,7 +58,7 @@ A recovery phrase controls a wallet. Never use source test phrases for funds. Th
 
 ## License
 
-Gramix is free software under **AGPL-3.0-only**: see the [license text](LICENSE), [licensing notes](LICENSING.md), [notices](NOTICE.md), [name and logo rules](TRADEMARKS.md), and [third-party components](licenses/THIRD_PARTY.md).
+Gramix is free software under **AGPL-3.0-only**: see the [license text](LICENSE), [licensing notes](docs/LICENSING.md), [notices](NOTICE.md), [name and logo rules](TRADEMARKS.md), and [third-party components](docs/third-party/THIRD_PARTY.md).
 
 ## GRAM Protocol References
 

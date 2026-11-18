@@ -4,7 +4,7 @@
  *
  * This file is part of Gramix.
  *
- * See LICENSE and LICENSING.md for details.
+ * See LICENSE for details.
  */
 
     uint2(0x428a2f98u, 0xd728ae22u), uint2(0x71374491u, 0x23ef65cdu),

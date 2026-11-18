@@ -4,7 +4,7 @@
  *
  * This file is part of Gramix.
  *
- * See LICENSE and LICENSING.md for details.
+ * See LICENSE for details.
  */
 
 // @ton/sandbox обращается к process.env и process.nextTick, как в Node. Только для Web Worker Sandbox.

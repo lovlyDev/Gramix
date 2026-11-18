@@ -1,14 +1,16 @@
-# Сторонние компоненты VANTIX
+# Gramix Third-Party Components
 
-Я учитываю версии из текущих lock-файлов. Наличие пакета в lock-файле не означает, что он входит в каждый установщик. Перед выпуском нужно проверить фактическое дерево поставки и включить полные тексты лицензий и авторские уведомления каждого распространяемого компонента.
+English | [Русский](THIRD_PARTY.ru.md)
 
-Объявление лицензии в реестре или манифесте не заменяет проверку текста лицензии в исходном пакете. Статус `UNKNOWN` блокирует утверждение о готовности коммерческого состава. Для лицензий MIT/BSD/ISC обычно требуется сохранять copyright и текст разрешения; для Apache-2.0 — текст лицензии, уведомления и применимый NOTICE; для MPL/LGPL/GPL и иных copyleft-лицензий проверяются отдельные условия распространения и исходников. Условия конкретной версии имеют приоритет над этим кратким описанием.
+I record versions from the current lockfiles. A package in a lockfile is not necessarily present in every installer. Before release, inspect each delivered artifact and include the complete license text and copyright notices for redistributed components.
 
-## Прямые C++ зависимости vcpkg
+A registry license declaration does not replace inspection of the actual package license and notices. `UNKNOWN` must be resolved before a release. MIT/BSD/ISC generally require preserving copyright and permission notices; Apache-2.0 requires its license text and applicable notices; MPL/LGPL/GPL and other copyleft terms need individual source-distribution review. The actual version's terms control.
 
-Базовая ревизия vcpkg: `ee6a47dac031930715bea2e6dfb9ad60caaa5d83`. Версии ниже взяты из локального `vcpkg_installed/vcpkg/status`; манифест без lock-файла сам по себе не закрепляет их для каждой будущей сборки.
+## Direct C++ vcpkg dependencies
 
-| Пакет | Локальная версия | Лицензия порта | Источник |
+vcpkg baseline: `ee6a47dac031930715bea2e6dfb9ad60caaa5d83`. The versions below come from local `vcpkg_installed/vcpkg/status`; the manifest alone does not pin them for every future build.
+
+| Package | Local version | Port license declaration | Source |
 | --- | --- | --- | --- |
 | `cli11` | `2.7.2` | `BSD-3-Clause` | [vcpkg port](https://github.com/microsoft/vcpkg/tree/ee6a47dac031930715bea2e6dfb9ad60caaa5d83/ports/cli11) |
 | `gtest` | `1.18.0` | `BSD-3-Clause` | [vcpkg port](https://github.com/microsoft/vcpkg/tree/ee6a47dac031930715bea2e6dfb9ad60caaa5d83/ports/gtest) |
@@ -17,9 +19,9 @@
 | `volk` | `1.4.357.0` | `MIT` | [vcpkg port](https://github.com/microsoft/vcpkg/tree/ee6a47dac031930715bea2e6dfb9ad60caaa5d83/ports/volk) |
 | `vulkan-headers` | `1.4.357.0` | `Apache-2.0 OR MIT` | [vcpkg port](https://github.com/microsoft/vcpkg/tree/ee6a47dac031930715bea2e6dfb9ad60caaa5d83/ports/vulkan-headers) |
 
-## npm и Cargo: точные версии из lock-файлов
+## npm and Cargo: exact lockfile versions
 
-| Экосистема | Пакет | Версия | Объявленная лицензия | Источник |
+| Ecosystem | Package | Version | Declared license | Source |
 | --- | --- | --- | --- | --- |
 | npm | `@esbuild/aix-ppc64` | `0.28.2` | `MIT` | [npm](https://www.npmjs.com/package/%40esbuild%2Faix-ppc64/v/0.28.2) |
 | npm | `@esbuild/android-arm` | `0.28.2` | `MIT` | [npm](https://www.npmjs.com/package/%40esbuild%2Fandroid-arm/v/0.28.2) |
@@ -51,15 +53,20 @@
 | npm | `@floating-ui/dom` | `1.8.0` | `MIT` | [npm](https://www.npmjs.com/package/%40floating-ui%2Fdom/v/1.8.0) |
 | npm | `@floating-ui/react-dom` | `2.1.9` | `MIT` | [npm](https://www.npmjs.com/package/%40floating-ui%2Freact-dom/v/2.1.9) |
 | npm | `@floating-ui/utils` | `0.2.12` | `MIT` | [npm](https://www.npmjs.com/package/%40floating-ui%2Futils/v/0.2.12) |
+| npm | `@fontsource-variable/inter` | `5.3.0` | `OFL-1.1` | [npm](https://www.npmjs.com/package/%40fontsource-variable%2Finter/v/5.3.0) |
+| npm | `@fontsource-variable/jetbrains-mono` | `5.3.0` | `OFL-1.1` | [npm](https://www.npmjs.com/package/%40fontsource-variable%2Fjetbrains-mono/v/5.3.0) |
 | npm | `@jridgewell/gen-mapping` | `0.3.13` | `MIT` | [npm](https://www.npmjs.com/package/%40jridgewell%2Fgen-mapping/v/0.3.13) |
 | npm | `@jridgewell/remapping` | `2.3.5` | `MIT` | [npm](https://www.npmjs.com/package/%40jridgewell%2Fremapping/v/2.3.5) |
 | npm | `@jridgewell/resolve-uri` | `3.1.2` | `MIT` | [npm](https://www.npmjs.com/package/%40jridgewell%2Fresolve-uri/v/3.1.2) |
 | npm | `@jridgewell/sourcemap-codec` | `1.6.0` | `MIT` | [npm](https://www.npmjs.com/package/%40jridgewell%2Fsourcemap-codec/v/1.6.0) |
 | npm | `@jridgewell/trace-mapping` | `0.3.31` | `MIT` | [npm](https://www.npmjs.com/package/%40jridgewell%2Ftrace-mapping/v/0.3.31) |
+| npm | `@monaco-editor/loader` | `1.7.0` | `MIT` | [npm](https://www.npmjs.com/package/%40monaco-editor%2Floader/v/1.7.0) |
+| npm | `@monaco-editor/react` | `4.7.0` | `MIT` | [npm](https://www.npmjs.com/package/%40monaco-editor%2Freact/v/4.7.0) |
 | npm | `@oxc-project/types` | `0.151.0` | `MIT` | [npm](https://www.npmjs.com/package/%40oxc-project%2Ftypes/v/0.151.0) |
 | npm | `@radix-ui/number` | `1.1.3` | `MIT` | [npm](https://www.npmjs.com/package/%40radix-ui%2Fnumber/v/1.1.3) |
 | npm | `@radix-ui/primitive` | `1.1.7` | `MIT` | [npm](https://www.npmjs.com/package/%40radix-ui%2Fprimitive/v/1.1.7) |
 | npm | `@radix-ui/react-arrow` | `1.1.15` | `MIT` | [npm](https://www.npmjs.com/package/%40radix-ui%2Freact-arrow/v/1.1.15) |
+| npm | `@radix-ui/react-checkbox` | `1.3.11` | `MIT` | [npm](https://www.npmjs.com/package/%40radix-ui%2Freact-checkbox/v/1.3.11) |
 | npm | `@radix-ui/react-collection` | `1.1.15` | `MIT` | [npm](https://www.npmjs.com/package/%40radix-ui%2Freact-collection/v/1.1.15) |
 | npm | `@radix-ui/react-compose-refs` | `1.1.5` | `MIT` | [npm](https://www.npmjs.com/package/%40radix-ui%2Freact-compose-refs/v/1.1.5) |
 | npm | `@radix-ui/react-context` | `1.2.2` | `MIT` | [npm](https://www.npmjs.com/package/%40radix-ui%2Freact-context/v/1.2.2) |
@@ -132,6 +139,7 @@
 | npm | `@tauri-apps/cli-win32-arm64-msvc` | `2.12.0` | `Apache-2.0 OR MIT` | [npm](https://www.npmjs.com/package/%40tauri-apps%2Fcli-win32-arm64-msvc/v/2.12.0) |
 | npm | `@tauri-apps/cli-win32-ia32-msvc` | `2.12.0` | `Apache-2.0 OR MIT` | [npm](https://www.npmjs.com/package/%40tauri-apps%2Fcli-win32-ia32-msvc/v/2.12.0) |
 | npm | `@tauri-apps/cli-win32-x64-msvc` | `2.12.0` | `Apache-2.0 OR MIT` | [npm](https://www.npmjs.com/package/%40tauri-apps%2Fcli-win32-x64-msvc/v/2.12.0) |
+| npm | `@tauri-apps/plugin-dialog` | `2.8.0` | `MIT OR Apache-2.0` | [npm](https://www.npmjs.com/package/%40tauri-apps%2Fplugin-dialog/v/2.8.0) |
 | npm | `@tauri-apps/plugin-process` | `2.4.0` | `MIT OR Apache-2.0` | [npm](https://www.npmjs.com/package/%40tauri-apps%2Fplugin-process/v/2.4.0) |
 | npm | `@tauri-apps/plugin-shell` | `2.3.6` | `MIT OR Apache-2.0` | [npm](https://www.npmjs.com/package/%40tauri-apps%2Fplugin-shell/v/2.3.6) |
 | npm | `@tauri-apps/plugin-updater` | `2.13.0` | `MIT OR Apache-2.0` | [npm](https://www.npmjs.com/package/%40tauri-apps%2Fplugin-updater/v/2.13.0) |
@@ -146,10 +154,19 @@
 | npm | `@ton/ton` | `16.3.0` | `MIT` | [npm](https://www.npmjs.com/package/%40ton%2Fton/v/16.3.0) |
 | npm | `@tonstudio/parser-runtime` | `0.0.1` | `UNKNOWN` | [npm](https://www.npmjs.com/package/%40tonstudio%2Fparser-runtime/v/0.0.1) |
 | npm | `@types/chai` | `5.2.3` | `MIT` | [npm](https://www.npmjs.com/package/%40types%2Fchai/v/5.2.3) |
+| npm | `@types/debug` | `4.1.13` | `MIT` | [npm](https://www.npmjs.com/package/%40types%2Fdebug/v/4.1.13) |
 | npm | `@types/deep-eql` | `4.0.2` | `MIT` | [npm](https://www.npmjs.com/package/%40types%2Fdeep-eql/v/4.0.2) |
 | npm | `@types/estree` | `1.0.9` | `MIT` | [npm](https://www.npmjs.com/package/%40types%2Festree/v/1.0.9) |
+| npm | `@types/estree-jsx` | `1.0.5` | `MIT` | [npm](https://www.npmjs.com/package/%40types%2Festree-jsx/v/1.0.5) |
+| npm | `@types/hast` | `3.0.5` | `MIT` | [npm](https://www.npmjs.com/package/%40types%2Fhast/v/3.0.5) |
+| npm | `@types/mdast` | `4.0.4` | `MIT` | [npm](https://www.npmjs.com/package/%40types%2Fmdast/v/4.0.4) |
+| npm | `@types/ms` | `2.1.0` | `MIT` | [npm](https://www.npmjs.com/package/%40types%2Fms/v/2.1.0) |
+| npm | `@types/node` | `24.19.2` | `MIT` | [npm](https://www.npmjs.com/package/%40types%2Fnode/v/24.19.2) |
 | npm | `@types/react` | `19.3.0` | `MIT` | [npm](https://www.npmjs.com/package/%40types%2Freact/v/19.3.0) |
 | npm | `@types/react-dom` | `19.3.0` | `MIT` | [npm](https://www.npmjs.com/package/%40types%2Freact-dom/v/19.3.0) |
+| npm | `@types/trusted-types` | `2.0.7` | `MIT` | [npm](https://www.npmjs.com/package/%40types%2Ftrusted-types/v/2.0.7) |
+| npm | `@types/unist` | `2.0.11` | `MIT` | [npm](https://www.npmjs.com/package/%40types%2Funist/v/2.0.11) |
+| npm | `@types/unist` | `3.0.3` | `MIT` | [npm](https://www.npmjs.com/package/%40types%2Funist/v/3.0.3) |
 | npm | `@typescript/typescript-aix-ppc64` | `7.0.2` | `Apache-2.0` | [npm](https://www.npmjs.com/package/%40typescript%2Ftypescript-aix-ppc64/v/7.0.2) |
 | npm | `@typescript/typescript-darwin-arm64` | `7.0.2` | `Apache-2.0` | [npm](https://www.npmjs.com/package/%40typescript%2Ftypescript-darwin-arm64/v/7.0.2) |
 | npm | `@typescript/typescript-darwin-x64` | `7.0.2` | `Apache-2.0` | [npm](https://www.npmjs.com/package/%40typescript%2Ftypescript-darwin-x64/v/7.0.2) |
@@ -170,9 +187,12 @@
 | npm | `@typescript/typescript-sunos-x64` | `7.0.2` | `Apache-2.0` | [npm](https://www.npmjs.com/package/%40typescript%2Ftypescript-sunos-x64/v/7.0.2) |
 | npm | `@typescript/typescript-win32-arm64` | `7.0.2` | `Apache-2.0` | [npm](https://www.npmjs.com/package/%40typescript%2Ftypescript-win32-arm64/v/7.0.2) |
 | npm | `@typescript/typescript-win32-x64` | `7.0.2` | `Apache-2.0` | [npm](https://www.npmjs.com/package/%40typescript%2Ftypescript-win32-x64/v/7.0.2) |
+| npm | `@ungap/structured-clone` | `1.4.0` | `ISC` | [npm](https://www.npmjs.com/package/%40ungap%2Fstructured-clone/v/1.4.0) |
 | npm | `@vitejs/plugin-react` | `6.1.1` | `MIT` | [npm](https://www.npmjs.com/package/%40vitejs%2Fplugin-react/v/6.1.1) |
 | npm | `@vitest/mocker` | `5.0.2` | `MIT` | [npm](https://www.npmjs.com/package/%40vitest%2Fmocker/v/5.0.2) |
 | npm | `@vitest/spy` | `5.0.2` | `MIT` | [npm](https://www.npmjs.com/package/%40vitest%2Fspy/v/5.0.2) |
+| npm | `@xterm/addon-fit` | `0.11.0` | `MIT` | [npm](https://www.npmjs.com/package/%40xterm%2Faddon-fit/v/0.11.0) |
+| npm | `@xterm/xterm` | `6.0.0` | `MIT` | [npm](https://www.npmjs.com/package/%40xterm%2Fxterm/v/6.0.0) |
 | npm | `agent-base` | `6.0.2` | `MIT` | [npm](https://www.npmjs.com/package/agent-base/v/6.0.2) |
 | npm | `ajv` | `8.20.0` | `MIT` | [npm](https://www.npmjs.com/package/ajv/v/8.20.0) |
 | npm | `ansi-regex` | `5.0.1` | `MIT` | [npm](https://www.npmjs.com/package/ansi-regex/v/5.0.1) |
@@ -183,21 +203,33 @@
 | npm | `astral-regex` | `2.0.0` | `MIT` | [npm](https://www.npmjs.com/package/astral-regex/v/2.0.0) |
 | npm | `asynckit` | `0.4.0` | `MIT` | [npm](https://www.npmjs.com/package/asynckit/v/0.4.0) |
 | npm | `axios` | `1.20.0` | `MIT` | [npm](https://www.npmjs.com/package/axios/v/1.20.0) |
+| npm | `axios` | `1.21.1` | `MIT` | [npm](https://www.npmjs.com/package/axios/v/1.21.1) |
+| npm | `bail` | `2.0.2` | `MIT` | [npm](https://www.npmjs.com/package/bail/v/2.0.2) |
 | npm | `base64-js` | `1.5.1` | `MIT` | [npm](https://www.npmjs.com/package/base64-js/v/1.5.1) |
 | npm | `buffer` | `6.0.3` | `MIT` | [npm](https://www.npmjs.com/package/buffer/v/6.0.3) |
 | npm | `cac` | `6.7.14` | `MIT` | [npm](https://www.npmjs.com/package/cac/v/6.7.14) |
 | npm | `call-bind-apply-helpers` | `1.0.2` | `MIT` | [npm](https://www.npmjs.com/package/call-bind-apply-helpers/v/1.0.2) |
+| npm | `ccount` | `2.0.1` | `MIT` | [npm](https://www.npmjs.com/package/ccount/v/2.0.1) |
 | npm | `chai` | `6.2.2` | `MIT` | [npm](https://www.npmjs.com/package/chai/v/6.2.2) |
 | npm | `chalk` | `4.1.2` | `MIT` | [npm](https://www.npmjs.com/package/chalk/v/4.1.2) |
+| npm | `character-entities` | `2.0.2` | `MIT` | [npm](https://www.npmjs.com/package/character-entities/v/2.0.2) |
+| npm | `character-entities-html4` | `2.1.0` | `MIT` | [npm](https://www.npmjs.com/package/character-entities-html4/v/2.1.0) |
+| npm | `character-entities-legacy` | `3.0.0` | `MIT` | [npm](https://www.npmjs.com/package/character-entities-legacy/v/3.0.0) |
+| npm | `character-reference-invalid` | `2.0.1` | `MIT` | [npm](https://www.npmjs.com/package/character-reference-invalid/v/2.0.1) |
 | npm | `color-convert` | `2.0.1` | `MIT` | [npm](https://www.npmjs.com/package/color-convert/v/2.0.1) |
 | npm | `color-name` | `1.1.4` | `MIT` | [npm](https://www.npmjs.com/package/color-name/v/1.1.4) |
 | npm | `combined-stream` | `1.0.8` | `MIT` | [npm](https://www.npmjs.com/package/combined-stream/v/1.0.8) |
+| npm | `comma-separated-tokens` | `2.0.3` | `MIT` | [npm](https://www.npmjs.com/package/comma-separated-tokens/v/2.0.3) |
 | npm | `csstype` | `3.2.3` | `MIT` | [npm](https://www.npmjs.com/package/csstype/v/3.2.3) |
 | npm | `dataloader` | `2.2.3` | `MIT` | [npm](https://www.npmjs.com/package/dataloader/v/2.2.3) |
 | npm | `debug` | `4.4.3` | `MIT` | [npm](https://www.npmjs.com/package/debug/v/4.4.3) |
+| npm | `decode-named-character-reference` | `1.3.0` | `MIT` | [npm](https://www.npmjs.com/package/decode-named-character-reference/v/1.3.0) |
 | npm | `delayed-stream` | `1.0.0` | `MIT` | [npm](https://www.npmjs.com/package/delayed-stream/v/1.0.0) |
+| npm | `dequal` | `2.0.3` | `MIT` | [npm](https://www.npmjs.com/package/dequal/v/2.0.3) |
 | npm | `detect-libc` | `2.1.2` | `Apache-2.0` | [npm](https://www.npmjs.com/package/detect-libc/v/2.1.2) |
 | npm | `detect-node-es` | `1.1.0` | `MIT` | [npm](https://www.npmjs.com/package/detect-node-es/v/1.1.0) |
+| npm | `devlop` | `1.1.0` | `MIT` | [npm](https://www.npmjs.com/package/devlop/v/1.1.0) |
+| npm | `dompurify` | `3.4.15` | `(MPL-2.0 OR Apache-2.0)` | [npm](https://www.npmjs.com/package/dompurify/v/3.4.15) |
 | npm | `dunder-proto` | `1.0.1` | `MIT` | [npm](https://www.npmjs.com/package/dunder-proto/v/1.0.1) |
 | npm | `emoji-regex` | `8.0.0` | `MIT` | [npm](https://www.npmjs.com/package/emoji-regex/v/8.0.0) |
 | npm | `enhanced-resolve` | `5.25.1` | `MIT` | [npm](https://www.npmjs.com/package/enhanced-resolve/v/5.25.1) |
@@ -207,13 +239,17 @@
 | npm | `es-object-atoms` | `1.1.2` | `MIT` | [npm](https://www.npmjs.com/package/es-object-atoms/v/1.1.2) |
 | npm | `es-set-tostringtag` | `2.1.0` | `MIT` | [npm](https://www.npmjs.com/package/es-set-tostringtag/v/2.1.0) |
 | npm | `esbuild` | `0.28.2` | `MIT` | [npm](https://www.npmjs.com/package/esbuild/v/0.28.2) |
+| npm | `escape-string-regexp` | `5.0.0` | `MIT` | [npm](https://www.npmjs.com/package/escape-string-regexp/v/5.0.0) |
+| npm | `estree-util-is-identifier-name` | `3.0.0` | `MIT` | [npm](https://www.npmjs.com/package/estree-util-is-identifier-name/v/3.0.0) |
 | npm | `estree-walker` | `3.0.3` | `MIT` | [npm](https://www.npmjs.com/package/estree-walker/v/3.0.3) |
 | npm | `expect-type` | `1.4.0` | `Apache-2.0` | [npm](https://www.npmjs.com/package/expect-type/v/1.4.0) |
+| npm | `extend` | `3.0.2` | `MIT` | [npm](https://www.npmjs.com/package/extend/v/3.0.2) |
 | npm | `fast-deep-equal` | `3.1.3` | `MIT` | [npm](https://www.npmjs.com/package/fast-deep-equal/v/3.1.3) |
 | npm | `fast-uri` | `3.1.8` | `BSD-3-Clause` | [npm](https://www.npmjs.com/package/fast-uri/v/3.1.8) |
 | npm | `fdir` | `6.5.0` | `MIT` | [npm](https://www.npmjs.com/package/fdir/v/6.5.0) |
 | npm | `fflate` | `0.8.3` | `MIT` | [npm](https://www.npmjs.com/package/fflate/v/0.8.3) |
 | npm | `follow-redirects` | `1.16.0` | `MIT` | [npm](https://www.npmjs.com/package/follow-redirects/v/1.16.0) |
+| npm | `follow-redirects` | `1.16.3` | `MIT` | [npm](https://www.npmjs.com/package/follow-redirects/v/1.16.3) |
 | npm | `form-data` | `4.0.6` | `MIT` | [npm](https://www.npmjs.com/package/form-data/v/4.0.6) |
 | npm | `fsevents` | `2.3.3` | `MIT` | [npm](https://www.npmjs.com/package/fsevents/v/2.3.3) |
 | npm | `function-bind` | `1.1.2` | `MIT` | [npm](https://www.npmjs.com/package/function-bind/v/1.1.2) |
@@ -226,9 +262,18 @@
 | npm | `has-symbols` | `1.1.0` | `MIT` | [npm](https://www.npmjs.com/package/has-symbols/v/1.1.0) |
 | npm | `has-tostringtag` | `1.0.2` | `MIT` | [npm](https://www.npmjs.com/package/has-tostringtag/v/1.0.2) |
 | npm | `hasown` | `2.0.4` | `MIT` | [npm](https://www.npmjs.com/package/hasown/v/2.0.4) |
+| npm | `hast-util-to-jsx-runtime` | `2.3.6` | `MIT` | [npm](https://www.npmjs.com/package/hast-util-to-jsx-runtime/v/2.3.6) |
+| npm | `hast-util-whitespace` | `3.0.0` | `MIT` | [npm](https://www.npmjs.com/package/hast-util-whitespace/v/3.0.0) |
+| npm | `html-url-attributes` | `3.0.1` | `MIT` | [npm](https://www.npmjs.com/package/html-url-attributes/v/3.0.1) |
 | npm | `https-proxy-agent` | `5.0.1` | `MIT` | [npm](https://www.npmjs.com/package/https-proxy-agent/v/5.0.1) |
 | npm | `ieee754` | `1.2.1` | `BSD-3-Clause` | [npm](https://www.npmjs.com/package/ieee754/v/1.2.1) |
+| npm | `inline-style-parser` | `0.2.7` | `MIT` | [npm](https://www.npmjs.com/package/inline-style-parser/v/0.2.7) |
+| npm | `is-alphabetical` | `2.0.1` | `MIT` | [npm](https://www.npmjs.com/package/is-alphabetical/v/2.0.1) |
+| npm | `is-alphanumerical` | `2.0.1` | `MIT` | [npm](https://www.npmjs.com/package/is-alphanumerical/v/2.0.1) |
+| npm | `is-decimal` | `2.0.1` | `MIT` | [npm](https://www.npmjs.com/package/is-decimal/v/2.0.1) |
 | npm | `is-fullwidth-code-point` | `3.0.0` | `MIT` | [npm](https://www.npmjs.com/package/is-fullwidth-code-point/v/3.0.0) |
+| npm | `is-hexadecimal` | `2.0.1` | `MIT` | [npm](https://www.npmjs.com/package/is-hexadecimal/v/2.0.1) |
+| npm | `is-plain-obj` | `4.1.0` | `MIT` | [npm](https://www.npmjs.com/package/is-plain-obj/v/4.1.0) |
 | npm | `jiti` | `2.7.0` | `MIT` | [npm](https://www.npmjs.com/package/jiti/v/2.7.0) |
 | npm | `json-schema-traverse` | `1.0.0` | `MIT` | [npm](https://www.npmjs.com/package/json-schema-traverse/v/1.0.0) |
 | npm | `jssha` | `3.2.0` | `BSD-3-Clause` | [npm](https://www.npmjs.com/package/jssha/v/3.2.0) |
@@ -257,31 +302,96 @@
 | npm | `lightningcss-win32-x64-msvc` | `1.32.0` | `MPL-2.0` | [npm](https://www.npmjs.com/package/lightningcss-win32-x64-msvc/v/1.32.0) |
 | npm | `lightningcss-win32-x64-msvc` | `1.33.0` | `MPL-2.0` | [npm](https://www.npmjs.com/package/lightningcss-win32-x64-msvc/v/1.33.0) |
 | npm | `lodash.truncate` | `4.4.2` | `MIT` | [npm](https://www.npmjs.com/package/lodash.truncate/v/4.4.2) |
+| npm | `longest-streak` | `3.1.0` | `MIT` | [npm](https://www.npmjs.com/package/longest-streak/v/3.1.0) |
+| npm | `lucide-react` | `1.48.0` | `ISC` | [npm](https://www.npmjs.com/package/lucide-react/v/1.48.0) |
 | npm | `magic-string` | `0.30.21` | `MIT` | [npm](https://www.npmjs.com/package/magic-string/v/0.30.21) |
 | npm | `magic-string` | `1.4.2` | `MIT` | [npm](https://www.npmjs.com/package/magic-string/v/1.4.2) |
+| npm | `markdown-table` | `3.0.4` | `MIT` | [npm](https://www.npmjs.com/package/markdown-table/v/3.0.4) |
+| npm | `marked` | `14.0.0` | `MIT` | [npm](https://www.npmjs.com/package/marked/v/14.0.0) |
 | npm | `math-intrinsics` | `1.1.0` | `MIT` | [npm](https://www.npmjs.com/package/math-intrinsics/v/1.1.0) |
+| npm | `mdast-util-find-and-replace` | `3.0.2` | `MIT` | [npm](https://www.npmjs.com/package/mdast-util-find-and-replace/v/3.0.2) |
+| npm | `mdast-util-from-markdown` | `2.0.3` | `MIT` | [npm](https://www.npmjs.com/package/mdast-util-from-markdown/v/2.0.3) |
+| npm | `mdast-util-gfm` | `3.1.0` | `MIT` | [npm](https://www.npmjs.com/package/mdast-util-gfm/v/3.1.0) |
+| npm | `mdast-util-gfm-autolink-literal` | `2.0.1` | `MIT` | [npm](https://www.npmjs.com/package/mdast-util-gfm-autolink-literal/v/2.0.1) |
+| npm | `mdast-util-gfm-footnote` | `2.1.0` | `MIT` | [npm](https://www.npmjs.com/package/mdast-util-gfm-footnote/v/2.1.0) |
+| npm | `mdast-util-gfm-strikethrough` | `2.0.1` | `MIT` | [npm](https://www.npmjs.com/package/mdast-util-gfm-strikethrough/v/2.0.1) |
+| npm | `mdast-util-gfm-table` | `2.0.0` | `MIT` | [npm](https://www.npmjs.com/package/mdast-util-gfm-table/v/2.0.0) |
+| npm | `mdast-util-gfm-task-list-item` | `2.0.0` | `MIT` | [npm](https://www.npmjs.com/package/mdast-util-gfm-task-list-item/v/2.0.0) |
+| npm | `mdast-util-mdx-expression` | `2.0.1` | `MIT` | [npm](https://www.npmjs.com/package/mdast-util-mdx-expression/v/2.0.1) |
+| npm | `mdast-util-mdx-jsx` | `3.2.0` | `MIT` | [npm](https://www.npmjs.com/package/mdast-util-mdx-jsx/v/3.2.0) |
+| npm | `mdast-util-mdxjs-esm` | `2.0.1` | `MIT` | [npm](https://www.npmjs.com/package/mdast-util-mdxjs-esm/v/2.0.1) |
+| npm | `mdast-util-phrasing` | `4.1.0` | `MIT` | [npm](https://www.npmjs.com/package/mdast-util-phrasing/v/4.1.0) |
+| npm | `mdast-util-to-hast` | `13.2.1` | `MIT` | [npm](https://www.npmjs.com/package/mdast-util-to-hast/v/13.2.1) |
+| npm | `mdast-util-to-markdown` | `2.1.3` | `MIT` | [npm](https://www.npmjs.com/package/mdast-util-to-markdown/v/2.1.3) |
+| npm | `mdast-util-to-string` | `4.0.0` | `MIT` | [npm](https://www.npmjs.com/package/mdast-util-to-string/v/4.0.0) |
+| npm | `micromark` | `4.0.3` | `MIT` | [npm](https://www.npmjs.com/package/micromark/v/4.0.3) |
+| npm | `micromark-core-commonmark` | `2.0.4` | `MIT` | [npm](https://www.npmjs.com/package/micromark-core-commonmark/v/2.0.4) |
+| npm | `micromark-extension-gfm` | `3.0.0` | `MIT` | [npm](https://www.npmjs.com/package/micromark-extension-gfm/v/3.0.0) |
+| npm | `micromark-extension-gfm-autolink-literal` | `2.1.0` | `MIT` | [npm](https://www.npmjs.com/package/micromark-extension-gfm-autolink-literal/v/2.1.0) |
+| npm | `micromark-extension-gfm-footnote` | `2.1.0` | `MIT` | [npm](https://www.npmjs.com/package/micromark-extension-gfm-footnote/v/2.1.0) |
+| npm | `micromark-extension-gfm-strikethrough` | `2.1.0` | `MIT` | [npm](https://www.npmjs.com/package/micromark-extension-gfm-strikethrough/v/2.1.0) |
+| npm | `micromark-extension-gfm-table` | `2.1.2` | `MIT` | [npm](https://www.npmjs.com/package/micromark-extension-gfm-table/v/2.1.2) |
+| npm | `micromark-extension-gfm-tagfilter` | `2.0.0` | `MIT` | [npm](https://www.npmjs.com/package/micromark-extension-gfm-tagfilter/v/2.0.0) |
+| npm | `micromark-extension-gfm-task-list-item` | `2.1.0` | `MIT` | [npm](https://www.npmjs.com/package/micromark-extension-gfm-task-list-item/v/2.1.0) |
+| npm | `micromark-factory-destination` | `2.0.1` | `MIT` | [npm](https://www.npmjs.com/package/micromark-factory-destination/v/2.0.1) |
+| npm | `micromark-factory-label` | `2.0.1` | `MIT` | [npm](https://www.npmjs.com/package/micromark-factory-label/v/2.0.1) |
+| npm | `micromark-factory-space` | `2.1.0` | `MIT` | [npm](https://www.npmjs.com/package/micromark-factory-space/v/2.1.0) |
+| npm | `micromark-factory-title` | `2.0.1` | `MIT` | [npm](https://www.npmjs.com/package/micromark-factory-title/v/2.0.1) |
+| npm | `micromark-factory-whitespace` | `2.0.1` | `MIT` | [npm](https://www.npmjs.com/package/micromark-factory-whitespace/v/2.0.1) |
+| npm | `micromark-util-character` | `2.1.1` | `MIT` | [npm](https://www.npmjs.com/package/micromark-util-character/v/2.1.1) |
+| npm | `micromark-util-chunked` | `2.0.1` | `MIT` | [npm](https://www.npmjs.com/package/micromark-util-chunked/v/2.0.1) |
+| npm | `micromark-util-classify-character` | `2.0.1` | `MIT` | [npm](https://www.npmjs.com/package/micromark-util-classify-character/v/2.0.1) |
+| npm | `micromark-util-combine-extensions` | `2.0.1` | `MIT` | [npm](https://www.npmjs.com/package/micromark-util-combine-extensions/v/2.0.1) |
+| npm | `micromark-util-decode-numeric-character-reference` | `2.0.2` | `MIT` | [npm](https://www.npmjs.com/package/micromark-util-decode-numeric-character-reference/v/2.0.2) |
+| npm | `micromark-util-decode-string` | `2.0.1` | `MIT` | [npm](https://www.npmjs.com/package/micromark-util-decode-string/v/2.0.1) |
+| npm | `micromark-util-edit-map` | `1.0.0` | `MIT` | [npm](https://www.npmjs.com/package/micromark-util-edit-map/v/1.0.0) |
+| npm | `micromark-util-encode` | `2.0.1` | `MIT` | [npm](https://www.npmjs.com/package/micromark-util-encode/v/2.0.1) |
+| npm | `micromark-util-html-tag-name` | `2.0.1` | `MIT` | [npm](https://www.npmjs.com/package/micromark-util-html-tag-name/v/2.0.1) |
+| npm | `micromark-util-normalize-identifier` | `2.0.1` | `MIT` | [npm](https://www.npmjs.com/package/micromark-util-normalize-identifier/v/2.0.1) |
+| npm | `micromark-util-resolve-all` | `2.0.1` | `MIT` | [npm](https://www.npmjs.com/package/micromark-util-resolve-all/v/2.0.1) |
+| npm | `micromark-util-sanitize-uri` | `2.0.1` | `MIT` | [npm](https://www.npmjs.com/package/micromark-util-sanitize-uri/v/2.0.1) |
+| npm | `micromark-util-subtokenize` | `2.1.0` | `MIT` | [npm](https://www.npmjs.com/package/micromark-util-subtokenize/v/2.1.0) |
+| npm | `micromark-util-symbol` | `2.0.1` | `MIT` | [npm](https://www.npmjs.com/package/micromark-util-symbol/v/2.0.1) |
+| npm | `micromark-util-types` | `2.0.3` | `MIT` | [npm](https://www.npmjs.com/package/micromark-util-types/v/2.0.3) |
 | npm | `mime-db` | `1.52.0` | `MIT` | [npm](https://www.npmjs.com/package/mime-db/v/1.52.0) |
 | npm | `mime-types` | `2.1.35` | `MIT` | [npm](https://www.npmjs.com/package/mime-types/v/2.1.35) |
+| npm | `monaco-editor` | `0.57.0` | `MIT` | [npm](https://www.npmjs.com/package/monaco-editor/v/0.57.0) |
 | npm | `ms` | `2.1.3` | `MIT` | [npm](https://www.npmjs.com/package/ms/v/2.1.3) |
 | npm | `nanoid` | `3.3.19` | `MIT` | [npm](https://www.npmjs.com/package/nanoid/v/3.3.19) |
 | npm | `obug` | `2.2.1` | `MIT` | [npm](https://www.npmjs.com/package/obug/v/2.2.1) |
+| npm | `parse-entities` | `4.0.2` | `MIT` | [npm](https://www.npmjs.com/package/parse-entities/v/4.0.2) |
 | npm | `picocolors` | `1.1.1` | `ISC` | [npm](https://www.npmjs.com/package/picocolors/v/1.1.1) |
 | npm | `picomatch` | `4.0.7` | `MIT` | [npm](https://www.npmjs.com/package/picomatch/v/4.0.7) |
+| npm | `playwright-core` | `1.63.0` | `Apache-2.0` | [npm](https://www.npmjs.com/package/playwright-core/v/1.63.0) |
 | npm | `postcss` | `8.5.28` | `MIT` | [npm](https://www.npmjs.com/package/postcss/v/8.5.28) |
+| npm | `property-information` | `7.2.0` | `MIT` | [npm](https://www.npmjs.com/package/property-information/v/7.2.0) |
 | npm | `proxy-from-env` | `2.1.0` | `MIT` | [npm](https://www.npmjs.com/package/proxy-from-env/v/2.1.0) |
+| npm | `qrcode.react` | `4.2.0` | `ISC` | [npm](https://www.npmjs.com/package/qrcode.react/v/4.2.0) |
 | npm | `react` | `19.3.0` | `MIT` | [npm](https://www.npmjs.com/package/react/v/19.3.0) |
 | npm | `react-dom` | `19.3.0` | `MIT` | [npm](https://www.npmjs.com/package/react-dom/v/19.3.0) |
+| npm | `react-icons` | `5.5.0` | `MIT` | [npm](https://www.npmjs.com/package/react-icons/v/5.5.0) |
+| npm | `react-markdown` | `10.1.0` | `MIT` | [npm](https://www.npmjs.com/package/react-markdown/v/10.1.0) |
 | npm | `react-remove-scroll` | `2.7.2` | `MIT` | [npm](https://www.npmjs.com/package/react-remove-scroll/v/2.7.2) |
 | npm | `react-remove-scroll-bar` | `2.3.8` | `MIT` | [npm](https://www.npmjs.com/package/react-remove-scroll-bar/v/2.3.8) |
+| npm | `react-resizable-panels` | `4.14.1` | `MIT` | [npm](https://www.npmjs.com/package/react-resizable-panels/v/4.14.1) |
 | npm | `react-style-singleton` | `2.2.3` | `MIT` | [npm](https://www.npmjs.com/package/react-style-singleton/v/2.2.3) |
+| npm | `remark-gfm` | `4.0.1` | `MIT` | [npm](https://www.npmjs.com/package/remark-gfm/v/4.0.1) |
+| npm | `remark-parse` | `11.0.0` | `MIT` | [npm](https://www.npmjs.com/package/remark-parse/v/11.0.0) |
+| npm | `remark-rehype` | `11.1.2` | `MIT` | [npm](https://www.npmjs.com/package/remark-rehype/v/11.1.2) |
+| npm | `remark-stringify` | `11.0.0` | `MIT` | [npm](https://www.npmjs.com/package/remark-stringify/v/11.0.0) |
 | npm | `require-from-string` | `2.0.2` | `MIT` | [npm](https://www.npmjs.com/package/require-from-string/v/2.0.2) |
 | npm | `rolldown` | `1.2.11` | `MIT` | [npm](https://www.npmjs.com/package/rolldown/v/1.2.11) |
 | npm | `scheduler` | `0.28.0` | `MIT` | [npm](https://www.npmjs.com/package/scheduler/v/0.28.0) |
 | npm | `slice-ansi` | `4.0.0` | `MIT` | [npm](https://www.npmjs.com/package/slice-ansi/v/4.0.0) |
 | npm | `source-map-js` | `1.2.1` | `BSD-3-Clause` | [npm](https://www.npmjs.com/package/source-map-js/v/1.2.1) |
+| npm | `space-separated-tokens` | `2.0.2` | `MIT` | [npm](https://www.npmjs.com/package/space-separated-tokens/v/2.0.2) |
+| npm | `state-local` | `1.0.7` | `MIT` | [npm](https://www.npmjs.com/package/state-local/v/1.0.7) |
 | npm | `std-env` | `4.2.0` | `MIT` | [npm](https://www.npmjs.com/package/std-env/v/4.2.0) |
 | npm | `string-width` | `4.2.3` | `MIT` | [npm](https://www.npmjs.com/package/string-width/v/4.2.3) |
+| npm | `stringify-entities` | `4.0.4` | `MIT` | [npm](https://www.npmjs.com/package/stringify-entities/v/4.0.4) |
 | npm | `strip-ansi` | `6.0.1` | `MIT` | [npm](https://www.npmjs.com/package/strip-ansi/v/6.0.1) |
+| npm | `style-to-js` | `1.1.21` | `MIT` | [npm](https://www.npmjs.com/package/style-to-js/v/1.1.21) |
+| npm | `style-to-object` | `1.0.14` | `MIT` | [npm](https://www.npmjs.com/package/style-to-object/v/1.0.14) |
 | npm | `supports-color` | `7.2.0` | `MIT` | [npm](https://www.npmjs.com/package/supports-color/v/7.2.0) |
 | npm | `table` | `6.9.0` | `BSD-3-Clause` | [npm](https://www.npmjs.com/package/table/v/6.9.0) |
 | npm | `tailwindcss` | `4.3.3` | `MIT` | [npm](https://www.npmjs.com/package/tailwindcss/v/4.3.3) |
@@ -290,17 +400,29 @@
 | npm | `tinyexec` | `1.3.1` | `MIT` | [npm](https://www.npmjs.com/package/tinyexec/v/1.3.1) |
 | npm | `tinyglobby` | `0.2.17` | `MIT` | [npm](https://www.npmjs.com/package/tinyglobby/v/0.2.17) |
 | npm | `ton-source-map` | `0.2.2` | `MIT` | [npm](https://www.npmjs.com/package/ton-source-map/v/0.2.2) |
+| npm | `trim-lines` | `3.0.1` | `MIT` | [npm](https://www.npmjs.com/package/trim-lines/v/3.0.1) |
+| npm | `trough` | `2.2.0` | `MIT` | [npm](https://www.npmjs.com/package/trough/v/2.2.0) |
 | npm | `tslib` | `2.8.1` | `0BSD` | [npm](https://www.npmjs.com/package/tslib/v/2.8.1) |
 | npm | `tweetnacl` | `1.0.3` | `Unlicense` | [npm](https://www.npmjs.com/package/tweetnacl/v/1.0.3) |
 | npm | `typescript` | `7.0.2` | `Apache-2.0` | [npm](https://www.npmjs.com/package/typescript/v/7.0.2) |
+| npm | `undici-types` | `7.24.6` | `MIT` | [npm](https://www.npmjs.com/package/undici-types/v/7.24.6) |
+| npm | `unified` | `11.0.5` | `MIT` | [npm](https://www.npmjs.com/package/unified/v/11.0.5) |
+| npm | `unist-util-is` | `6.0.1` | `MIT` | [npm](https://www.npmjs.com/package/unist-util-is/v/6.0.1) |
+| npm | `unist-util-position` | `5.0.0` | `MIT` | [npm](https://www.npmjs.com/package/unist-util-position/v/5.0.0) |
+| npm | `unist-util-stringify-position` | `4.0.0` | `MIT` | [npm](https://www.npmjs.com/package/unist-util-stringify-position/v/4.0.0) |
+| npm | `unist-util-visit` | `5.1.0` | `MIT` | [npm](https://www.npmjs.com/package/unist-util-visit/v/5.1.0) |
+| npm | `unist-util-visit-parents` | `6.0.2` | `MIT` | [npm](https://www.npmjs.com/package/unist-util-visit-parents/v/6.0.2) |
 | npm | `uplot` | `1.6.32` | `MIT` | [npm](https://www.npmjs.com/package/uplot/v/1.6.32) |
 | npm | `use-callback-ref` | `1.3.3` | `MIT` | [npm](https://www.npmjs.com/package/use-callback-ref/v/1.3.3) |
 | npm | `use-sidecar` | `1.1.3` | `MIT` | [npm](https://www.npmjs.com/package/use-sidecar/v/1.1.3) |
+| npm | `vfile` | `6.0.3` | `MIT` | [npm](https://www.npmjs.com/package/vfile/v/6.0.3) |
+| npm | `vfile-message` | `4.0.3` | `MIT` | [npm](https://www.npmjs.com/package/vfile-message/v/4.0.3) |
 | npm | `vite` | `8.3.1` | `MIT` | [npm](https://www.npmjs.com/package/vite/v/8.3.1) |
 | npm | `vitest` | `5.0.2` | `MIT` | [npm](https://www.npmjs.com/package/vitest/v/5.0.2) |
 | npm | `why-is-node-running` | `3.2.2` | `MIT` | [npm](https://www.npmjs.com/package/why-is-node-running/v/3.2.2) |
 | npm | `zod` | `3.25.76` | `MIT` | [npm](https://www.npmjs.com/package/zod/v/3.25.76) |
 | npm | `zustand` | `5.0.15` | `MIT` | [npm](https://www.npmjs.com/package/zustand/v/5.0.15) |
+| npm | `zwitch` | `2.0.4` | `MIT` | [npm](https://www.npmjs.com/package/zwitch/v/2.0.4) |
 | Cargo | `adler2` | `2.0.1` | `0BSD OR MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/adler2/2.0.1) |
 | Cargo | `aho-corasick` | `1.1.5` | `Unlicense OR MIT` | [crates.io](https://crates.io/crates/aho-corasick/1.1.5) |
 | Cargo | `alloc-no-stdlib` | `3.0.0` | `BSD-3-Clause` | [crates.io](https://crates.io/crates/alloc-no-stdlib/3.0.0) |
@@ -586,6 +708,7 @@
 | Cargo | `regex-automata` | `0.4.18` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/regex-automata/0.4.18) |
 | Cargo | `regex-syntax` | `0.8.11` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/regex-syntax/0.8.11) |
 | Cargo | `reqwest` | `0.13.5` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/reqwest/0.13.5) |
+| Cargo | `rfd` | `0.16.0` | `MIT` | [crates.io](https://crates.io/crates/rfd/0.16.0) |
 | Cargo | `ring` | `0.17.14` | `Apache-2.0 AND ISC` | [crates.io](https://crates.io/crates/ring/0.17.14) |
 | Cargo | `rustc-hash` | `2.1.3` | `Apache-2.0 OR MIT` | [crates.io](https://crates.io/crates/rustc-hash/2.1.3) |
 | Cargo | `rustc_version` | `0.4.1` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/rustc_version/0.4.1) |
@@ -661,6 +784,8 @@
 | Cargo | `tauri-codegen` | `2.7.0` | `Apache-2.0 OR MIT` | [crates.io](https://crates.io/crates/tauri-codegen/2.7.0) |
 | Cargo | `tauri-macros` | `2.7.0` | `Apache-2.0 OR MIT` | [crates.io](https://crates.io/crates/tauri-macros/2.7.0) |
 | Cargo | `tauri-plugin` | `2.7.0` | `Apache-2.0 OR MIT` | [crates.io](https://crates.io/crates/tauri-plugin/2.7.0) |
+| Cargo | `tauri-plugin-dialog` | `2.8.0` | `Apache-2.0 OR MIT` | [crates.io](https://crates.io/crates/tauri-plugin-dialog/2.8.0) |
+| Cargo | `tauri-plugin-fs` | `2.6.0` | `Apache-2.0 OR MIT` | [crates.io](https://crates.io/crates/tauri-plugin-fs/2.6.0) |
 | Cargo | `tauri-plugin-process` | `2.4.0` | `Apache-2.0 OR MIT` | [crates.io](https://crates.io/crates/tauri-plugin-process/2.4.0) |
 | Cargo | `tauri-plugin-shell` | `2.3.6` | `Apache-2.0 OR MIT` | [crates.io](https://crates.io/crates/tauri-plugin-shell/2.3.6) |
 | Cargo | `tauri-plugin-updater` | `2.13.0` | `Apache-2.0 OR MIT` | [crates.io](https://crates.io/crates/tauri-plugin-updater/2.13.0) |
@@ -801,11 +926,11 @@
 | Cargo | `zlib-rs` | `0.6.8` | `Zlib` | [crates.io](https://crates.io/crates/zlib-rs/0.6.8) |
 | Cargo | `zmij` | `1.0.23` | `MIT` | [crates.io](https://crates.io/crates/zmij/1.0.23) |
 
-## Другие материалы и поставляемые рантаймы
+## Other assets and bundled runtimes
 
-- `data/ton-english.txt`: все 2048 слов совпадают со [списком BIP39 English](https://github.com/bitcoin/bips/blob/master/bip-0039/english.txt) после нормализации концов строк. [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) указывает MIT и авторов Marek Palatinus, Pavol Rusnak, Aaron Voisine и Sean Bowe. Точный источник копии и обязательное уведомление ещё нужно подтвердить; это не собственный код проекта.
-- `desktop/src-tauri/icons/`: происхождение SVG/PNG/ICO и права на логотип требуют подтверждения владельца.
+- `data/ton-english.txt`: the [BIP-39 English word list](https://github.com/bitcoin/bips/blob/master/bip-0039/english.txt) by Marek Palatinus, Pavol Rusnak, Aaron Voisine, and Sean Bowe, MIT license; see [NOTICE.md](../../NOTICE.md).
+- `desktop/src-tauri/icons/`, `desktop/public/favicon.svg`, `desktop/src/assets/icons/gramix-app.svg`: the Gramix logo and icons drawn for this project by lovlydev; see [TRADEMARKS.md](../../TRADEMARKS.md).
 
-## Нерешённые записи
+## Unresolved records
 
 - npm `@tonstudio/parser-runtime@0.0.1`

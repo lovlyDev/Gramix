@@ -4,7 +4,7 @@
  *
  * This file is part of Gramix.
  *
- * See LICENSE and LICENSING.md for details.
+ * See LICENSE for details.
  */
 
 // Распознавание адресов, хэшей, BOC и ссылок на эксплореры, а также пути сайта.

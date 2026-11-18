@@ -1,25 +1,25 @@
 # VANTIX 0.1.0
 
-Я выпускаю первую публичную версию VANTIX для Windows и Linux. Приложение ищет TON-адреса по заданному фрагменту, проверяет доступные CPU и Vulkan GPU и позволяет выбрать вычислительный режим автоматически или вручную.
+The first public release, published under the name VANTIX (now Gramix), for Windows and Linux. The app searches addresses by a chosen fragment, checks the available CPU and Vulkan GPUs, and lets you pick the compute mode automatically or manually.
 
-## Скачать
+## Downloads
 
 - Windows: `VANTIX_0.1.0_x64-setup.exe` (NSIS).
-- Linux: `VANTIX_0.1.0_amd64.deb` или `VANTIX_0.1.0_amd64.AppImage`.
-- Контрольные суммы находятся в `SHA256SUMS.txt`.
+- Linux: `VANTIX_0.1.0_amd64.deb` or `VANTIX_0.1.0_amd64.AppImage`.
+- Checksums are in `SHA256SUMS.txt`.
 
-## Возможности
+## Features
 
-- Кошельки TON V5R1 и V4R2; фразы восстановления на 12 или 24 слова.
-- Поиск по началу, концу или любой части адреса, с возможностью не учитывать регистр.
-- CPU, Vulkan Compute и гибридный поиск; проверка результатов GPU на CPU.
-- Пауза и остановка поиска, мониторинг скорости и выбор устройства в приложении.
-- Шифрование сохранённой фразы: DPAPI на Windows, AES-256-GCM с паролем на Linux.
-- Подписанные обновления приложения для Windows NSIS и Linux AppImage. DEB обновляется через пакетный менеджер.
+- Wallet V5R1 and V4R2; 12- and 24-word recovery phrases.
+- Search by prefix, suffix, or any part of the address, optionally case-insensitive.
+- CPU, Vulkan Compute, and hybrid search; GPU results are re-checked on the CPU.
+- Pause and stop, speed monitoring, and device selection in the app.
+- Encrypted saved phrase: DPAPI on Windows, AES-256-GCM with a password on Linux.
+- Signed in-app updates for Windows NSIS and Linux AppImage; DEB updates through the package manager.
 
-## Известные ограничения
+## Known Limitations
 
-- CUDA и HIP есть в исходниках, но их модули не включены в установщики 0.1.0: сборка и работа на поддерживаемых картах NVIDIA/AMD ещё не проверены. На таких картах доступен Vulkan Compute при поддержке драйвером; CPU остаётся запасным режимом.
-- Работа нескольких физических GPU вместе пока не подтверждена аппаратной проверкой.
-- Ускорение GPU реализовано для 12-словной схемы. Для 24 слов используется CPU.
-- Windows установщик не подписан сертификатом издателя; Windows SmartScreen может показать предупреждение.
+- CUDA and HIP exist in source, but their modules are not included in the 0.1.0 installers: building and running on supported NVIDIA/AMD cards has not been validated. Those cards can use Vulkan Compute if the driver supports it; the CPU remains the fallback.
+- Running several physical GPUs together is not confirmed by hardware testing.
+- GPU acceleration covers the 12-word scheme. The 24-word scheme uses the CPU.
+- The Windows installer is not signed with a publisher certificate; Windows SmartScreen may show a warning.

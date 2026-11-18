@@ -1,5 +1,7 @@
 # Contributing to Gramix
 
+English | [Русский](CONTRIBUTING.ru.md)
+
 I welcome bug reports and proposals through GitHub issues and pull requests.
 
 - Contributions are accepted under the project license, AGPL-3.0-only.
@@ -7,5 +9,3 @@ I welcome bug reports and proposals through GitHub issues and pull requests.
 - Do not submit third-party code, images, fonts, or word lists without their source and license. Keep existing third-party notices intact.
 - New source files need the project header defined by `licenses/header-policy.json`. Run `python scripts/check_headers.py`; `--fix` adds a missing header to project files.
 - Never commit private keys, update-signing keys, or recovery phrases.
-
-[Russian translation](CONTRIBUTING.ru.md).

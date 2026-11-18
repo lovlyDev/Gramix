@@ -4,7 +4,7 @@
  *
  * This file is part of Gramix.
  *
- * See LICENSE and LICENSING.md for details.
+ * See LICENSE for details.
  */
 
 // Приложение: все операции идут через ядро и команды Tauri. Сетевой телеметрии нет.

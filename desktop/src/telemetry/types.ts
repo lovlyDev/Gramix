@@ -4,7 +4,7 @@
  *
  * This file is part of Gramix.
  *
- * See LICENSE and LICENSING.md for details.
+ * See LICENSE for details.
  */
 
 // Схема событий сайта. В ней намеренно нет полей для фраз, ключей, паролей и файлов:

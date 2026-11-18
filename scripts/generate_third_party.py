@@ -3,7 +3,7 @@
 #
 # This file is part of Gramix.
 #
-# See LICENSE and LICENSING.md for details.
+# See LICENSE for details.
 
 """Refresh exact locked dependency versions and declared licenses."""
 
@@ -16,7 +16,7 @@ import urllib.request
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-CACHE = ROOT / "licenses/cargo-license-cache.json"
+CACHE = ROOT / "docs/third-party/cargo-license-cache.json"
 USER_AGENT = "Gramix license inventory (https://github.com/lovlyDev/Gramix)"
 
 
@@ -63,9 +63,11 @@ def main():
     lines = [
         "# Gramix Third-Party Components",
         "",
+        "English | [Русский](THIRD_PARTY.ru.md)",
+        "",
         "I record versions from the current lockfiles. A package in a lockfile is not necessarily present in every installer. Before release, inspect each delivered artifact and include the complete license text and copyright notices for redistributed components.",
         "",
-        "A registry license declaration does not replace inspection of the actual package license and notices. `UNKNOWN` blocks a claim that the commercial distribution is ready. MIT/BSD/ISC generally require preserving copyright and permission notices; Apache-2.0 requires its license text and applicable notices; MPL/LGPL/GPL and other copyleft terms need individual source-distribution review. The actual version's terms control.",
+        "A registry license declaration does not replace inspection of the actual package license and notices. `UNKNOWN` must be resolved before a release. MIT/BSD/ISC generally require preserving copyright and permission notices; Apache-2.0 requires its license text and applicable notices; MPL/LGPL/GPL and other copyleft terms need individual source-distribution review. The actual version's terms control.",
         "",
         "## Direct C++ vcpkg dependencies",
         "",
@@ -117,15 +119,14 @@ def main():
         lines.append(f"| Cargo | `{name}` | `{version}` | `{license_id}` | [crates.io](https://crates.io/crates/{name}/{version}) |")
     lines += [
         "", "## Other assets and bundled runtimes", "",
-        "- `data/ton-english.txt`: all 2,048 words match the [BIP39 English list](https://github.com/bitcoin/bips/blob/master/bip-0039/english.txt) after newline normalization. [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) declares MIT and names Marek Palatinus, Pavol Rusnak, Aaron Voisine, and Sean Bowe. The exact source of the copy and required notice still need confirmation; it is not project-owned code.",
-        "- `desktop/src-tauri/icons/`: the origin of SVG/PNG/ICO files and rights in the logo require confirmation.",
+        "- `data/ton-english.txt`: the [BIP-39 English word list](https://github.com/bitcoin/bips/blob/master/bip-0039/english.txt) by Marek Palatinus, Pavol Rusnak, Aaron Voisine, and Sean Bowe, MIT license; see [NOTICE.md](../../NOTICE.md).",
+        "- `desktop/src-tauri/icons/`, `desktop/public/favicon.svg`, `desktop/src/assets/icons/gramix-app.svg`: the Gramix logo and icons drawn for this project by lovlydev; see [TRADEMARKS.md](../../TRADEMARKS.md).",
         "", "## Unresolved records", "",
     ]
     unknown = [f"Cargo `{k}`" for k, v in cache.items() if v["license"] == "UNKNOWN"]
     unknown += [f"npm `{n}@{v}`" for (n, v), l in npm.items() if l == "UNKNOWN"]
     lines += [f"- {x}" for x in sorted(unknown)] or ["- No unknown license declarations in package metadata; delivered license texts and notices still require verification."]
-    lines += ["", "[Russian translation](THIRD_PARTY.ru.md)."]
-    (ROOT / "licenses/THIRD_PARTY.md").write_text("\n".join(lines) + "\n", "utf-8")
+    (ROOT / "docs/third-party/THIRD_PARTY.md").write_text("\n".join(lines) + "\n", "utf-8")
     print(f"Recorded {len(npm)} npm and {len(packages)} Cargo packages; lookup failures: {len(errors)}")
     return 0
 

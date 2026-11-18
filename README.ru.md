@@ -1,12 +1,12 @@
 # Gramix
 
-[English README](README.md).
+[English](README.md) | Русский
 
 Gramix — новое название проекта VANTIX. Сайт с инструментами: [gram.lovlydev.ru](https://gram.lovlydev.ru).
 
 ## Лицензия
 
-Gramix — свободная программа на условиях **AGPL-3.0-only**: см. [текст лицензии](LICENSE), [пояснения](LICENSING.ru.md), [уведомления](NOTICE.ru.md), [правила названия и логотипа](TRADEMARKS.ru.md) и [сторонние компоненты](licenses/THIRD_PARTY.ru.md).
+Gramix — свободная программа на условиях **AGPL-3.0-only**: см. [текст лицензии](LICENSE), [пояснения](docs/LICENSING.ru.md), [уведомления](NOTICE.ru.md), [правила названия и логотипа](TRADEMARKS.ru.md) и [сторонние компоненты](docs/third-party/THIRD_PARTY.ru.md).
 
 Я разрабатываю Gramix — генератор GRAM-адресов и набор инструментов сети GRAM с заданным фрагментом. Вычислительное ядро написано на C++23, приложение для Windows и Linux — на Tauri и React. В выпуске 0.1.0 доступны CPU и Vulkan Compute. Исходники CUDA/HIP есть в проекте, но их модули не входят в установщики: сборка и работа на поддерживаемых видеокартах ещё не проверены.
 
@@ -40,7 +40,7 @@ Gramix — свободная программа на условиях **AGPL-3.
 - Для 24-словной схемы используется CPU.
 - Windows установщик не подписан сертификатом издателя; SmartScreen может показать предупреждение.
 
-Подробности: [ТЗ для AMD и NVIDIA](docs/gpu-backends.md), [проверка CUDA/HIP](docs/vendor-validation.md), [процесс выпуска](docs/release.md).
+Подробности: [движки AMD и NVIDIA](docs/gpu-backends.ru.md), [проверка CUDA/HIP](docs/vendor-validation.ru.md), [процесс выпуска](docs/release.md).
 
 ## Сборка из исходников
 

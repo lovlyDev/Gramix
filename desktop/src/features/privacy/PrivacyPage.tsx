@@ -4,7 +4,7 @@
  *
  * This file is part of Gramix.
  *
- * See LICENSE and LICENSING.md for details.
+ * See LICENSE for details.
  */
 
 // Политика конфиденциальности сайта gram.lovlydev.ru. В приложение не входит.

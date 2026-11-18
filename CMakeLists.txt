@@ -3,7 +3,7 @@
 #
 # This file is part of Gramix.
 #
-# See LICENSE and LICENSING.md for details.
+# See LICENSE for details.
 
 cmake_minimum_required(VERSION 3.24)
 project(Gramix VERSION 0.2.0 LANGUAGES CXX)

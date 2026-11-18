@@ -4,7 +4,7 @@
  *
  * This file is part of Gramix.
  *
- * See LICENSE and LICENSING.md for details.
+ * See LICENSE for details.
  */
 
 // Суммы в нано-единицах (1 GRAM = 10^9) → «1 334 408 278,8129 GRAM».
