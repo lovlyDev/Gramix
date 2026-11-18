@@ -89,7 +89,7 @@ export default function Overview({ devices, backends, recent, searchStatus, chec
         onClick={() => onOpen("generator")} />
       <StatTile icon={CircleCheck} color="#007aff" value={number(checked)} label="Проверено адресов"
         onClick={() => onOpen("generator")} />
-      <StatTile icon={Cpu} color="#34c759" value={String(devices.length)} label={`Устройства · ${backends.length} движков`}
+      <StatTile icon={Cpu} color="#34c759" value={String(devices.length)} label={`Устройства · ${backends.length} ${backends.length % 10 === 1 && backends.length % 100 !== 11 ? "движок" : [2, 3, 4].includes(backends.length % 10) && ![12, 13, 14].includes(backends.length % 100) ? "движка" : "движков"}`}
         onClick={() => onOpen("gpu-benchmark")} />
       <StatTile icon={Gauge} color="#ff9500" value={lastResult ? number(lastResult.addresses_per_second) : "—"}
         label="Лучший Benchmark" onClick={() => onOpen("gpu-benchmark")} />

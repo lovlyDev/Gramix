@@ -22,6 +22,10 @@ const host = (testnet: boolean) => testnet ? "https://testnet.tonapi.io" : "http
 const now = () => Math.floor(Date.now() / 1000);
 const network = (testnet: boolean) => testnet ? "testnet" as const : "mainnet" as const;
 
+class NotFound extends Error {
+  constructor() { super("Не найдено в OpenTonAPI"); }
+}
+
 async function getJson(url: string): Promise<Record<string, unknown>> {
   let response: Response;
   try {
@@ -32,6 +36,7 @@ async function getJson(url: string): Promise<Record<string, unknown>> {
       ? "Время ожидания OpenTonAPI истекло" : "OpenTonAPI недоступен: проверьте подключение");
   }
   if (response.status === 429) throw new Error("OpenTonAPI ограничил частоту запросов");
+  if (response.status === 404) throw new NotFound();
   if (!response.ok) throw new Error(`OpenTonAPI вернул HTTP ${response.status}`);
   const text = await response.text();
   if (text.length > MAX_BYTES) throw new Error("Ответ OpenTonAPI слишком велик");
@@ -43,7 +48,10 @@ export async function fetchAccount(raw: string, testnet: boolean): Promise<Accou
   if (!rawPattern.test(raw)) throw new Error("Некорректный raw-адрес");
   if (Date.now() - lastAccountRequest < 2000) throw new Error("Повторите запрос через две секунды");
   lastAccountRequest = Date.now();
-  const data = await getJson(`${host(testnet)}/v2/accounts/${raw}`);
+  const data = await getJson(`${host(testnet)}/v2/accounts/${raw}`).catch((cause) => {
+    if (cause instanceof NotFound) throw new Error("Аккаунт не найден в OpenTonAPI.");
+    throw cause;
+  });
   if (data.address !== raw) throw new Error("OpenTonAPI вернул данные другого аккаунта");
   if (typeof data.status !== "string" || !statuses.has(data.status)) throw new Error("Неизвестный статус аккаунта в ответе OpenTonAPI");
   if (typeof data.balance !== "number") throw new Error("Некорректный баланс в ответе OpenTonAPI");
@@ -55,8 +63,21 @@ export async function fetchAccount(raw: string, testnet: boolean): Promise<Accou
 
 export async function fetchTransaction(hash: string, testnet: boolean): Promise<RemoteTransaction> {
   if (!/^[0-9a-fA-F]{64}$/.test(hash)) throw new Error("ID транзакции должен содержать 64 hex-символа");
-  const data = await getJson(`${host(testnet)}/v2/blockchain/transactions/${hash}`);
-  if (typeof data.hash !== "string" || data.hash.toLowerCase() !== hash.toLowerCase())
+  let data: Record<string, unknown>;
+  let byMessage = false;
+  try { data = await getJson(`${host(testnet)}/v2/blockchain/transactions/${hash}`); }
+  catch (cause) {
+    if (!(cause instanceof NotFound)) throw cause;
+    // Часто вставляют хэш входящего сообщения: находим транзакцию, которую оно вызвало.
+    try { data = await getJson(`${host(testnet)}/v2/blockchain/messages/${hash}/transaction`); byMessage = true; }
+    catch (inner) {
+      if (inner instanceof NotFound) throw new Error(`Транзакция с таким хэшем не найдена в ${testnet ? "testnet" : "mainnet"}. Проверьте хэш${testnet ? "" : " или включите Testnet"}.`);
+      throw inner;
+    }
+  }
+  const inMessage = (data.in_msg as { hash?: unknown } | undefined)?.hash;
+  const viaMessage = typeof inMessage === "string" && inMessage.toLowerCase() === hash.toLowerCase();
+  if (typeof data.hash !== "string" || (!byMessage && !viaMessage && data.hash.toLowerCase() !== hash.toLowerCase()))
     throw new Error("OpenTonAPI вернул другую транзакцию");
   if (!cellHex(data.raw) || !data.raw) throw new Error("OpenTonAPI не вернул корректный raw BOC");
   return { source: "OpenTonAPI", network: network(testnet), hash: data.hash, raw_boc_hex: data.raw, received_at: now() };

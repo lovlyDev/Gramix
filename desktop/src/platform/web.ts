@@ -16,6 +16,8 @@ import type { BuildFailure, BuildSuccess, Platform, Simulation, VanityHandle } f
 
 type Reply<T> = { ok: true; value: T } | { ok: false; error: string };
 let sandboxWorker: Worker | null = null;
+const insecureMessage = "Ключи создаются только по защищённому соединению. Откройте сайт по адресу https://gram.lovlydev.ru.";
+const secure = () => typeof window === "undefined" || window.isSecureContext;
 let sandboxReject: ((error: Error) => void) | null = null;
 
 function runOnce<T>(worker: Worker, message: unknown): Promise<T> {
@@ -56,9 +58,16 @@ export const platform = {
     sandboxWorker?.terminate();
     sandboxReject?.(new Error("Симуляция остановлена."));
   },
-  generateWallet,
+  async generateWallet(scheme, version) {
+    if (!secure()) throw new Error(insecureMessage);
+    return await generateWallet(scheme, version);
+  },
   browserThreads: () => Math.max(1, Math.min(16, (navigator.hardwareConcurrency || 2) - 1)),
   startVanity(options, events): VanityHandle {
+    if (!secure()) {
+      window.setTimeout(() => events.onError(insecureMessage), 0);
+      return { pause() {}, resume() {}, stop() {} };
+    }
     const counts = new Map<Worker, { checked: number; rate: number }>();
     let finished = false;
     const workers = Array.from({ length: Math.max(1, options.threads) }, () =>
@@ -75,7 +84,12 @@ export const platform = {
           let checked = 0; let rate = 0;
           for (const item of counts.values()) { checked += item.checked; rate += item.rate; }
           events.onProgress(checked, rate);
-        } else if (data.type === "found" && data.wallet) { stopAll(); events.onFound(data.wallet); }
+        } else if (data.type === "found" && data.wallet) {
+          counts.set(worker, { checked: data.checked ?? 0, rate: 0 });
+          let checked = 0;
+          for (const item of counts.values()) checked += item.checked;
+          stopAll(); events.onFound(data.wallet, checked);
+        }
         else if (data.type === "error") { stopAll(); events.onError(data.message ?? "Ошибка поиска."); }
       };
       worker.onerror = (event) => { stopAll(); events.onError(event.message || "Ошибка фонового потока."); };

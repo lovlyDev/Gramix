@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { errorText } from "../../lib/errors";
 import { Buffer } from "buffer";
 import { Download, FileCode2, Pause, Play, ShieldCheck, Square, Zap } from "lucide-react";
 import { parseContractInput, verifyContractCandidate, type ContractCandidate } from "./contractVanityService";
@@ -51,7 +52,7 @@ export default function ContractVanity() {
   async function validate() {
     setError(""); setValidated(false);
     try { await parseContractInput(codeHex, dataHex, inputFormat); setValidated(true); }
-    catch (cause) { setError(String(cause)); }
+    catch (cause) { setError(errorText(cause)); }
   }
 
   async function start(event: FormEvent<HTMLFormElement>) {
@@ -87,7 +88,7 @@ export default function ContractVanity() {
                 throw new Error("Независимая проверка результата не прошла.");
               setCandidate(data.candidate!);
               setProgress(data);
-            } catch (cause) { setError(String(cause)); }
+            } catch (cause) { setError(errorText(cause)); }
             finally { setRunning(false); setPaused(false); next.terminate(); }
           })();
         } else {
@@ -101,7 +102,7 @@ export default function ContractVanity() {
       next.onerror = () => { setError("Рабочий поток поиска завершился с ошибкой."); setRunning(false); setPaused(false); next.terminate(); };
       next.postMessage({ type: "start", payload: { codeHex, dataHex, suffix, format, matchMode, inputFormat,
         startNonce: startValue.toString(), maxAttempts: limit } });
-    } catch (cause) { setError(String(cause)); }
+    } catch (cause) { setError(errorText(cause)); }
   }
 
   function stop() {

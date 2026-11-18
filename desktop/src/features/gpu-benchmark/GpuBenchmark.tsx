@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { errorText } from "../../lib/errors";
 import { Command, type Child } from "@tauri-apps/plugin-shell";
 import { isTauri } from "@tauri-apps/api/core";
 import { getVersion } from "@tauri-apps/api/app";
@@ -153,14 +154,14 @@ export default function GpuBenchmark() {
             [`${item.api}:${item.device_id}`, item.addresses_per_second])) }]);
         if (performance.now() - started >= duration * 1000) break;
       }
-    } catch (cause) { if (!cancelled.current.value) setError(String(cause)); }
+    } catch (cause) { if (!cancelled.current.value) setError(errorText(cause)); }
     finally { child.current.child = null; setBusy(false); }
   }
 
   async function stop() {
     cancelled.current.value = true;
     try { await child.current.child?.kill(); }
-    catch (cause) { setError("Не удалось остановить измерение: " + String(cause)); }
+    catch (cause) { setError("Не удалось остановить измерение: " + errorText(cause)); }
   }
 
   function exportFile(format: "json" | "csv") {

@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { errorText } from "../../lib/errors";
 import { exactGram, formatGram } from "../../lib/format";
 import { Buffer } from "buffer";
 import * as Tabs from "@radix-ui/react-tabs";
@@ -116,7 +117,7 @@ export default function ContractInspector() {
       if (loaded.data_hex) setDataHash(await localHash(loaded.data_hex));
       setAccount(loaded);
     } catch (cause) {
-      setError(String(cause));
+      setError(errorText(cause));
     } finally {
       setBusy(false);
     }
@@ -136,7 +137,7 @@ export default function ContractInspector() {
       }
       setInspection(data);
     } catch (cause) {
-      setInspectionError(String(cause));
+      setInspectionError(errorText(cause));
     } finally {
       setBusy(false);
     }
@@ -153,7 +154,7 @@ export default function ContractInspector() {
       setResult(await platform.runGetMethod(account.raw, testnet, method.trim(), args));
       telemetry.track({ name: "get_method", address: account.raw, method: method.trim() });
     } catch (cause) {
-      setError(String(cause));
+      setError(errorText(cause));
     } finally {
       setMethodBusy(false);
     }
@@ -170,7 +171,7 @@ export default function ContractInspector() {
       if (type === "code") { setOfflineCode(hex); setOfflineCodeHash(hash); }
       else { setOfflineData(hex); setOfflineDataHash(hash); }
       setOfflineError("");
-    } catch (cause) { setOfflineError(String(cause)); }
+    } catch (cause) { setOfflineError(errorText(cause)); }
   }
 
   function openBoc(hex: string) {

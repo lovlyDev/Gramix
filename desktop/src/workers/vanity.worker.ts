@@ -40,7 +40,7 @@ async function search(options: Start) {
     const { address, raw } = walletAddress(keys.publicKey, options.version);
     checked++; windowCount++;
     if (needle && matches(address, needle, options.mode, options.ignoreCase)) {
-      self.postMessage({ type: "found", wallet: { phrase: words.join(" "), publicKey: keys.publicKey.toString("hex"),
+      self.postMessage({ type: "found", checked, wallet: { phrase: words.join(" "), publicKey: keys.publicKey.toString("hex"),
         address, raw, wallet: options.version === "v4" ? "Wallet V4R2" : "Wallet V5R1", scheme: options.scheme } });
       running = false;
     }

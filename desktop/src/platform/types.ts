@@ -55,7 +55,7 @@ export type VanityOptions = { pattern: string; mode: "contains" | "prefix" | "su
 export type VanityHandle = { pause(): void; resume(): void; stop(): void };
 export type VanityEvents = {
   onProgress(checked: number, rate: number): void;
-  onFound(wallet: GeneratedWallet): void;
+  onFound(wallet: GeneratedWallet, checkedByWorker: number): void;
   onError(message: string): void;
 };
 

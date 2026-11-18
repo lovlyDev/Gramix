@@ -7,36 +7,16 @@
  * See LICENSE for details.
  */
 
-import { useEffect, useRef } from "react";
-import uPlot from "uplot";
-import "uplot/dist/uPlot.min.css";
+import SmoothChart from "./components/SmoothChart";
 
+// Скорость поиска за последние 60 секунд, по одному значению в секунду.
 export default function RateChart({ values }: { values: number[] }) {
-  const host = useRef<HTMLDivElement>(null);
-  const chart = useRef<uPlot | null>(null);
-  useEffect(() => {
-    if (!host.current) return;
-    const width = Math.max(1, host.current.clientWidth);
-    const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#8774e1";
-    chart.current = new uPlot({
-      width,
-      height: 155,
-      cursor: { show: false },
-      legend: { show: false },
-      scales: { x: { time: false }, y: { auto: true,
-        range: (_chart, _min, max) => [0, Math.max(1, max * 1.15)] } },
-      axes: [{ show: false }, { show: false }],
-      series: [{}, { stroke: accent, width: 2.5, fill: accent + "22" }]
-    }, [values.map((_, i) => i), values], host.current);
-    const resize = new ResizeObserver(([entry]) => {
-      const nextWidth = Math.round(entry.contentRect.width);
-      if (nextWidth > 0) chart.current?.setSize({ width: nextWidth, height: 155 });
-    });
-    resize.observe(host.current);
-    return () => { resize.disconnect(); chart.current?.destroy(); chart.current = null; };
-  }, []);
-  useEffect(() => {
-    chart.current?.setData([values.map((_, i) => i), values]);
-  }, [values]);
-  return <div className="rate-chart" ref={host} role="img" aria-label="График скорости поиска адресов" />;
+  const labels = values.map((_, index) => {
+    const ago = values.length - 1 - index;
+    return ago === 0 ? "сейчас" : `−${ago} с`;
+  });
+  return <div className="rate-chart">
+    <SmoothChart series={[{ key: "rate", label: "Скорость", color: "var(--accent)", values }]} labels={labels}
+      height={170} unit="адр/с" ariaLabel="График скорости поиска адресов" />
+  </div>;
 }

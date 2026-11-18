@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useState, type ChangeEvent } from "react";
+import { errorText } from "../../lib/errors";
 import { formatGram } from "../../lib/format";
 import { platform } from "@platform";
 import { telemetry } from "@telemetry";
@@ -80,7 +81,7 @@ export default function TransactionDecoder() {
       setSelected("transaction");
       setDetailTab("overview");
     } catch (cause) {
-      setError(String(cause));
+      setError(errorText(cause));
     } finally {
       setBusy(false);
     }
@@ -102,7 +103,7 @@ export default function TransactionDecoder() {
     try {
       await load(decodeBocText(bocText, format));
     } catch (cause) {
-      setError(String(cause));
+      setError(errorText(cause));
       setTransaction(null);
     }
   }
@@ -123,7 +124,7 @@ export default function TransactionDecoder() {
       telemetry.track({ name: "transaction_opened", hash: data.hash, network: data.network });
       await load(decodeBocText(data.raw_boc_hex, "hex"), data);
     } catch (cause) {
-      setError(String(cause));
+      setError(errorText(cause));
       setBusy(false);
     }
   }
@@ -187,7 +188,7 @@ export default function TransactionDecoder() {
     </Tabs.Root>
     {error && <p className="error-box" role="alert">{error}</p>}
     {transaction ? <div className="tx-workspace">
-      <div className="tx-summary"><div><span>TRANSACTION</span>
+      <div className="tx-summary"><div><span>ТРАНЗАКЦИЯ</span>
         <strong>{transaction.aborted === true || transaction.computeSuccess === false ? "Ошибка исполнения" : "Транзакция декодирована"}</strong>
         <small>{remote ? `OpenTonAPI · ${remote.network} · ${new Date(remote.received_at * 1000).toLocaleString("ru-RU")}`
           : "Локальный BOC · без запроса к сети"}</small></div>

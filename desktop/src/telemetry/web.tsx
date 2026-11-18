@@ -23,16 +23,28 @@ function read(key: string) { try { return localStorage.getItem(key); } catch { r
 function write(key: string, value: string | null) {
   try { if (value === null) localStorage.removeItem(key); else localStorage.setItem(key, value); } catch { /* приватный режим */ }
 }
+// crypto.randomUUID есть только на HTTPS; getRandomValues работает везде.
+function randomId() {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40; bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = [...bytes].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
 function deviceId() {
   let id = read(DEVICE_KEY);
-  if (!id) { id = crypto.randomUUID(); write(DEVICE_KEY, id); }
+  if (!id) { id = randomId(); write(DEVICE_KEY, id); }
   return id;
 }
 const secretOnScreen = () => document.querySelector("[data-telemetry-off]:not([hidden])") !== null;
 
 function send(event: TrackEvent) {
+  // Статистика не должна ломать сайт ни при каких условиях.
+  try { deliver(event); } catch { /* событие пропускается */ }
+}
+
+function deliver(event: TrackEvent) {
   if (!endpoint || !website || telemetry.consent() !== "granted" || secretOnScreen()) return;
-  if (!sessionId) sessionId = crypto.randomUUID();
+  if (!sessionId) sessionId = randomId();
   const { name, ...data } = event;
   const body = JSON.stringify({ type: "event", payload: {
     website, hostname: location.hostname, url: location.pathname, title: document.title,

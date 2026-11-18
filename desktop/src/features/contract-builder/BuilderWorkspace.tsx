@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { errorText } from "../../lib/errors";
 import { platform } from "@platform";
 import { telemetry } from "@telemetry";
 import Editor, { loader } from "@monaco-editor/react";
@@ -90,7 +91,7 @@ export default function BuilderWorkspace() {
   function saveProject() {
     try { saveDownload("gramix-tolk-project.json", JSON.stringify(
       parseTolkProject({ entrypoint, files }), null, 2)); setDirty(false); setError(""); }
-    catch (cause) { setError(String(cause)); }
+    catch (cause) { setError(errorText(cause)); }
   }
 
   async function importProject(event: ChangeEvent<HTMLInputElement>) {
@@ -101,7 +102,7 @@ export default function BuilderWorkspace() {
       const project = parseTolkProject(JSON.parse(await file.text()));
       requestReplace(() => { setFiles(project.files); setEntrypoint(project.entrypoint);
         setActive(project.entrypoint); setDirty(false); setResult(null); setError(""); });
-    } catch (cause) { setError(`Не удалось открыть проект: ${String(cause)}`); }
+    } catch (cause) { setError(`Не удалось открыть проект: ${errorText(cause)}`); }
   }
 
   function addFile() {
@@ -145,7 +146,7 @@ export default function BuilderWorkspace() {
       if (document.roots.length !== 1 || document.roots[0].toLowerCase() !== compiled.codeHashHex.toLowerCase())
         throw new Error("Хеш скомпилированного BOC не прошёл локальную проверку.");
       setResult(compiled);
-    } catch (cause) { setError(String(cause)); }
+    } catch (cause) { setError(errorText(cause)); }
     finally { setBusy(false); }
   }
 

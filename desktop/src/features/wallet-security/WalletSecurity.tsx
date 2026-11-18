@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { errorText } from "../../lib/errors";
 import { isTauri } from "@tauri-apps/api/core";
 import { resourceDir } from "@tauri-apps/api/path";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
@@ -148,7 +149,7 @@ export default function WalletSecurity() {
         throw new Error("Локальная проверка вернула неполный результат.");
       if (request === requestRef.current) { setResult(checked); setResultMode(mode); }
     } catch (cause) {
-      if (request === requestRef.current) setError(cause instanceof Error ? cause.message : String(cause));
+      if (request === requestRef.current) setError(errorText(cause));
     } finally {
       if (request === requestRef.current) { setPassword(""); setBusy(false); }
     }
@@ -163,7 +164,7 @@ export default function WalletSecurity() {
         .catch(() => { throw new Error("Ожидаемый адрес имеет неверный формат или checksum."); });
       setResult({ ...result, matches_expected: checked.raw === result.raw });
       setNotice(checked.raw === result.raw ? "Публичные адреса совпадают." : "Публичные адреса различаются.");
-    } catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); }
+    } catch (cause) { setError(errorText(cause)); }
   }
 
   async function compareTwo() {
@@ -176,7 +177,7 @@ export default function WalletSecurity() {
         .catch(() => { throw new Error("Второй адрес имеет неверный формат или checksum."); });
       const same = first.raw === second.raw;
       setNotice(same ? `Адреса указывают на один кошелёк: ${first.raw}` : "Это разные кошельки: raw-адреса не совпадают.");
-    } catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); }
+    } catch (cause) { setError(errorText(cause)); }
   }
 
   function downloadReport() {

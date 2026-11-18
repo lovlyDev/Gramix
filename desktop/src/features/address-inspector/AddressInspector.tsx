@@ -8,6 +8,8 @@
  */
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { errorText } from "../../lib/errors";
+import { pasteText } from "../../lib/clipboard";
 import { exactGram, formatGram } from "../../lib/format";
 import { platform } from "@platform";
 import { telemetry } from "@telemetry";
@@ -62,7 +64,7 @@ export default function AddressInspector() {
       if (inspected.input_testnet !== null)
         setNetwork(inspected.input_testnet ? "testnet" : "mainnet");
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : String(cause));
+      setError(errorText(cause));
     } finally {
       setBusy(false);
     }
@@ -78,7 +80,7 @@ export default function AddressInspector() {
       setAccount(data);
       telemetry.track({ name: "account_loaded", address: data.raw, network: data.network, status: data.status });
     } catch (cause) {
-      setNetworkError(String(cause));
+      setNetworkError(errorText(cause));
     } finally {
       setNetworkBusy(false);
     }
@@ -86,9 +88,9 @@ export default function AddressInspector() {
 
   async function pasteAddress() {
     try {
-      setInput((await navigator.clipboard.readText()).trim());
+      setInput((await pasteText()).trim());
       setResult(null); setAccount(null); setError(""); setNetworkError("");
-    } catch { setError("Не удалось прочитать буфер обмена."); }
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "Не удалось прочитать буфер обмена."); }
   }
   function clear() {
     setInput(""); setResult(null); setAccount(null); setError("");
@@ -143,35 +145,36 @@ export default function AddressInspector() {
       <PublicAddressQr address={result.bounceable} label="QR адреса" />
       </div>
       <div className="address-network-pane"><h3>Публичные данные сети</h3>
-        <p>Сетевой запрос выполняется только после нажатия кнопки.</p>
-      <div className="address-network"><label>Сеть
+        <p>Сетевой запрос выполняется только после нажатия кнопки. Публичный адрес будет отправлен в OpenTonAPI.</p>
+      <div className="address-network">
         <Select label="Сеть" value={network} onValueChange={(value) => {
           setNetwork(value as "mainnet" | "testnet"); setAccount(null); setNetworkError("");
         }} options={[{ value: "mainnet", label: "Mainnet" },
           { value: "testnet", label: "Testnet" }]}/>
-      </label>
         <button type="button" onClick={() => void fetchAccount()} disabled={networkBusy}>
-          {networkBusy ? "Запрашиваю…" : "Запросить состояние аккаунта"}
+          {networkBusy ? "Запрашиваю…" : account ? "Обновить" : "Запросить состояние"}
         </button>
-        <span>Публичный адрес будет отправлен в OpenTonAPI.</span>
       </div>
+      {networkError && <p className="error-box" role="alert">{networkError}</p>}
+      {account && <div className="account-card" aria-live="polite">
+        <div className="account-balance">
+          <span>Баланс</span>
+          <strong title={exactGram(account.balance_nanoton)}>{formatGram(account.balance_nanoton)}</strong>
+        </div>
+        <dl className="account-kv">
+          <dt>Статус</dt><dd><span className={`badge ${account.status === "active" ? "ok" : account.status === "frozen" ? "fail" : ""}`}>{account.status}</span></dd>
+          <dt>Тип</dt><dd>{account.is_wallet === null ? "нет данных" : account.is_wallet ? "Кошелёк" : "Контракт"}</dd>
+          <dt>Последняя активность</dt><dd>{account.last_activity
+            ? new Date(account.last_activity * 1000).toLocaleString("ru-RU") : "нет данных"}</dd>
+          <dt>Источник</dt><dd>OpenTonAPI · {account.network} · {new Date(account.received_at * 1000).toLocaleTimeString("ru-RU")}</dd>
+        </dl>
+      </div>}
       <button className="address-open-contract" type="button" onClick={() => {
         window.dispatchEvent(new CustomEvent("gramix:contract-address", {
           detail: { address: result.raw, testnet: network === "testnet" },
         }));
         window.location.hash = "contract-inspector";
       }}>Открыть в «Контрактах»</button>
-      {networkError && <p className="error-box" role="alert">{networkError}</p>}
-      {account && <div className="account-result" aria-live="polite">
-        <strong>Ответ OpenTonAPI · {account.network}</strong>
-        <span>Получен {new Date(account.received_at * 1000).toLocaleString("ru-RU")}</span>
-        <span>Статус: {account.status}</span>
-        <span title={exactGram(account.balance_nanoton)}>Баланс: {formatGram(account.balance_nanoton)}</span>
-        <span>Последняя активность: {account.last_activity
-          ? new Date(account.last_activity * 1000).toLocaleString("ru-RU") : "нет данных"}</span>
-        <span>Определён как кошелёк: {account.is_wallet === null
-          ? "нет данных" : account.is_wallet ? "да" : "нет"}</span>
-      </div>}
       </div>
     </div>}
   </section>;

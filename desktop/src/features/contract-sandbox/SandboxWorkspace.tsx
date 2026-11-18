@@ -8,6 +8,7 @@
  */
 
 import { useState, type ChangeEvent } from "react";
+import { errorText } from "../../lib/errors";
 import { exactGram, formatGram } from "../../lib/format";
 import { platform } from "@platform";
 import { telemetry } from "@telemetry";
@@ -75,7 +76,7 @@ export default function SandboxWorkspace() {
       const issue = validate(loaded);
       if (issue) throw new Error(issue);
       setScenario(loaded); setResult(null); setDirty(false); setError("");
-    } catch (cause) { setError(`Не удалось открыть сценарий: ${String(cause)}`); }
+    } catch (cause) { setError(`Не удалось открыть сценарий: ${errorText(cause)}`); }
   }
   function addAccount() {
     const name = accountName.trim();
@@ -91,12 +92,12 @@ export default function SandboxWorkspace() {
       setResult(await platform.runSandbox(scenario));
       telemetry.track({ name: "tool_action", tool: "contract-sandbox", action: "run" });
     }
-    catch (cause) { setError(String(cause)); }
+    catch (cause) { setError(errorText(cause)); }
     finally { setBusy(false); }
   }
   async function stop() {
     try { await platform.cancelSandbox(); }
-    catch (cause) { setError(String(cause)); }
+    catch (cause) { setError(errorText(cause)); }
   }
 
   const transaction = result?.transactions[selected];

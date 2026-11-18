@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { errorText } from "../../lib/errors";
 import { ChevronDown, ChevronRight, FileCode2 } from "lucide-react";
 import { decodeBocText, MAX_BOC_BYTES, parseBocBytes,
   type BocDocument } from "./bocService";
@@ -71,7 +72,7 @@ export default function BocExplorer() {
       resetTreeScroll();
       setCollapsedPaths(new Set());
     } catch (cause) {
-      setError(String(cause));
+      setError(errorText(cause));
     }
   }
 
@@ -82,7 +83,7 @@ export default function BocExplorer() {
       setText(value);
       setFormat("base64");
       try { void load(decodeBocText(value, "base64")); }
-      catch (cause) { setError(String(cause)); }
+      catch (cause) { setError(errorText(cause)); }
     };
     window.addEventListener("gramix:open-boc", receive);
     return () => window.removeEventListener("gramix:open-boc", receive);
@@ -105,7 +106,7 @@ export default function BocExplorer() {
       await load(decodeBocText(text, format));
     } catch (cause) {
       setDocument(null);
-      setError(String(cause));
+      setError(errorText(cause));
     }
   }
 
@@ -117,7 +118,7 @@ export default function BocExplorer() {
       setComparisonResult(document.roots.join(",") === other.roots.join(",")
         ? "Корневые хеши совпадают." : "Корневые хеши различаются.");
     } catch (cause) {
-      setComparisonResult(String(cause));
+      setComparisonResult(errorText(cause));
     }
   }
 

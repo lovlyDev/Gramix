@@ -1,3 +1,4 @@
 # Скрипты и конфигурация для Linux-сервера всегда с LF, иначе bash на сервере падает.
 *.sh text eol=lf
 deploy/** text eol=lf
+LICENSE text eol=lf

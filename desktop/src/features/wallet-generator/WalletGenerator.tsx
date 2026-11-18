@@ -8,6 +8,8 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { errorText } from "../../lib/errors";
+import { copyText } from "../../lib/clipboard";
 import { appDataDir, join, resourceDir } from "@tauri-apps/api/path";
 import { isTauri } from "@tauri-apps/api/core";
 import { Command, type Child } from "@tauri-apps/plugin-shell";
@@ -135,7 +137,7 @@ export default function WalletGenerator() {
         setWallet({ address: created.address, raw: created.raw, public_key: created.publicKey,
           wallet: version, scheme });
         setConfirmed(false);
-      } catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); }
+      } catch (cause) { setError(errorText(cause)); }
       finally { setBusy(false); }
       return;
     }
@@ -202,7 +204,7 @@ export default function WalletGenerator() {
       });
       session.current = await command.spawn();
     } catch (cause) {
-      setError(String(cause));
+      setError(errorText(cause));
       setBusy(false);
     }
   }
@@ -220,7 +222,7 @@ export default function WalletGenerator() {
     setSaving(true);
     setError("");
     try { await session.current.write("SAVE\n"); }
-    catch (cause) { setSaving(false); setError(String(cause)); }
+    catch (cause) { setSaving(false); setError(errorText(cause)); }
   }
 
   async function reveal() {
@@ -261,7 +263,7 @@ export default function WalletGenerator() {
       if (request === revealRequest.current) pendingPhrase.current = output.stdout.trim();
     } catch (cause) {
       if (request === revealRequest.current) {
-        setError(String(cause));
+        setError(errorText(cause));
         setRevealOpen(false);
         setRevealing(false);
       }
@@ -275,7 +277,7 @@ export default function WalletGenerator() {
 
   async function copyPublic(value: string, field: string) {
     try {
-      await navigator.clipboard.writeText(value);
+      await copyText(value);
       setCopied(field);
       if (copyTimer.current) clearTimeout(copyTimer.current);
       copyTimer.current = setTimeout(() => setCopied(""), 4_000);

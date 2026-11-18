@@ -412,7 +412,6 @@ vcpkg baseline: `ee6a47dac031930715bea2e6dfb9ad60caaa5d83`. The versions below c
 | npm | `unist-util-stringify-position` | `4.0.0` | `MIT` | [npm](https://www.npmjs.com/package/unist-util-stringify-position/v/4.0.0) |
 | npm | `unist-util-visit` | `5.1.0` | `MIT` | [npm](https://www.npmjs.com/package/unist-util-visit/v/5.1.0) |
 | npm | `unist-util-visit-parents` | `6.0.2` | `MIT` | [npm](https://www.npmjs.com/package/unist-util-visit-parents/v/6.0.2) |
-| npm | `uplot` | `1.6.32` | `MIT` | [npm](https://www.npmjs.com/package/uplot/v/1.6.32) |
 | npm | `use-callback-ref` | `1.3.3` | `MIT` | [npm](https://www.npmjs.com/package/use-callback-ref/v/1.3.3) |
 | npm | `use-sidecar` | `1.1.3` | `MIT` | [npm](https://www.npmjs.com/package/use-sidecar/v/1.1.3) |
 | npm | `vfile` | `6.0.3` | `MIT` | [npm](https://www.npmjs.com/package/vfile/v/6.0.3) |

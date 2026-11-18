@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useRef, useState, type ButtonHTMLAttributes } from "react";
+import { copyText } from "../../lib/clipboard";
 import { Check, Copy } from "lucide-react";
 
 type Props = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "value" | "onClick" | "children"> & {
@@ -26,7 +27,7 @@ export default function CopyButton({ value, label = "Копировать", onCo
 
   async function copy() {
     try {
-      await navigator.clipboard.writeText(value);
+      await copyText(value);
       setCopiedValue(value);
       if (timer.current) clearTimeout(timer.current);
       timer.current = setTimeout(() => setCopiedValue(""), 4_000);

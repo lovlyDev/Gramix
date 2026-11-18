@@ -8,6 +8,8 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { errorText } from "../../lib/errors";
+import { copyText } from "../../lib/clipboard";
 import { Command, type Child } from "@tauri-apps/plugin-shell";
 import { isTauri } from "@tauri-apps/api/core";
 import { Terminal } from "@xterm/xterm";
@@ -112,18 +114,18 @@ export default function CliWorkspace() {
       });
       command.on("error", (cause) => {
         child.current = null; setBusy(false); setStatus("Ошибка");
-        write(`\nОшибка запуска: ${String(cause)}\n`);
+        write(`\nОшибка запуска: ${errorText(cause)}\n`);
       });
       child.current = await command.spawn();
     } catch (cause) { child.current = null; setBusy(false); setStatus("Ошибка");
-      write(`Ошибка запуска: ${String(cause)}\n`); }
+      write(`Ошибка запуска: ${errorText(cause)}\n`); }
   }
 
 
   async function stop() {
     if (!child.current) return;
     try { await child.current.kill(); setStatus("Остановлено"); }
-    catch (cause) { setStatus(`Не удалось остановить: ${String(cause)}`); }
+    catch (cause) { setStatus(`Не удалось остановить: ${errorText(cause)}`); }
   }
 
   function download() {
@@ -159,7 +161,7 @@ export default function CliWorkspace() {
           ? "gramix address inspect --json <адрес>" : cliEquivalent}</code></div>
       <div className="cli-command-actions"><button type="button" title="Копировать эквивалентную CLI-команду"
         disabled={selected === "address" && !validAddress}
-        onClick={() => void navigator.clipboard.writeText(cliEquivalent)}>
+        onClick={() => void copyText(cliEquivalent)}>
         <Copy size={16} /> Команда</button>
         {busy ? <button type="button" onClick={() => void stop()}><Square size={15} /> Стоп</button>
           : <button type="button" className="cli-run" disabled={selected === "address" && !validAddress}
@@ -168,7 +170,7 @@ export default function CliWorkspace() {
     <div className="cli-terminal-header"><span>Вывод терминала</span>
       <span role="status">{status}{exitCode !== null && ` · код ${exitCode}`}{duration !== null && ` · ${duration} мс`}</span>
       <button type="button" title="Копировать вывод" aria-label="Копировать вывод"
-        onClick={() => void navigator.clipboard.writeText(output.current)}><Copy size={15} /></button>
+        onClick={() => void copyText(output.current)}><Copy size={15} /></button>
       <button type="button" title="Сохранить вывод" aria-label="Сохранить вывод" onClick={download}>
         <Download size={15} /></button>
       <button type="button" title="Очистить вывод" aria-label="Очистить вывод"

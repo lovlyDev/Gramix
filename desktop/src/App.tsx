@@ -8,6 +8,7 @@
  */
 
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { errorText } from "./lib/errors";
 import * as Tabs from "@radix-ui/react-tabs";
 import * as Switch from "@radix-ui/react-switch";
 import * as Dialog from "@radix-ui/react-dialog";
@@ -40,6 +41,7 @@ import { parsePath, pathFor } from "./lib/links";
 import type { VanityHandle } from "./platform/types";
 import PrivacyPage from "./features/privacy/PrivacyPage";
 import SiteFooter from "./components/SiteFooter";
+import ToolBoundary from "./components/ToolBoundary";
 
 const sidecar = "binaries/gramix";
 const web = __WEB__;
@@ -216,7 +218,7 @@ export default function App() {
       const verified = JSON.parse(checked.stdout) as { backends: ValidatedBackend[] };
       app.set({ validatedBackends: verified.backends });
     } catch (error) {
-      app.set({ error: String(error) });
+      app.set({ error: errorText(error) });
     } finally {
       setRefreshing(false);
     }
@@ -269,7 +271,7 @@ export default function App() {
       setAvailableUpdate(update);
       setUpdateState(update ? "Доступна версия " + update.version : "Установлена последняя версия.");
     } catch (error) {
-      setUpdateError("Не удалось проверить обновления: " + String(error));
+      setUpdateError("Не удалось проверить обновления: " + errorText(error));
       setUpdateState("");
     } finally {
       setUpdateBusy(false);
@@ -296,7 +298,7 @@ export default function App() {
       });
       await relaunch();
     } catch (error) {
-      setUpdateError("Не удалось установить обновление: " + String(error));
+      setUpdateError("Не удалось установить обновление: " + errorText(error));
       setUpdateState("");
       setUpdateBusy(false);
     }
@@ -342,10 +344,13 @@ export default function App() {
         app.set({ checked });
         if (performance.now() - lastSample > 950) { lastSample = performance.now(); app.addSample(rate); }
       },
-      onFound: (wallet) => {
+      onFound: (wallet, checked) => {
         vanity.current = null;
         foundPhrase.current = wallet.phrase;
-        app.set({ status: "finished", rate: 0, resultPath: wallet.address });
+        const seconds = Math.max(0.001, (performance.now() - vanityStarted.current) / 1000);
+        const total = Math.max(checked, useApp.getState().checked);
+        if (useApp.getState().samples.length === 0) app.addSample(total / seconds);
+        app.set({ status: "finished", rate: 0, checked: total, resultPath: wallet.address });
         telemetry.track({ name: "vanity_stopped", found: true, checked: useApp.getState().checked,
           seconds: Math.round((performance.now() - vanityStarted.current) / 1000) });
       },
@@ -401,7 +406,7 @@ export default function App() {
       child.current = await command.spawn();
       app.set({ status: "running" });
     } catch (error) {
-      app.set({ status: "error", error: String(error) });
+      app.set({ status: "error", error: errorText(error) });
     }
   }
 
@@ -420,7 +425,7 @@ export default function App() {
     try {
       await process.write("STOP\n");
     } catch (error) {
-      app.set({ error: "Не удалось штатно остановить поиск: " + String(error) });
+      app.set({ error: "Не удалось штатно остановить поиск: " + errorText(error) });
       stopRequested.current = false;
       app.set({ status: "running" });
     }
@@ -439,7 +444,7 @@ export default function App() {
       await child.current.write(wasPaused ? "RESUME\n" : "PAUSE\n");
       app.set({ status: wasPaused ? "running" : "paused", rate: wasPaused ? app.rate : 0 });
     } catch (error) {
-      app.set({ error: "Не удалось переключить паузу: " + String(error) });
+      app.set({ error: "Не удалось переключить паузу: " + errorText(error) });
     }
   }
 
@@ -462,7 +467,7 @@ export default function App() {
         throw new Error(result.stderr || "Не удалось прочитать сохранённый кошелёк");
       setRecoveryPhrase(result.stdout.trim());
     } catch (error) {
-      app.set({ error: String(error) });
+      app.set({ error: errorText(error) });
       setRevealOpen(false);
     } finally {
       setRevealing(false);
@@ -476,6 +481,9 @@ export default function App() {
     <div className="main" id="generator">
       <ToolNavigation active={activeTool} onSelect={openTool}
         live={running && activeTool !== "generator" ? { label: statusLabel, value: fmt.format(app.rate) + " адр/с" } : null}/>
+      {web && !window.isSecureContext && <div className="secure-banner wrap" role="alert">
+        Сайт открыт без HTTPS: браузер блокирует создание ключей и буфер обмена.{" "}
+        <a href={`https://${window.location.host}${window.location.pathname}`}>Открыть защищённую версию</a></div>}
       <main className={"content wrap" + (wide ? " wide" : "") + (activeTool === "overview" ? " home-content" : "")}>
         {activeTool !== "overview" && <div className="page-title">
           <div className="screen-heading">{isToolId(activeTool) && <ToolIcon tool={activeTool} className="screen-tool-icon" size={34} />}
@@ -636,26 +644,26 @@ export default function App() {
           </Tabs.Root>
         </section>
         </div>
-        <div className="tool-screen" hidden={activeTool !== "wallet-generator"}><WalletGenerator /></div>
-        <div className="tool-screen" hidden={activeTool !== "wallet-security"}><WalletSecurity /></div>
-        <div className="tool-screen" hidden={activeTool !== "address-inspector"}><AddressInspector /></div>
-        <div className="tool-screen" hidden={activeTool !== "boc-explorer"}><BocExplorer /></div>
-        <div className="tool-screen" hidden={activeTool !== "transaction-decoder"}><TransactionDecoder /></div>
-        <div className="tool-screen" hidden={activeTool !== "contract-inspector"}><ContractInspector /></div>
-        <div className="tool-screen" hidden={activeTool !== "contract-vanity"}><ContractVanity /></div>
-        <div className="tool-screen" hidden={activeTool !== "gpu-benchmark"}><GpuBenchmark /></div>
+        <div className="tool-screen" hidden={activeTool !== "wallet-generator"}><ToolBoundary name="Новый кошелёк"><WalletGenerator /></ToolBoundary></div>
+        <div className="tool-screen" hidden={activeTool !== "wallet-security"}><ToolBoundary name="Проверка кошелька"><WalletSecurity /></ToolBoundary></div>
+        <div className="tool-screen" hidden={activeTool !== "address-inspector"}><ToolBoundary name="Проверка адреса"><AddressInspector /></ToolBoundary></div>
+        <div className="tool-screen" hidden={activeTool !== "boc-explorer"}><ToolBoundary name="BOC Explorer"><BocExplorer /></ToolBoundary></div>
+        <div className="tool-screen" hidden={activeTool !== "transaction-decoder"}><ToolBoundary name="Транзакции"><TransactionDecoder /></ToolBoundary></div>
+        <div className="tool-screen" hidden={activeTool !== "contract-inspector"}><ToolBoundary name="Контракты"><ContractInspector /></ToolBoundary></div>
+        <div className="tool-screen" hidden={activeTool !== "contract-vanity"}><ToolBoundary name="Contract Vanity"><ContractVanity /></ToolBoundary></div>
+        <div className="tool-screen" hidden={activeTool !== "gpu-benchmark"}><ToolBoundary name="GPU Benchmark"><GpuBenchmark /></ToolBoundary></div>
         <div className="tool-screen" hidden={activeTool !== "contract-sandbox"}>
           {(activeTool === "contract-sandbox" || visitedWorkspaces.includes("contract-sandbox")) &&
             <Suspense fallback={<p>Загружаю Sandbox…</p>}>
-            <ContractSandbox /></Suspense>}</div>
+            <ToolBoundary name="Sandbox"><ContractSandbox /></ToolBoundary></Suspense>}</div>
         <div className="tool-screen" hidden={activeTool !== "contract-builder"}>
           {(activeTool === "contract-builder" || visitedWorkspaces.includes("contract-builder")) &&
             <Suspense fallback={<p>Загружаю редактор…</p>}>
-            <ContractBuilder /></Suspense>}</div>
+            <ToolBoundary name="Builder"><ContractBuilder /></ToolBoundary></Suspense>}</div>
         <div className="tool-screen" hidden={activeTool !== "developer-cli"}>
           {(activeTool === "developer-cli" || visitedWorkspaces.includes("developer-cli")) &&
             <Suspense fallback={<p>Загружаю терминал…</p>}>
-            <DeveloperCli /></Suspense>}</div>
+            <ToolBoundary name="Developer CLI"><DeveloperCli /></ToolBoundary></Suspense>}</div>
       </main>
       {web && <SiteFooter onOpen={openTool} />}
     </div>

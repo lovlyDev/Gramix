@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useState } from "react";
+import { copyText } from "../../lib/clipboard";
 import * as Tabs from "@radix-ui/react-tabs";
 import * as Switch from "@radix-ui/react-switch";
 import * as Dialog from "@radix-ui/react-dialog";
@@ -197,7 +198,7 @@ export default function WorkspaceSettings({ devices, backends, version, updateSt
             const publicInfo = { version, platform: navigator.platform,
               devices: devices.map((device) => ({ name: device.name, vendor: device.vendor,
                 driver: device.driver, apis: device.apis })) };
-            void navigator.clipboard.writeText(JSON.stringify(publicInfo, null, 2))
+            void copyText(JSON.stringify(publicInfo, null, 2))
               .then(() => setDiagnosticsStatus("Публичные сведения скопированы."))
               .catch(() => setDiagnosticsStatus("Не удалось скопировать сведения."));
           }}>Копировать сведения о системе</button>
