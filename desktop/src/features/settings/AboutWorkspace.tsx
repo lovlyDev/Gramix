@@ -17,7 +17,7 @@ import license from "../../../../LICENSE?raw";
 import licensingRu from "../../../../LICENSING.ru.md?raw";
 import noticeRu from "../../../../NOTICE.ru.md?raw";
 
-const repository = "https://github.com/lovlyDev/VANTIX";
+const repository = "https://github.com/lovlyDev/Gramix";
 const sourceRevision = import.meta.env.VITE_SOURCE_REVISION || "";
 const documents = [
   { id: "readme-ru", title: "README · Русский", icon: BookOpen, text: readmeRu },

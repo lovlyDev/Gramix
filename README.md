@@ -6,7 +6,7 @@ Gramix (formerly VANTIX) is my toolkit for the GRAM network: a vanity address ge
 
 ## Download
 
-[Release 0.1.0](https://github.com/lovlyDev/VANTIX/releases/tag/v0.1.0) provides a Windows NSIS installer (`GRAMIX_0.1.0_x64-setup.exe`), Linux DEB (`GRAMIX_0.1.0_amd64.deb`), Linux AppImage (`GRAMIX_0.1.0_amd64.AppImage`), and `SHA256SUMS.txt`.
+[Release 0.1.0](https://github.com/lovlyDev/Gramix/releases/tag/v0.1.0) provides a Windows NSIS installer (`GRAMIX_0.1.0_x64-setup.exe`), Linux DEB (`GRAMIX_0.1.0_amd64.deb`), Linux AppImage (`GRAMIX_0.1.0_amd64.AppImage`), and `SHA256SUMS.txt`.
 
 The app detects devices, tests available compute modes, and lets you choose automatic or manual mode selection. The 12-word search can use Vulkan Compute, with results rechecked on CPU. The 24-word search uses CPU. Multiple physical GPUs have not yet been hardware-validated together. The Windows installer is not publisher certificate signed.
 

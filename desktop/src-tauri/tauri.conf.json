@@ -45,7 +45,7 @@
   "plugins": {
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDE5QjA5MUY2OUUxQ0U1RTkKUldUcDVSeWU5cEd3R2FQekNBNGVMNzhHMFRka1E2L2x3a3hCRFo5TU81OHpPSENuWXF2Lzd3NWUK",
-      "endpoints": ["https://github.com/lovlyDev/VANTIX/releases/latest/download/latest.json"],
+      "endpoints": ["https://github.com/lovlyDev/Gramix/releases/latest/download/latest.json"],
       "windows": { "installMode": "passive" }
     }
   }

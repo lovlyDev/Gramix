@@ -247,7 +247,7 @@ export default function ToolNavigation({ active, onSelect, live }: {
             : <p className="menu-empty">Отметьте инструменты звёздочкой в меню разделов.</p>}
         </div>}
       </div>
-      <a className="icon-btn" href="https://github.com/lovlyDev/VANTIX" target="_blank"
+      <a className="icon-btn" href="https://github.com/lovlyDev/Gramix" target="_blank"
         rel="noreferrer" title="Исходный код Gramix" aria-label="Исходный код Gramix"><SiGithub size={18} /></a>
       <button type="button" className={`icon-btn ${active === "settings" ? "on" : ""}`} title="Настройки"
         aria-label="Настройки" onClick={() => select("settings")}><Settings size={19} /></button>
