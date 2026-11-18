@@ -1,22 +1,37 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Run only the bundled Gramix compute sidecar",
-  "windows": ["main"],
+  "description": "Run only the bundled Gramix compute sidecar and open web links in the browser",
+  "windows": [
+    "main"
+  ],
   "permissions": [
     "core:default",
     {
       "identifier": "shell:allow-execute",
-      "allow": [{ "name": "binaries/gramix", "sidecar": true, "args": true }]
+      "allow": [
+        {
+          "name": "binaries/gramix",
+          "sidecar": true,
+          "args": true
+        }
+      ]
     },
     {
       "identifier": "shell:allow-spawn",
-      "allow": [{ "name": "binaries/gramix", "sidecar": true, "args": true }]
+      "allow": [
+        {
+          "name": "binaries/gramix",
+          "sidecar": true,
+          "args": true
+        }
+      ]
     },
     "shell:allow-kill",
     "shell:allow-stdin-write",
     "dialog:allow-open",
     "updater:default",
-    "process:allow-restart"
+    "process:allow-restart",
+    "shell:allow-open"
   ]
 }

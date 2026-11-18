@@ -14,6 +14,7 @@ import { ToolIcon, allTools, detectQuery, matchesTool, openSmart, toolAvailable,
   type ToolId, type WorkspaceId } from "../../components/ToolNavigation";
 import type { Device, ValidatedBackend } from "../../store";
 import { readBenchmarkHistory } from "../gpu-benchmark/benchmarkHistory";
+import SmoothChart from "../../components/SmoothChart";
 
 const whole = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 });
 const compact = new Intl.NumberFormat("ru-RU", { notation: "compact", maximumFractionDigits: 1 });
@@ -38,7 +39,13 @@ export default function Overview({ devices, backends, recent, searchStatus, chec
 }) {
   const [query, setQuery] = useState("");
   const active = searchStatus === "running" || searchStatus === "paused";
-  const lastBenchmark = readBenchmarkHistory().at(-1);
+  const history = readBenchmarkHistory();
+  const lastBenchmark = history.at(-1);
+  // Лучший результат каждого прохода Benchmark — для графика на главной.
+  const bestPerRun = history.slice(-30).map((report) => ({
+    at: new Date(report.measuredAt),
+    rate: Math.max(...report.results.map((item) => item.addresses_per_second)),
+  }));
   const lastResult = lastBenchmark?.results.reduce((best, result) =>
     result.addresses_per_second > best.addresses_per_second ? result : best);
   const apis = [...new Set(backends.map((backend) => backend.api))];
@@ -51,7 +58,7 @@ export default function Overview({ devices, backends, recent, searchStatus, chec
   }
 
   return <div className="overview-page home">
-    <section className="hero">
+    {__WEB__ && <section className="hero">
       <h1>Gramix<span className="org">GRAM</span></h1>
       <p>Локальная мастерская GRAM: адреса, кошельки, контракты и GPU в одном окне</p>
       <form className="hero-search search" onSubmit={(event) => { event.preventDefault(); submit(); }}>
@@ -82,7 +89,14 @@ export default function Overview({ devices, backends, recent, searchStatus, chec
           Локальный режим{version && <span className="muted">v{version}</span>}
         </button>
       </div>
-    </section>
+    </section>}
+    {!__WEB__ && <section className="app-quick" aria-label="Быстрые действия">
+      {([["generator", "Найти красивый адрес"], ["wallet-generator", "Создать кошелёк"],
+        ["transaction-decoder", "Разобрать транзакцию"], ["gpu-benchmark", "Замерить скорость"]] as const).map(([id, label]) =>
+        <button type="button" key={id} className="quick-action" onClick={() => onOpen(id)}>
+          <ToolIcon tool={id} size={34} /><span><b>{label}</b><small>{allTools.find((item) => item.id === id)?.description}</small></span>
+          <ChevronRight size={16} className="chev" /></button>)}
+    </section>}
 
     <div className="tiles">
       <StatTile icon={Activity} color="#5856d6" value={number(rate)} label="Адресов / сек"
@@ -107,6 +121,17 @@ export default function Overview({ devices, backends, recent, searchStatus, chec
         </div>
       </div>
     </section>}
+
+    <section className="card activity-card" aria-labelledby="overview-activity-title">
+      <div className="card-head"><h2 id="overview-activity-title">Скорость по замерам Benchmark</h2>
+        <button type="button" className="card-link" onClick={() => onOpen("gpu-benchmark")}>Новый замер <ChevronRight size={14} /></button></div>
+      <div className="card-body">{bestPerRun.length >= 2
+        ? <SmoothChart height={200} unit="адр/с" ariaLabel="Лучшая скорость по проходам Benchmark"
+            labels={bestPerRun.map((item) => item.at.toLocaleDateString("ru-RU", { day: "numeric", month: "short" }))}
+            series={[{ key: "best", label: "Лучший результат", color: "var(--accent)", values: bestPerRun.map((item) => item.rate) }]} />
+        : <div className="activity-empty"><Gauge size={22} /><span>После двух замеров Benchmark здесь появится график скорости вашего компьютера.</span>
+            <button type="button" className="btn" onClick={() => onOpen("gpu-benchmark")}>Запустить Benchmark</button></div>}</div>
+    </section>
 
     <div className="grid-3">
       {toolGroups.map((group) => <section className="card" key={group.title} aria-label={group.title}>

@@ -19,6 +19,8 @@ import type { Device, ValidatedBackend } from "../../store";
 import { useApp, type Backend } from "../../store";
 import Select from "../../components/ui/Select";
 import { BENCHMARK_HISTORY_KEY } from "../gpu-benchmark/benchmarkHistory";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import AboutWorkspace from "./AboutWorkspace";
 
 type Theme = "oled" | "dark" | "light";
@@ -33,11 +35,10 @@ function readOption<T extends string>(key: string, values: readonly T[], fallbac
 const web = platform.kind === "web";
 
 export default function WorkspaceSettings({ devices, backends, version, updateState,
-  updateBusy, canInstallUpdate, onRefreshDevices, onCheckUpdate, onInstallUpdate }: {
+  updateBusy, updateVersion, updateNotes, updateCheckedAt, onRefreshDevices, onUpdate }: {
   devices: Device[]; backends: ValidatedBackend[]; version: string; updateState: string;
-  updateBusy: boolean; canInstallUpdate: boolean;
-  onRefreshDevices: () => void; onCheckUpdate: () => void;
-  onInstallUpdate: () => void;
+  updateBusy: boolean; updateVersion: string; updateNotes: string; updateCheckedAt: number | null;
+  onRefreshDevices: () => void; onUpdate: () => void;
 }) {
   const [consent, setConsent] = useState(telemetry.consent() === "granted");
   const [theme, setTheme] = useState<Theme>(() => readOption("gramix.ui.theme", themes, "dark"));
@@ -186,11 +187,15 @@ export default function WorkspaceSettings({ devices, backends, version, updateSt
         </Tabs.Content>}
         <Tabs.Content value="updates"><div className="settings-panel-heading"><h2>Обновления</h2>
           <p>Установленная версия: {version || "определяется"}</p></div>
-          <p className="settings-status" role="status">{updateState || "Состояние обновлений пока неизвестно."}</p>
-          <div className="workspace-actions"><button type="button" className="settings-secondary" disabled={updateBusy}
-            onClick={onCheckUpdate}><RefreshCw size={16} /> Проверить обновления</button>
-            {canInstallUpdate && <button type="button" className="settings-secondary"
-              disabled={updateBusy} onClick={onInstallUpdate}>Установить обновление</button>}</div>
+          <p className="settings-status" role="status">{updateState || "Состояние обновлений пока неизвестно."}
+            {updateCheckedAt && <small> · проверено в {new Date(updateCheckedAt).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}</small>}</p>
+          {updateVersion && updateNotes && <div className="update-notes"><b>Что нового в {updateVersion}</b>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{updateNotes}</ReactMarkdown></div>}
+          <div className="workspace-actions"><button type="button" className="update-button" disabled={updateBusy}
+            onClick={onUpdate}><RefreshCw size={16} className={updateBusy ? "spin" : ""} />
+            {updateBusy ? "Обновление…" : updateVersion ? `Обновить до ${updateVersion}` : "Обновить"}</button></div>
+          <p className="update-hint">Gramix проверяет GitHub Releases при запуске и каждые 6 часов. Перед установкой
+            приложение проверяет подпись обновления, затем перезапускается само.</p>
         </Tabs.Content>
         <Tabs.Content value="diagnostics"><div className="settings-panel-heading"><h2>Диагностика</h2>
           <p>Публичные сведения без кошельков, фраз и паролей.</p></div>

@@ -78,22 +78,34 @@ try {
   await page.keyboard.press("Escape");
 
   await page.evaluate(() => { location.hash = "wallet-generator"; });
-  await page.locator(".top").getByRole("button", { name: "Блокчейн", exact: true }).click();
-  const blockchainMenu = page.getByRole("menu", { name: "Блокчейн" });
-  await blockchainMenu.waitFor();
-  assert.equal(await blockchainMenu.getByRole("menuitem").count(), 4);
-  if (process.env.GRAMIX_E2E_SCREENSHOTS === "1")
-    await page.screenshot({ path: join(screenshotDir, "header-menu-1024.png") });
-  await blockchainMenu.getByRole("menuitem", { name: "BOC Explorer" }).click();
+  const sidebar = page.getByRole("complementary", { name: "Навигация Gramix" });
+  assert.equal(await sidebar.getByRole("button", { name: "BOC Explorer", exact: true }).count(), 1);
+  await sidebar.getByRole("button", { name: "BOC Explorer", exact: true }).click();
   await page.waitForFunction(() =>
     document.querySelector(".screen-heading strong")?.textContent === "BOC Explorer");
-  assert.equal(await page.getByRole("menu", { name: "Блокчейн" }).count(), 0, "Меню закрывается после выбора");
+  assert.equal(await sidebar.locator('[aria-current="page"]').count(), 1, "Активный пункт отмечен в боковой панели");
+  if (process.env.GRAMIX_E2E_SCREENSHOTS === "1") {
+    await page.evaluate(() => { location.hash = "overview"; });
+    await page.waitForTimeout(400);
+    await page.screenshot({ path: join(screenshotDir, "overview-app-1024.png") });
+  }
   const rawAddress = `0:${"1".repeat(64)}`;
   await page.getByRole("textbox", { name: "Поиск по Gramix", exact: true }).fill(rawAddress);
   await page.keyboard.press("Enter");
   await page.waitForFunction(() =>
     document.querySelector(".screen-heading strong")?.textContent === "Проверка адреса");
   assert.equal(await page.locator("#address-value").inputValue(), rawAddress);
+
+  await page.evaluate(() => { location.hash = "settings"; });
+  await page.getByRole("tab", { name: "О программе" }).click();
+  await page.locator(".about-markdown h1").first().waitFor();
+  assert.equal(await page.locator(".about-markdown").getByText("English | Русский").count(), 0, "Строка языков скрыта");
+  await page.getByRole("combobox", { name: "Язык документа" }).click();
+  await page.getByRole("option", { name: "English" }).click();
+  await page.locator(".about-markdown").getByText("is my toolkit for the GRAM network", { exact: false }).waitFor();
+  await page.getByRole("button", { name: "README", exact: true }).click();
+  await page.getByRole("combobox", { name: "Язык документа" }).click();
+  await page.getByRole("option", { name: "Русский" }).click();
 
   if (process.env.GRAMIX_E2E_SCREENSHOTS === "1") {
     for (const [theme, button] of [["light", "Светлая"], ["dark", "Тёмная"]]) {
@@ -106,12 +118,13 @@ try {
       await page.locator(".about-markdown h1").first().waitFor();
       await page.getByRole("button", { name: "GNU AGPLv3" }).click();
       await page.locator(".about-document pre").waitFor();
-      await page.getByRole("button", { name: "README · Русский" }).click();
+      await page.getByRole("button", { name: "README", exact: true }).click();
       await page.screenshot({ path: join(screenshotDir, `about-${theme}-1024.png`) });
       for (const [route, title] of routes) {
         await page.evaluate((value) => { location.hash = value; }, route);
         await page.waitForFunction((value) =>
           document.querySelector(".screen-heading strong")?.textContent === value, title);
+        await page.waitForTimeout(400);
         await page.screenshot({ path: join(screenshotDir, `${route}-${theme}-1024.png`) });
       }
     }

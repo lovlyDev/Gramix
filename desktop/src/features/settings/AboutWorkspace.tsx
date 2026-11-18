@@ -15,18 +15,38 @@ import readmeRu from "../../../../README.ru.md?raw";
 import readmeEn from "../../../../README.md?raw";
 import license from "../../../../LICENSE?raw";
 import licensingRu from "../../../../docs/LICENSING.ru.md?raw";
+import licensingEn from "../../../../docs/LICENSING.md?raw";
 import noticeRu from "../../../../NOTICE.ru.md?raw";
+import noticeEn from "../../../../NOTICE.md?raw";
+import Select from "../../components/ui/Select";
+import { openExternal } from "../../lib/external";
 
 const repository = "https://github.com/lovlyDev/Gramix";
 const sourceRevision = import.meta.env.VITE_SOURCE_REVISION || "";
+type Language = "ru" | "en";
 const documents = [
-  { id: "readme-ru", title: "README · Русский", icon: BookOpen, text: readmeRu },
-  { id: "readme-en", title: "README · English", icon: BookOpen, text: readmeEn },
-  { id: "license", title: "GNU AGPLv3", icon: Scale, text: license },
-  { id: "licensing", title: "Условия лицензирования", icon: ScrollText, text: licensingRu },
-  { id: "notice", title: "Уведомления", icon: FileText, text: noticeRu },
+  { id: "readme", title: { ru: "README", en: "README" }, icon: BookOpen, text: { ru: readmeRu, en: readmeEn } },
+  { id: "license", title: { ru: "GNU AGPLv3", en: "GNU AGPLv3" }, icon: Scale, text: { ru: license, en: license } },
+  { id: "licensing", title: { ru: "Лицензия · пояснения", en: "Licensing" }, icon: ScrollText, text: { ru: licensingRu, en: licensingEn } },
+  { id: "notice", title: { ru: "Уведомления", en: "Notices" }, icon: FileText, text: { ru: noticeRu, en: noticeEn } },
 ] as const;
 type DocumentId = (typeof documents)[number]["id"];
+const languages = [{ value: "ru", label: "Русский" }, { value: "en", label: "English" }];
+
+// Ссылки между встроенными документами открываются здесь же, остальные — в браузере.
+const embedded: Record<string, [DocumentId, Language]> = {
+  "README.md": ["readme", "en"], "README.ru.md": ["readme", "ru"], "LICENSE": ["license", "en"],
+  "LICENSING.md": ["licensing", "en"], "LICENSING.ru.md": ["licensing", "ru"],
+  "NOTICE.md": ["notice", "en"], "NOTICE.ru.md": ["notice", "ru"],
+};
+function embeddedDocument(href: string): [DocumentId, Language] | null {
+  if (/^(https?:|mailto:|#)/i.test(href)) return null;
+  const name = href.split(/[?#]/)[0].split("/").pop() ?? "";
+  return embedded[name] ?? null;
+}
+
+// Строка «English | Русский» нужна на GitHub; в приложении язык выбирается списком.
+const withoutLanguageLine = (text: string) => text.replace(/^\[?English\]?(?:\([^)]*\))? \| \[?Русский\]?(?:\([^)]*\))?[ \t]*\r?\n/m, "");
 
 function externalDocumentUrl(value: string) {
   if (/^(https?:|mailto:|#)/i.test(value)) return value;
@@ -34,30 +54,45 @@ function externalDocumentUrl(value: string) {
 }
 
 export default function AboutWorkspace({ version }: { version: string }) {
-  const [selected, setSelected] = useState<DocumentId>("readme-ru");
+  const [selected, setSelected] = useState<DocumentId>("readme");
+  const [language, setLanguage] = useState<Language>(() => {
+    try { return localStorage.getItem("gramix.ui.docsLanguage") === "en" ? "en" : "ru"; } catch { return "ru"; }
+  });
+  function changeLanguage(value: Language) {
+    setLanguage(value);
+    try { localStorage.setItem("gramix.ui.docsLanguage", value); } catch { /* приватный режим */ }
+  }
   const document = documents.find((item) => item.id === selected) ?? documents[0];
+  const title = document.title[language];
   return <div className="about-workspace">
     <div className="about-intro">
       <div><strong>Gramix</strong><span>Версия {version || "определяется"}</span></div>
       <a href={sourceRevision ? `${repository}/tree/${sourceRevision}` : repository}
-        target="_blank" rel="noreferrer"><ExternalLink size={16} /> Исходный код</a>
+        onClick={(event) => { event.preventDefault(); openExternal(event.currentTarget.href); }}><ExternalLink size={16} /> Исходный код</a>
     </div>
-    <p className="about-licensing">Собственный код предоставляется по GNU AGPLv3. Коммерческая лицензия оформляется отдельным письменным договором.</p>
+    <p className="about-licensing">Gramix — свободная программа на условиях GNU AGPLv3. Сторонние компоненты сохраняют свои лицензии.</p>
     <div className="about-document-layout">
       <nav className="about-document-nav" aria-label="Документы Gramix">
         {documents.map((item) => { const Icon = item.icon; return <button type="button"
           key={item.id} aria-pressed={selected === item.id} onClick={() => setSelected(item.id)}>
-          <Icon size={18} aria-hidden="true" /><span>{item.title}</span></button>; })}
+          <Icon size={18} aria-hidden="true" /><span>{item.title[language]}</span></button>; })}
       </nav>
-      <section className="about-document" aria-label={document.title} key={document.id}>
-        <div className="about-document-heading"><FileText size={18} /><h3>{document.title}</h3></div>
-        {document.id === "license" ? <pre>{document.text}</pre> :
+      <section className="about-document" aria-label={title} key={`${document.id}-${language}`}>
+        <div className="about-document-heading"><FileText size={18} /><h3>{title}</h3>
+          {document.id !== "license" && <Select label="Язык документа" className="about-language" value={language}
+            onValueChange={(value) => changeLanguage(value as Language)} options={languages} />}</div>
+        {document.id === "license" ? <pre>{document.text.en}</pre> :
           <div className="about-markdown"><ReactMarkdown remarkPlugins={[remarkGfm]}
             components={{
-              a: ({ href, children }) => <a href={externalDocumentUrl(href || "#")}
-                target="_blank" rel="noreferrer">{children}</a>,
+              a: ({ href, children }) => {
+                const target = embeddedDocument(href || "");
+                return <a href={target ? `#${target}` : externalDocumentUrl(href || "#")} onClick={(event) => {
+                  event.preventDefault();
+                  if (target) { setSelected(target[0]); if (target[0] !== "license") changeLanguage(target[1]); } else if (href && !href.startsWith("#")) openExternal(externalDocumentUrl(href));
+                }}>{children}</a>;
+              },
               img: ({ src, alt }) => <img src={externalDocumentUrl(src || "#")} alt={alt || ""} loading="lazy" />,
-            }}>{document.text}</ReactMarkdown></div>}
+            }}>{withoutLanguageLine(document.text[language])}</ReactMarkdown></div>}
       </section>
     </div>
   </div>;

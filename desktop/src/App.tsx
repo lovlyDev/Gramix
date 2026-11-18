@@ -42,6 +42,7 @@ import type { VanityHandle } from "./platform/types";
 import PrivacyPage from "./features/privacy/PrivacyPage";
 import SiteFooter from "./components/SiteFooter";
 import ToolBoundary from "./components/ToolBoundary";
+import AppSidebar from "./components/AppSidebar";
 
 const sidecar = "binaries/gramix";
 const web = __WEB__;
@@ -93,6 +94,7 @@ export default function App() {
   const [updateState, setUpdateState] = useState("");
   const [updateError, setUpdateError] = useState("");
   const [updateBusy, setUpdateBusy] = useState(false);
+  const [updateCheckedAt, setUpdateCheckedAt] = useState<number | null>(null);
   const [installedVersion, setInstalledVersion] = useState("");
   const [recentTools, setRecentTools] = useState<ToolId[]>(() => {
     try {
@@ -228,78 +230,67 @@ export default function App() {
   useEffect(() => {
     if (!isTauri()) return;
     void getVersion().then(setInstalledVersion);
-    let cancelled = false;
-    async function findUpdate() {
-      try {
-        if ((await getVersion()).includes("-dev.")) {
-          if (!cancelled) setUpdateState("Пробная сборка: автообновление отключено.");
-          return;
-        }
-        if (!await invoke<boolean>("supports_self_update")) {
-          if (!cancelled) setUpdateState("DEB обновляется через пакетный менеджер.");
-          return;
-        }
-        const update = await check();
-        if (cancelled) { await update?.close(); return; }
-        setAvailableUpdate(update);
-        setUpdateState(update ? `Доступна версия ${update.version}` : "Установлена последняя версия.");
-      } catch {
-        // The first release may have no latest.json yet. Manual retry reports the error.
-        if (!cancelled) setUpdateState("Проверка обновлений сейчас недоступна.");
-      }
-    }
-    void findUpdate();
-    return () => { cancelled = true; };
+    void checkUpdate(true);
+    const timer = window.setInterval(() => void checkUpdate(true), 6 * 60 * 60 * 1000);
+    return () => window.clearInterval(timer);
   }, []);
   useEffect(() => () => { vanity.current?.stop(); void child.current?.write("STOP\n"); }, []);
 
-  async function checkUpdate() {
-    if (!isTauri() || updateBusy) return;
-    if (installedVersion.includes("-dev.")) {
+  // Проверить latest.json на GitHub. silent — фоновая проверка без сообщений об ошибке.
+  async function checkUpdate(silent = false): Promise<Update | null> {
+    if (!isTauri()) return null;
+    if ((installedVersion || await getVersion()).includes("-dev.")) {
       setUpdateState("Пробная сборка: автообновление отключено.");
-      return;
+      return null;
     }
-    setUpdateBusy(true);
-    setUpdateError("");
-    setUpdateState("Проверка версии…");
+    if (!await invoke<boolean>("supports_self_update")) {
+      setUpdateState("DEB обновляется через пакетный менеджер: скачайте новый .deb из GitHub Releases.");
+      return null;
+    }
+    if (!silent) { setUpdateError(""); setUpdateState("Проверяю GitHub…"); }
     try {
-      if (!await invoke<boolean>("supports_self_update")) {
-        setUpdateState("Для DEB обновление выполняется через пакетный менеджер.");
-        return;
-      }
       const update = await check();
       setAvailableUpdate(update);
-      setUpdateState(update ? "Доступна версия " + update.version : "Установлена последняя версия.");
+      setUpdateCheckedAt(Date.now());
+      setUpdateState(update ? `Доступна версия ${update.version}` : "Установлена последняя версия.");
+      return update;
     } catch (error) {
-      setUpdateError("Не удалось проверить обновления: " + errorText(error));
-      setUpdateState("");
-    } finally {
-      setUpdateBusy(false);
+      if (silent) setUpdateState("Проверка обновлений сейчас недоступна.");
+      else { setUpdateError("Не удалось проверить обновления: " + errorText(error)); setUpdateState(""); }
+      return null;
     }
   }
 
-  async function installUpdate() {
-    if (!availableUpdate || updateBusy || running) return;
+  // Кнопка «Обновить»: проверить GitHub и, если вышла новая версия, скачать, установить и перезапустить.
+  async function updateNow() {
+    if (!isTauri() || updateBusy) return;
     setUpdateBusy(true);
-    setUpdateError("");
-    setUpdateState("Загрузка обновления…");
     try {
+      const update = availableUpdate ?? await checkUpdate();
+      if (!update) return;
+      if (running) {
+        setUpdateError(`Версия ${update.version} готова. Остановите поиск адреса и нажмите «Обновить» ещё раз.`);
+        return;
+      }
+      setUpdateError("");
+      setUpdateState(`Загрузка версии ${update.version}…`);
       let downloaded = 0;
       let total = 0;
-      await availableUpdate.downloadAndInstall((event) => {
+      await update.downloadAndInstall((event) => {
         if (event.event === "Started") total = event.data.contentLength ?? 0;
         if (event.event === "Progress") {
           downloaded += event.data.chunkLength;
           setUpdateState(total > 0
-            ? `Загрузка обновления · ${Math.min(100, Math.round(downloaded / total * 100))}%`
-            : "Загрузка обновления…");
+            ? `Загрузка версии ${update.version} · ${Math.min(100, Math.round(downloaded / total * 100))}%`
+            : `Загрузка версии ${update.version}…`);
         }
-        if (event.event === "Finished") setUpdateState("Установка обновления…");
+        if (event.event === "Finished") setUpdateState("Установка и перезапуск…");
       });
       await relaunch();
     } catch (error) {
       setUpdateError("Не удалось установить обновление: " + errorText(error));
       setUpdateState("");
+    } finally {
       setUpdateBusy(false);
     }
   }
@@ -477,25 +468,19 @@ export default function App() {
   const wide = ["contract-sandbox", "contract-builder", "developer-cli"].includes(activeTool);
   const statusLabel = app.status === "paused" ? "Пауза" : app.status === "initializing" ? "Подготовка"
     : app.status === "stopping" ? "Остановка" : app.status === "running" ? "Поиск активен" : "Готово";
-  return <div className={"app-shell" + (wide ? " is-wide" : "")}>
-    <div className="main" id="generator">
-      <ToolNavigation active={activeTool} onSelect={openTool}
-        live={running && activeTool !== "generator" ? { label: statusLabel, value: fmt.format(app.rate) + " адр/с" } : null}/>
-      {web && !window.isSecureContext && <div className="secure-banner wrap" role="alert">
-        Сайт открыт без HTTPS: браузер блокирует создание ключей и буфер обмена.{" "}
-        <a href={`https://${window.location.host}${window.location.pathname}`}>Открыть защищённую версию</a></div>}
-      <main className={"content wrap" + (wide ? " wide" : "") + (activeTool === "overview" ? " home-content" : "")}>
-        {activeTool !== "overview" && <div className="page-title">
-          <div className="screen-heading">{isToolId(activeTool) && <ToolIcon tool={activeTool} className="screen-tool-icon" size={34} />}
-            <strong>{activeTool === "settings" ? "Настройки" : activeTool === "privacy" ? "Конфиденциальность" : toolTitles[activeTool as ToolId]}</strong></div>
-          <div className="page-meta">
-            <span className="badge"><ShieldCheck size={13}/>
-              {["address-inspector", "transaction-decoder", "contract-inspector"].includes(activeTool)
-                ? "Сеть: по запросу" : "Локально"}</span>
-            {activeTool === "generator" &&
-              <span className={"badge status-badge " + (app.status === "running" ? "ok live" : "")}><span className="status-light"/>{statusLabel}</span>}
-          </div>
-        </div>}
+  const screenTitle = activeTool === "overview" ? "Обзор" : activeTool === "settings" ? "Настройки"
+    : activeTool === "privacy" ? "Конфиденциальность" : toolTitles[activeTool as ToolId];
+  const pageMeta = <div className="page-meta">
+    <span className="badge"><ShieldCheck size={13}/>
+      {["address-inspector", "transaction-decoder", "contract-inspector"].includes(activeTool)
+        ? "Сеть: по запросу" : "Локально"}</span>
+    {activeTool === "generator" &&
+      <span className={"badge status-badge " + (app.status === "running" ? "ok live" : "")}><span className="status-light"/>{statusLabel}</span>}
+  </div>;
+  const heading = <div className="screen-heading">{isToolId(activeTool) && <ToolIcon tool={activeTool} className="screen-tool-icon" size={web ? 34 : 28} />}
+    <strong>{screenTitle}</strong></div>;
+  const liveChip = running && activeTool !== "generator" ? { label: statusLabel, value: fmt.format(app.rate) + " адр/с" } : null;
+  const screens = <>
         <div className="tool-screen workspace-screen" hidden={activeTool !== "overview"}>
           <Overview devices={app.devices} backends={app.validatedBackends} recent={recentTools}
             searchStatus={app.status} checked={app.checked} rate={app.rate} version={installedVersion}
@@ -505,9 +490,9 @@ export default function App() {
         <div className="tool-screen workspace-screen" hidden={activeTool !== "settings"}>
           <WorkspaceSettings devices={app.devices} backends={app.validatedBackends}
             version={installedVersion} updateState={updateError || updateState}
-            updateBusy={updateBusy} canInstallUpdate={Boolean(availableUpdate) && !running}
-            onRefreshDevices={() => void refreshDevices()} onCheckUpdate={() => void checkUpdate()}
-            onInstallUpdate={() => void installUpdate()} /></div>
+            updateBusy={updateBusy} updateVersion={availableUpdate?.version ?? ""}
+            updateNotes={availableUpdate?.body ?? ""} updateCheckedAt={updateCheckedAt}
+            onRefreshDevices={() => void refreshDevices()} onUpdate={() => void updateNow()} /></div>
         <div className="vanity-screen" hidden={activeTool !== "generator"}>
         <div className="intro"><h1>Поиск адреса</h1>
           <p>GRAM · Задайте фрагмент адреса, остальное Gramix проверит локально</p>
@@ -664,9 +649,40 @@ export default function App() {
           {(activeTool === "developer-cli" || visitedWorkspaces.includes("developer-cli")) &&
             <Suspense fallback={<p>Загружаю терминал…</p>}>
             <ToolBoundary name="Developer CLI"><DeveloperCli /></ToolBoundary></Suspense>}</div>
+  </>;
+  const gpu = app.validatedBackends.find((backend) => backend.api !== "CPU");
+  const layout = web ? <div className={"app-shell" + (wide ? " is-wide" : "")}>
+    <div className="main" id="generator">
+      <ToolNavigation active={activeTool} onSelect={openTool} live={liveChip}/>
+      {!window.isSecureContext && <div className="secure-banner wrap" role="alert">
+        Сайт открыт без HTTPS: браузер блокирует создание ключей и буфер обмена.{" "}
+        <a href={`https://${window.location.host}${window.location.pathname}`}>Открыть защищённую версию</a></div>}
+      <main className={"content wrap" + (wide ? " wide" : "") + (activeTool === "overview" ? " home-content" : "")}>
+        {activeTool !== "overview" && <div className="page-title">{heading}{pageMeta}</div>}
+        {screens}
       </main>
-      {web && <SiteFooter onOpen={openTool} />}
+      <SiteFooter onOpen={openTool} />
     </div>
+  </div> : <div className={"app-shell desktop" + (wide ? " is-wide" : "")}>
+    <AppSidebar active={activeTool} onSelect={openTool} live={liveChip}
+      update={availableUpdate ? { version: availableUpdate.version, busy: updateBusy, onUpdate: () => void updateNow() } : null} />
+    <div className="main" id="generator">
+      <header className="app-toolbar">{heading}{pageMeta}</header>
+      <main className={"content app-content" + (wide ? " wide" : "")}>{screens}</main>
+      <footer className="status-bar">
+        <span className="status-item"><span className="status-dot ok" />Локально · без телеметрии</span>
+        <span className="status-item">{gpu ? `${gpu.name} · ${gpu.api}` : app.devices.length ? "CPU" : "Устройства не найдены"}</span>
+        <span className="status-item">Движки: {app.validatedBackends.length ? [...new Set(app.validatedBackends.map((item) => item.api))].join(", ") : "проверка…"}</span>
+        <span className="status-spacer" />
+        {running && <button type="button" className="status-item status-live" onClick={() => openTool("generator")}>
+          <span className="status-dot live" />{statusLabel} · {fmt.format(app.rate)} адр/с · {fmt.format(app.checked)} проверено</button>}
+        <span className="status-item">Gramix {installedVersion || "dev"}</span>
+      </footer>
+    </div>
+  </div>;
+
+  return <>
+    {layout}
     <Dialog.Root open={revealOpen} onOpenChange={(open) => {
       setRevealOpen(open);
       if (!open) setRecoveryPhrase("");
@@ -690,5 +706,5 @@ export default function App() {
       </Dialog.Portal>
     </Dialog.Root>
     <ConsentBanner onPrivacy={() => openTool("privacy")} />
-  </div>;
+  </>;
 }

@@ -10,6 +10,7 @@
 import { useEffect, useState, type ChangeEvent } from "react";
 import { errorText } from "../../lib/errors";
 import { formatGram } from "../../lib/format";
+import { openExternal } from "../../lib/external";
 import { platform } from "@platform";
 import { telemetry } from "@telemetry";
 import * as Tabs from "@radix-ui/react-tabs";
@@ -204,7 +205,7 @@ export default function TransactionDecoder() {
         <button onClick={exportJson}><Download size={15}/> Экспорт</button>
         <button onClick={() => { window.dispatchEvent(new CustomEvent("gramix:open-boc", { detail: transaction.rawBocBase64 }));
           window.location.hash = "boc-explorer"; }}><FileCode2 size={15}/> BOC Explorer</button>
-        <a href={explorerUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={15}/> Tonviewer</a>
+        <a href={explorerUrl} onClick={(event) => { event.preventDefault(); openExternal(explorerUrl); }}><ExternalLink size={15}/> Tonviewer</a>
       </div>
       <Group orientation="horizontal" className="tx-split" id="tx-split">
         <Panel defaultSize="38" minSize={250} className="tx-timeline">
