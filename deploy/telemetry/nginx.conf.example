@@ -1,11 +1,8 @@
-# Поддомен для сборщика. Подставьте свой домен вместо stats.example.ru
-# и выпустите сертификат (certbot или панель хостинга).
+# /etc/nginx/conf.d/stats.lovlydev.ru.conf
+# Сначала только HTTP: certbot --nginx сам добавит HTTPS и сертификат.
 server {
-    listen 443 ssl http2;
-    server_name stats.example.ru;
-
-    # ssl_certificate     /etc/letsencrypt/live/stats.example.ru/fullchain.pem;
-    # ssl_certificate_key /etc/letsencrypt/live/stats.example.ru/privkey.pem;
+    listen 80;
+    server_name stats.lovlydev.ru;
 
     client_max_body_size 64k;
     access_log off;

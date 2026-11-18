@@ -10,7 +10,14 @@
 
 1. Скопируйте каталог на сервер: `scp -r deploy/telemetry user@server:/tmp/telemetry`.
 2. На сервере: `sudo bash /tmp/telemetry/setup.sh`. Если нужно освободить память, ключ `--remove-container ИМЯ` остановит и удалит указанный контейнер.
-3. Настройте поддомен по `nginx.conf.example` и выпустите сертификат.
+3. Добавьте сайт в nginx и выпустите сертификат:
+
+```bash
+cp /tmp/telemetry/nginx.conf.example /etc/nginx/conf.d/stats.lovlydev.ru.conf
+nginx -t && systemctl reload nginx
+apt-get install -y certbot python3-certbot-nginx
+certbot --nginx -d stats.lovlydev.ru --redirect --agree-tos --register-unsafely-without-email -n
+```
 4. Войдите в Umami (`admin` / `umami`), смените пароль, добавьте сайт `gram.lovlydev.ru` и скопируйте его Website ID.
 5. В репозитории задайте переменные сайта и пересоберите его:
 

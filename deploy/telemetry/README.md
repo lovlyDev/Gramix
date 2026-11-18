@@ -10,7 +10,14 @@ The collector is [Umami](https://umami.is) with PostgreSQL. Together they need a
 
 1. Copy the folder to the server: `scp -r deploy/telemetry user@server:/tmp/telemetry`.
 2. On the server: `sudo bash /tmp/telemetry/setup.sh`. To free memory, `--remove-container NAME` stops and removes the named container.
-3. Configure a subdomain from `nginx.conf.example` and issue a certificate.
+3. Add the site to nginx and issue a certificate:
+
+```bash
+cp /tmp/telemetry/nginx.conf.example /etc/nginx/conf.d/stats.lovlydev.ru.conf
+nginx -t && systemctl reload nginx
+apt-get install -y certbot python3-certbot-nginx
+certbot --nginx -d stats.lovlydev.ru --redirect --agree-tos --register-unsafely-without-email -n
+```
 4. Sign in to Umami (`admin` / `umami`), change the password, add the site `gram.lovlydev.ru`, and copy its Website ID.
 5. Set the site variables in the repository and rebuild:
 
