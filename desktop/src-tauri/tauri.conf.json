@@ -12,10 +12,10 @@
   "app": {
     "windows": [{
       "title": "VANTIX",
-      "width": 1140,
-      "height": 760,
-      "minWidth": 880,
-      "minHeight": 640,
+      "width": 1360,
+      "height": 850,
+      "minWidth": 1000,
+      "minHeight": 680,
       "backgroundColor": "#000000"
     }],
     "security": { "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:" }
@@ -28,7 +28,14 @@
     "externalBin": ["binaries/vantix"],
     "resources": {
       "../../data/ton-english.txt": "data/ton-english.txt",
-      "../../gpu/vulkan/derive.spv": "gpu/vulkan/derive.spv"
+      "../../gpu/vulkan/derive.spv": "gpu/vulkan/derive.spv",
+      "../runtime/bundle/sandbox-scenario.cjs": "runtime/sandbox-scenario.cjs",
+      "../runtime/bundle/tolk-build.cjs": "runtime/tolk-build.cjs",
+      "../../docs/licenses/node-24.18.0.LICENSE": "licenses/node.LICENSE",
+      "../../docs/licenses/ton-sandbox.LICENSE": "licenses/ton-sandbox.LICENSE",
+      "../../docs/licenses/ton-tolk-js.LICENSE": "licenses/ton-tolk-js.LICENSE",
+      "../../docs/licenses/ton-core.LICENSE": "licenses/ton-core.LICENSE",
+      "../../docs/licenses/buffer.LICENSE": "licenses/buffer.LICENSE"
     },
     "windows": {
       "bundleVCRuntime": true,

@@ -1,3 +1,15 @@
+/*
+ * Copyright (C) 2026 [COPYRIGHT HOLDER].
+ * SPDX-License-Identifier: AGPL-3.0-only
+ *
+ * This file is part of VANTIX.
+ *
+ * VANTIX is dual-licensed under the GNU Affero General
+ * Public License v3.0 and a separate commercial license.
+ *
+ * See LICENSE and LICENSING.md for details.
+ */
+
 import { useEffect, useRef } from "react";
 import uPlot from "uplot";
 import "uplot/dist/uPlot.min.css";
@@ -8,6 +20,7 @@ export default function RateChart({ values }: { values: number[] }) {
   useEffect(() => {
     if (!host.current) return;
     const width = Math.max(1, host.current.clientWidth);
+    const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#8774e1";
     chart.current = new uPlot({
       width,
       height: 155,
@@ -16,7 +29,7 @@ export default function RateChart({ values }: { values: number[] }) {
       scales: { x: { time: false }, y: { auto: true,
         range: (_chart, _min, max) => [0, Math.max(1, max * 1.15)] } },
       axes: [{ show: false }, { show: false }],
-      series: [{}, { stroke: "#4f98ff", width: 2 }]
+      series: [{}, { stroke: accent, width: 2.5, fill: accent + "22" }]
     }, [values.map((_, i) => i), values], host.current);
     const resize = new ResizeObserver(([entry]) => {
       const nextWidth = Math.round(entry.contentRect.width);

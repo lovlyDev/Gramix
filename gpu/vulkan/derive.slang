@@ -1,3 +1,15 @@
+/*
+ * Copyright (C) 2026 [COPYRIGHT HOLDER].
+ * SPDX-License-Identifier: AGPL-3.0-only
+ *
+ * This file is part of VANTIX.
+ *
+ * VANTIX is dual-licensed under the GNU Affero General
+ * Public License v3.0 and a separate commercial license.
+ *
+ * See LICENSE and LICENSING.md for details.
+ */
+
 // VANTIX Vulkan seed derivation. One invocation handles one BIP39 phrase.
 // SHA-512 follows FIPS 180-4; all arithmetic is unsigned modulo 2^64.
 // The host verifies every exported match with its independent OpenSSL path.

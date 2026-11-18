@@ -1,3 +1,15 @@
+/*
+ * Copyright (C) 2026 [COPYRIGHT HOLDER].
+ * SPDX-License-Identifier: AGPL-3.0-only
+ *
+ * This file is part of VANTIX.
+ *
+ * VANTIX is dual-licensed under the GNU Affero General
+ * Public License v3.0 and a separate commercial license.
+ *
+ * See LICENSE and LICENSING.md for details.
+ */
+
     0x428a2f98d728ae22UL, 0x7137449123ef65cdUL, 0xb5c0fbcfec4d3b2fUL, 0xe9b5dba58189dbbcUL,
     0x3956c25bf348b538UL, 0x59f111f1b605d019UL, 0x923f82a4af194f9bUL, 0xab1c5ed5da6d8118UL,
     0xd807aa98a3030242UL, 0x12835b0145706fbeUL, 0x243185be4ee4b28cUL, 0x550c7dc3d5ffb4e2UL,

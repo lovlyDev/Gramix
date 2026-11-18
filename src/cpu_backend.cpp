@@ -1,3 +1,15 @@
+/*
+ * Copyright (C) 2026 [COPYRIGHT HOLDER].
+ * SPDX-License-Identifier: AGPL-3.0-only
+ *
+ * This file is part of VANTIX.
+ *
+ * VANTIX is dual-licensed under the GNU Affero General
+ * Public License v3.0 and a separate commercial license.
+ *
+ * See LICENSE and LICENSING.md for details.
+ */
+
 #include "vantix/compute.hpp"
 
 #include <openssl/crypto.h>
@@ -110,6 +122,12 @@ std::vector<TuningResult> AutoTuner::benchmark(
             ? std::max(1u, std::thread::hardware_concurrency()) : 1u;
         const auto batch = backend->info().api == ComputeApi::cpu ? 16u
             : backend->info().api == ComputeApi::vulkan ? 64u : 128u;
+        try {
+            backend->run_batch(batch, SearchPattern{"Z", "", "", false},
+                               [](WalletCandidate&&) {});
+        } catch (...) {
+            continue;
+        }
         const auto started = std::chrono::steady_clock::now();
         const auto deadline = started + duration;
         std::atomic<std::uint64_t> count = 0;

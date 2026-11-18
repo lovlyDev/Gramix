@@ -1,3 +1,15 @@
+/*
+ * Copyright (C) 2026 [COPYRIGHT HOLDER].
+ * SPDX-License-Identifier: AGPL-3.0-only
+ *
+ * This file is part of VANTIX.
+ *
+ * VANTIX is dual-licensed under the GNU Affero General
+ * Public License v3.0 and a separate commercial license.
+ *
+ * See LICENSE and LICENSING.md for details.
+ */
+
 #pragma once
 
 #include "vantix/ton.hpp"
@@ -6,6 +18,7 @@
 #include <chrono>
 #include <cstdint>
 #include <functional>
+#include <filesystem>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -178,5 +191,7 @@ public:
 
 std::string api_name(ComputeApi api);
 std::string reveal_saved_mnemonic(const std::string& file_path);
+std::filesystem::path save_wallet_candidate(
+    const WalletCandidate& candidate, const std::filesystem::path& output_directory);
 
 }  // namespace vantix

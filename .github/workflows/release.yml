@@ -13,6 +13,8 @@ jobs:
     uses: ./.github/workflows/ci.yml
   build:
     needs: quality
+    env:
+      VITE_SOURCE_REVISION: ${{ github.sha }}
     strategy:
       fail-fast: false
       matrix:

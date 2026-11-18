@@ -1,3 +1,13 @@
+# Copyright (C) 2026 [COPYRIGHT HOLDER].
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# This file is part of VANTIX.
+#
+# VANTIX is dual-licensed under the GNU Affero General
+# Public License v3.0 and a separate commercial license.
+#
+# See LICENSE and LICENSING.md for details.
+
 cmake_minimum_required(VERSION 3.24)
 project(VANTIX VERSION 0.1.0 LANGUAGES CXX)
 
@@ -30,6 +40,8 @@ find_path(VULKAN_INCLUDE_DIR vulkan/vulkan.h REQUIRED)
 
 add_library(vantix_core
     src/ton.cpp
+    src/address_inspector.cpp
+    src/wallet_generator.cpp
     src/cpu_backend.cpp
     src/device_manager.cpp
     src/runtime.cpp
@@ -105,7 +117,7 @@ endif()
 include(CTest)
 if(BUILD_TESTING)
     add_executable(vantix_tests tests/core_tests.cpp)
-    target_link_libraries(vantix_tests PRIVATE vantix_core)
+    target_link_libraries(vantix_tests PRIVATE vantix_core OpenSSL::Crypto)
     add_test(NAME core COMMAND vantix_tests)
     add_executable(vantix_vendor_kernel_tests tests/vendor_kernel_tests.cpp)
     target_link_libraries(vantix_vendor_kernel_tests PRIVATE vantix_core OpenSSL::Crypto)
@@ -113,4 +125,11 @@ if(BUILD_TESTING)
     add_executable(vantix_vendor_module_mock_tests tests/vendor_module_mock_tests.cpp)
     target_link_libraries(vantix_vendor_module_mock_tests PRIVATE vantix_core)
     add_test(NAME vendor_module_mock COMMAND vantix_vendor_module_mock_tests)
+    add_test(NAME address_inspect_cli COMMAND vantix address inspect
+        0QAs9VlT6S776tq3unJcP5Ogsj-ELLunLXuOb1EKcOQi4-QO --json)
+    set_tests_properties(address_inspect_cli PROPERTIES
+        PASS_REGULAR_EXPRESSION "\"workchain\":0")
+    add_test(NAME address_inspect_bad_checksum COMMAND vantix address inspect
+        EQAs9VlT6S776tq3unJcP5Ogsj-ELLunLXuOb1EKcOQi4wJA --json)
+    set_tests_properties(address_inspect_bad_checksum PROPERTIES WILL_FAIL TRUE)
 endif()

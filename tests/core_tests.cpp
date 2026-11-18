@@ -1,9 +1,26 @@
+/*
+ * Copyright (C) 2026 [COPYRIGHT HOLDER].
+ * SPDX-License-Identifier: AGPL-3.0-only
+ *
+ * This file is part of VANTIX.
+ *
+ * VANTIX is dual-licensed under the GNU Affero General
+ * Public License v3.0 and a separate commercial license.
+ *
+ * See LICENSE and LICENSING.md for details.
+ */
+
 #include "vantix/compute.hpp"
+#include "vantix/address_inspector.hpp"
+#include "vantix/wallet_generator.hpp"
+
+#include <openssl/crypto.h>
 
 #ifdef NDEBUG
 #undef NDEBUG
 #endif
 #include <cassert>
+#include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
@@ -31,6 +48,53 @@ std::string hex(const vantix::Bytes32& bytes) {
 
 int main() {
     using namespace vantix;
+    constexpr auto reference_raw =
+        "0:2cf55953e92efbeadab7ba725c3f93a0b23f842cbba72d7b8e6f510a70e422e3";
+    const auto inspected = inspect_address(reference_raw);
+    assert(inspected.raw == reference_raw);
+    assert(inspected.bounceable ==
+           "EQAs9VlT6S776tq3unJcP5Ogsj-ELLunLXuOb1EKcOQi4wJB");
+    assert(inspected.non_bounceable ==
+           "UQAs9VlT6S776tq3unJcP5Ogsj-ELLunLXuOb1EKcOQi41-E");
+    const auto testnet = inspect_address(
+        "0QAs9VlT6S776tq3unJcP5Ogsj-ELLunLXuOb1EKcOQi4-QO");
+    assert(testnet.raw == reference_raw);
+    assert(testnet.input_was_friendly && testnet.input_testnet &&
+           !testnet.input_bounceable);
+    assert(testnet.bounceable ==
+           "kQAs9VlT6S776tq3unJcP5Ogsj-ELLunLXuOb1EKcOQi47nL");
+    const auto masterchain = inspect_address(
+        "-1:3333333333333333333333333333333333333333333333333333333333333333");
+    assert(masterchain.workchain == -1);
+    assert(inspect_address(masterchain.bounceable).raw == masterchain.raw);
+    auto rejects_address = [](std::string_view value) {
+        try { (void)inspect_address(value); }
+        catch (const std::invalid_argument&) { return true; }
+        return false;
+    };
+    assert(rejects_address("0:2cf55953"));
+    assert(rejects_address("0:2cf55953e92efbeadab7ba725c3f93a0b23f842cbba72d7b8e6f510a70e422g3"));
+    assert(rejects_address("128:3333333333333333333333333333333333333333333333333333333333333333"));
+    assert(rejects_address("EQAs9VlT6S776tq3unJcP5Ogsj-ELLunLXuOb1EKcOQi4wJA"));
+
+#ifndef _WIN32
+    assert(setenv("VANTIX_WALLET_PASSWORD", "testing-wallet-password-123", 1) == 0);
+#endif
+    const auto generated_dir = std::filesystem::temp_directory_path() /
+        ("vantix-generated-test-" + std::to_string(
+            std::chrono::steady_clock::now().time_since_epoch().count()));
+    const auto generated = generate_wallet_and_save(
+        WalletVersion::v5r1, MnemonicScheme::multichain12, generated_dir);
+    assert(std::filesystem::is_regular_file(generated.encrypted_file));
+    auto generated_phrase = reveal_saved_mnemonic(generated.encrypted_file.string());
+    assert(is_valid_multichain_mnemonic(generated_phrase));
+    auto restored = candidate_from_mnemonic(generated_phrase);
+    assert(restored.address == generated.address);
+    assert(restored.public_key == generated.public_key);
+    OPENSSL_cleanse(generated_phrase.data(), generated_phrase.size());
+    OPENSSL_cleanse(restored.mnemonic.data(), restored.mnemonic.size());
+    std::filesystem::remove(generated.encrypted_file);
+    std::filesystem::remove(generated_dir);
     constexpr auto phrase =
         "tag couch guilt honey garden illegal injury harsh battle elder donor hidden "
         "forget imitate suffer apology check hedgehog ability window clip romance correct jacket";
