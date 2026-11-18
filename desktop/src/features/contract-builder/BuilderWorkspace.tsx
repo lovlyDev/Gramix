@@ -8,7 +8,8 @@
  */
 
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
-import { invoke, isTauri } from "@tauri-apps/api/core";
+import { platform } from "@platform";
+import { telemetry } from "@telemetry";
 import Editor, { loader } from "@monaco-editor/react";
 import * as monaco from "monaco-editor";
 import EditorWorker from "../../../node_modules/monaco-editor/esm/vs/editor/editor.worker.js?worker";
@@ -25,7 +26,6 @@ loader.config({ monaco });
 
 type BuildSuccess = { status: "ok"; language: "Tolk"; compilerVersion: string;
   codeBocBase64: string; codeHashHex: string; fiftCode: string; abi: unknown; diagnostics: string };
-type BuildFailure = { status: "error"; message: string };
 type Project = Record<string, string>;
 const starter = "fun onInternalMessage(_: InMessage) {}\n";
 
@@ -49,7 +49,7 @@ function registerTolk(editor: typeof monaco) {
       ], comment: [[/[^*]+/, "comment"], [/\*\//, "comment", "@pop"], [/./, "comment"]] },
     });
   }
-  editor.editor.defineTheme("vantix-tolk", { base: "vs-dark", inherit: true,
+  editor.editor.defineTheme("gramix-tolk", { base: "vs-dark", inherit: true,
     rules: [{ token: "keyword", foreground: "a594f0" }, { token: "string", foreground: "7ee2a0" },
       { token: "comment", foreground: "858585" }, { token: "number", foreground: "ffb340" }],
     colors: { "editor.background": "#212121", "editor.foreground": "#FFFFFF",
@@ -88,7 +88,7 @@ export default function BuilderWorkspace() {
   }
 
   function saveProject() {
-    try { saveDownload("vantix-tolk-project.json", JSON.stringify(
+    try { saveDownload("gramix-tolk-project.json", JSON.stringify(
       parseTolkProject({ entrypoint, files }), null, 2)); setDirty(false); setError(""); }
     catch (cause) { setError(String(cause)); }
   }
@@ -132,14 +132,14 @@ export default function BuilderWorkspace() {
 
   async function build() {
     setError(""); setResult(null); setOutputTab("output");
-    if (!isTauri()) { setError("Компилятор доступен в установленном приложении VANTIX."); return; }
-    const project = JSON.stringify({ __vantixProject: 1, entrypoint, files });
+    const project = JSON.stringify({ __gramixProject: 1, entrypoint, files });
     if (new TextEncoder().encode(project).length > 128 * 1024) {
       setError("Проект превышает лимит 128 КиБ."); return;
     }
     setBusy(true);
     try {
-      const compiled = await invoke<BuildSuccess | BuildFailure>("compile_tolk", { source: project });
+      const compiled = await platform.compileTolk(project);
+      telemetry.track({ name: "tool_action", tool: "contract-builder", action: compiled.status === "ok" ? "build_ok" : "build_error" });
       if (compiled.status === "error") throw new Error(compiled.message);
       const document = await parseBocBytes(decodeBocText(compiled.codeBocBase64, "base64"));
       if (document.roots.length !== 1 || document.roots[0].toLowerCase() !== compiled.codeHashHex.toLowerCase())
@@ -225,7 +225,7 @@ export default function BuilderWorkspace() {
         <Group orientation="vertical" id="builder-editor-output">
           <Panel defaultSize="70" minSize={230} className="builder-editor-pane">
             <div className="builder-editor-tab"><FileCode2 size={15} /> {active}{dirty ? " *" : ""}</div>
-            <Editor path={`file:///vantix/${active}`} language="tolk" theme="vantix-tolk"
+            <Editor path={`file:///gramix/${active}`} language="tolk" theme="gramix-tolk"
               value={files[active] ?? ""} beforeMount={registerTolk}
               onChange={(value) => { setFiles((current) => ({ ...current, [active]: value ?? "" }));
                 setDirty(true); setResult(null); }}
@@ -242,7 +242,7 @@ export default function BuilderWorkspace() {
               {result && <button type="button" className="builder-export" onClick={() => saveDownload(
                 `${entrypoint}.compiled.json`, JSON.stringify(result, null, 2))}><Download size={15} /> Артефакт</button>}
               {result && <button type="button" className="builder-export" onClick={() => {
-                window.dispatchEvent(new CustomEvent("vantix:open-boc", { detail: result.codeBocBase64 }));
+                window.dispatchEvent(new CustomEvent("gramix:open-boc", { detail: result.codeBocBase64 }));
                 window.location.hash = "boc-explorer";
               }}>Открыть BOC</button>}
             </div>

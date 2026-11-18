@@ -7,7 +7,10 @@
  * See LICENSE and LICENSING.md for details.
  */
 
-#include "vantix/resources.hpp"
+#include "gramix/resources.hpp"
+
+#include <cstdlib>
+#include <string>
 
 #include <stdexcept>
 #include <cstdlib>
@@ -18,7 +21,13 @@
 #include <unistd.h>
 #endif
 
-namespace vantix {
+namespace gramix {
+const char* environment_value(const char* name) {
+    const std::string suffix(name);
+    if (const auto* value = std::getenv(("GRAMIX_" + suffix).c_str())) return value;
+    return std::getenv(("VANTIX_" + suffix).c_str());
+}
+
 std::filesystem::path resource_path(const std::filesystem::path& relative) {
     std::filesystem::path executable;
 #ifdef _WIN32
@@ -26,7 +35,7 @@ std::filesystem::path resource_path(const std::filesystem::path& relative) {
     const auto count = GetModuleFileNameW(nullptr, buffer.data(),
                                           static_cast<DWORD>(buffer.size()));
     if (count == 0 || count >= buffer.size())
-        throw std::runtime_error("Cannot locate VANTIX executable");
+        throw std::runtime_error("Cannot locate Gramix executable");
     buffer.resize(count);
     executable = std::filesystem::path(buffer);
 #else
@@ -34,14 +43,14 @@ std::filesystem::path resource_path(const std::filesystem::path& relative) {
 #endif
     const auto installed = executable.parent_path() / relative;
     if (std::filesystem::is_regular_file(installed)) return installed;
-    if (const auto* bundle = std::getenv("VANTIX_RESOURCE_DIR")) {
+    if (const auto* bundle = environment_value("RESOURCE_DIR")) {
         const auto bundled = std::filesystem::path(bundle) / relative;
         if (std::filesystem::is_regular_file(bundled)) return bundled;
     }
-#ifdef VANTIX_SOURCE_RESOURCE_ROOT
-    const auto development = std::filesystem::path(VANTIX_SOURCE_RESOURCE_ROOT) / relative;
+#ifdef GRAMIX_SOURCE_RESOURCE_ROOT
+    const auto development = std::filesystem::path(GRAMIX_SOURCE_RESOURCE_ROOT) / relative;
     if (std::filesystem::is_regular_file(development)) return development;
 #endif
-    throw std::runtime_error("VANTIX resource is missing: " + relative.string());
+    throw std::runtime_error("Gramix resource is missing: " + relative.string());
 }
 }

@@ -7,9 +7,9 @@
  * See LICENSE and LICENSING.md for details.
  */
 
-#include "vantix/compute.hpp"
-#include "vantix/address_inspector.hpp"
-#include "vantix/wallet_generator.hpp"
+#include "gramix/compute.hpp"
+#include "gramix/address_inspector.hpp"
+#include "gramix/wallet_generator.hpp"
 
 #include <openssl/crypto.h>
 
@@ -34,7 +34,7 @@
 
 namespace {
 
-std::string hex(const vantix::Bytes32& bytes) {
+std::string hex(const gramix::Bytes32& bytes) {
     std::ostringstream stream;
     stream << std::hex << std::setfill('0');
     for (auto byte : bytes) stream << std::setw(2) << static_cast<unsigned>(byte);
@@ -44,7 +44,7 @@ std::string hex(const vantix::Bytes32& bytes) {
 }  // namespace
 
 int main() {
-    using namespace vantix;
+    using namespace gramix;
     constexpr auto reference_raw =
         "0:2cf55953e92efbeadab7ba725c3f93a0b23f842cbba72d7b8e6f510a70e422e3";
     const auto inspected = inspect_address(reference_raw);
@@ -75,10 +75,10 @@ int main() {
     assert(rejects_address("EQAs9VlT6S776tq3unJcP5Ogsj-ELLunLXuOb1EKcOQi4wJA"));
 
 #ifndef _WIN32
-    assert(setenv("VANTIX_WALLET_PASSWORD", "testing-wallet-password-123", 1) == 0);
+    assert(setenv("GRAMIX_WALLET_PASSWORD", "testing-wallet-password-123", 1) == 0);
 #endif
     const auto generated_dir = std::filesystem::temp_directory_path() /
-        ("vantix-generated-test-" + std::to_string(
+        ("gramix-generated-test-" + std::to_string(
             std::chrono::steady_clock::now().time_since_epoch().count()));
     const auto generated = generate_wallet_and_save(
         WalletVersion::v5r1, MnemonicScheme::multichain12, generated_dir);
@@ -157,9 +157,9 @@ int main() {
 
 #ifndef _WIN32
     // A Linux result must remain encrypted at rest and reject a wrong password.
-    assert(setenv("VANTIX_WALLET_PASSWORD", "testing-wallet-password-123", 1) == 0);
+    assert(setenv("GRAMIX_WALLET_PASSWORD", "testing-wallet-password-123", 1) == 0);
     auto secure_dir = std::filesystem::temp_directory_path() /
-        ("vantix-wallet-test-" + std::to_string(getpid()));
+        ("gramix-wallet-test-" + std::to_string(getpid()));
     SearchOptions secure_options;
     secure_options.pattern.prefix = "UQ";
     secure_options.max_candidates = 1;
@@ -177,7 +177,7 @@ int main() {
     const auto recovered = reveal_saved_mnemonic(result.string());
     assert(is_valid_multichain_mnemonic(recovered));
     assert(candidate_from_mnemonic(recovered).address == result.stem().string());
-    assert(setenv("VANTIX_WALLET_PASSWORD", "wrong-wallet-password-123", 1) == 0);
+    assert(setenv("GRAMIX_WALLET_PASSWORD", "wrong-wallet-password-123", 1) == 0);
     bool wrong_password_rejected = false;
     try { (void)reveal_saved_mnemonic(result.string()); }
     catch (const std::runtime_error&) { wrong_password_rejected = true; }
@@ -186,5 +186,5 @@ int main() {
     std::filesystem::remove(secure_dir);
 #endif
 
-    std::cout << "VANTIX core tests passed\n";
+    std::cout << "Gramix core tests passed\n";
 }

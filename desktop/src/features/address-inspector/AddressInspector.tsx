@@ -7,45 +7,29 @@
  * See LICENSE and LICENSING.md for details.
  */
 
-import { useEffect, useState, type FormEvent } from "react";
-import { isTauri } from "@tauri-apps/api/core";
-import { invoke } from "@tauri-apps/api/core";
-import { Command } from "@tauri-apps/plugin-shell";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { exactGram, formatGram } from "../../lib/format";
+import { platform } from "@platform";
+import { telemetry } from "@telemetry";
+import type { AccountResult, AddressResult } from "../../platform/types";
 import PublicAddressQr from "../../components/PublicAddressQr";
 import Select from "../../components/ui/Select";
 import CopyButton from "../../components/ui/CopyButton";
 
-type AddressResult = {
-  source: "local";
-  raw: string;
-  workchain: number;
-  input_format: "raw" | "friendly";
-  input_bounceable: boolean | null;
-  input_testnet: boolean | null;
-  bounceable: string;
-  non_bounceable: string;
-};
-
-type AccountResult = {
-  source: "OpenTonAPI";
-  network: "mainnet" | "testnet";
-  raw: string;
-  status: string;
-  balance_nanoton: string;
-  last_activity: number | null;
-  is_wallet: boolean | null;
-  received_at: number;
-};
-
 export default function AddressInspector() {
   const [input, setInput] = useState("");
+  const [autoRun, setAutoRun] = useState("");
+  const formRef = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    if (autoRun && input === autoRun) { setAutoRun(""); formRef.current?.requestSubmit(); }
+  }, [autoRun, input]);
   useEffect(() => {
     const receive = (event: Event) => {
       const address = (event as CustomEvent<string>).detail;
-      if (typeof address === "string") setInput(address);
+      if (typeof address === "string") { setInput(address); setAutoRun(address); }
     };
-    window.addEventListener("vantix:inspect-address", receive);
-    return () => window.removeEventListener("vantix:inspect-address", receive);
+    window.addEventListener("gramix:inspect-address", receive);
+    return () => window.removeEventListener("gramix:inspect-address", receive);
   }, []);
   useEffect(() => {
     const receive = (event: Event) => {
@@ -53,8 +37,8 @@ export default function AddressInspector() {
       if (network !== "mainnet" && network !== "testnet") return;
       setNetwork(network); setAccount(null); setNetworkError("");
     };
-    window.addEventListener("vantix:default-network", receive);
-    return () => window.removeEventListener("vantix:default-network", receive);
+    window.addEventListener("gramix:default-network", receive);
+    return () => window.removeEventListener("gramix:default-network", receive);
   }, []);
   const [result, setResult] = useState<AddressResult | null>(null);
   const [error, setError] = useState("");
@@ -63,24 +47,18 @@ export default function AddressInspector() {
   const [networkError, setNetworkError] = useState("");
   const [networkBusy, setNetworkBusy] = useState(false);
   const [network, setNetwork] = useState<"mainnet" | "testnet">(() =>
-    localStorage.getItem("vantix.network.default") === "testnet" ? "testnet" : "mainnet");
+    localStorage.getItem("gramix.network.default") === "testnet" ? "testnet" : "mainnet");
 
   async function inspect(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setResult(null);
     setAccount(null);
     setError("");
-    if (!isTauri()) {
-      setError("Локальная проверка доступна в установленном приложении VANTIX.");
-      return;
-    }
     setBusy(true);
     try {
-      const output = await Command.sidecar("binaries/vantix",
-        ["address", "inspect", input.trim(), "--json"]).execute();
-      if (output.code !== 0) throw new Error(output.stderr.trim() || "Адрес не прошёл проверку.");
-      const inspected = JSON.parse(output.stdout) as AddressResult;
+      const inspected = await platform.inspectAddress(input.trim());
       setResult(inspected);
+      telemetry.track({ name: "address_checked", address: inspected.raw, network: inspected.input_testnet ? "testnet" : "mainnet" });
       if (inspected.input_testnet !== null)
         setNetwork(inspected.input_testnet ? "testnet" : "mainnet");
     } catch (cause) {
@@ -96,10 +74,9 @@ export default function AddressInspector() {
     setNetworkError("");
     setNetworkBusy(true);
     try {
-      const data = await invoke<AccountResult>("fetch_account", {
-        raw: result.raw, testnet: network === "testnet",
-      });
+      const data = await platform.fetchAccount(result.raw, network === "testnet");
       setAccount(data);
+      telemetry.track({ name: "account_loaded", address: data.raw, network: data.network, status: data.status });
     } catch (cause) {
       setNetworkError(String(cause));
     } finally {
@@ -120,11 +97,11 @@ export default function AddressInspector() {
 
   return <section className="panel address-inspector" id="address-inspector" aria-labelledby="address-title">
     <div className="panel-heading"><div>
-      <h2 id="address-title">Проверка TON-адреса</h2>
+      <h2 id="address-title">Проверка GRAM-адреса</h2>
       <p>Локальная проверка raw и friendly форматов, флагов и контрольной суммы</p>
     </div></div>
-    <form className="address-workspace-form" onSubmit={(event) => void inspect(event)}>
-      <label className="field-label" htmlFor="address-value">Адрес TON</label>
+    <form ref={formRef} className="address-workspace-form" onSubmit={(event) => void inspect(event)}>
+      <label className="field-label" htmlFor="address-value">Адрес GRAM</label>
       <input id="address-value" className="address-input" value={input}
         onChange={(event) => {
           setInput(event.target.value);
@@ -179,7 +156,7 @@ export default function AddressInspector() {
         <span>Публичный адрес будет отправлен в OpenTonAPI.</span>
       </div>
       <button className="address-open-contract" type="button" onClick={() => {
-        window.dispatchEvent(new CustomEvent("vantix:contract-address", {
+        window.dispatchEvent(new CustomEvent("gramix:contract-address", {
           detail: { address: result.raw, testnet: network === "testnet" },
         }));
         window.location.hash = "contract-inspector";
@@ -189,7 +166,7 @@ export default function AddressInspector() {
         <strong>Ответ OpenTonAPI · {account.network}</strong>
         <span>Получен {new Date(account.received_at * 1000).toLocaleString("ru-RU")}</span>
         <span>Статус: {account.status}</span>
-        <span>Баланс: {account.balance_nanoton} nanotON</span>
+        <span title={exactGram(account.balance_nanoton)}>Баланс: {formatGram(account.balance_nanoton)}</span>
         <span>Последняя активность: {account.last_activity
           ? new Date(account.last_activity * 1000).toLocaleString("ru-RU") : "нет данных"}</span>
         <span>Определён как кошелёк: {account.is_wallet === null

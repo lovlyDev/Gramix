@@ -34,8 +34,16 @@ import WorkspaceSettings from "./features/settings/WorkspaceSettings";
 import ToolNavigation, { ToolIcon, isToolId, isWorkspaceId, toolTitles, type ToolId, type WorkspaceId } from "./components/ToolNavigation";
 import UiSelect from "./components/ui/Select";
 import { useApp, type Backend, type Device, type ValidatedBackend } from "./store";
+import { platform } from "@platform";
+import { ConsentBanner, telemetry } from "@telemetry";
+import { parsePath, pathFor } from "./lib/links";
+import type { VanityHandle } from "./platform/types";
+import PrivacyPage from "./features/privacy/PrivacyPage";
+import SiteFooter from "./components/SiteFooter";
 
-const sidecar = "binaries/vantix";
+const sidecar = "binaries/gramix";
+const web = __WEB__;
+const initialLocation = web ? parsePath(window.location.pathname) : null;
 const ContractBuilder = lazy(() => import("./features/contract-builder/BuilderWorkspace"));
 const DeveloperCli = lazy(() => import("./features/developer-cli/CliWorkspace"));
 const ContractSandbox = lazy(() => import("./features/contract-sandbox/SandboxWorkspace"));
@@ -86,19 +94,45 @@ export default function App() {
   const [installedVersion, setInstalledVersion] = useState("");
   const [recentTools, setRecentTools] = useState<ToolId[]>(() => {
     try {
-      const stored: unknown = JSON.parse(localStorage.getItem("vantix.ui.recentTools") || "[]");
+      const stored: unknown = JSON.parse(localStorage.getItem("gramix.ui.recentTools") || "[]");
       return Array.isArray(stored) ? stored.filter((id): id is ToolId =>
         typeof id === "string" && isToolId(id)).slice(0, 4) : [];
     } catch { return []; }
   });
   const [activeTool, setActiveTool] = useState<WorkspaceId>(() => {
-    const initial = window.location.hash.slice(1);
+    const initial = web ? initialLocation!.workspace : window.location.hash.slice(1);
+    const legacy = web ? window.location.hash.slice(1) : "";
+    if (web && isWorkspaceId(legacy)) return legacy;
     return isWorkspaceId(initial) ? initial : "overview";
   });
+  const vanity = useRef<VanityHandle | null>(null);
+  const foundPhrase = useRef<string | null>(null);
+  const vanityStarted = useRef(0);
+  useEffect(() => {
+    if (!web) return;
+    // Старые ссылки вида /#tool и прямые ссылки /address/… открываются как обычные страницы.
+    if (window.location.hash && isWorkspaceId(window.location.hash.slice(1)))
+      window.history.replaceState(null, "", pathFor(window.location.hash.slice(1)));
+    const target = initialLocation?.target;
+    if (target) window.setTimeout(() => window.dispatchEvent(new CustomEvent(target.event, { detail: target.detail })), 50);
+    const follow = () => {
+      const next = parsePath(window.location.pathname);
+      if (isWorkspaceId(next.workspace)) setActiveTool(next.workspace);
+      if (next.target) window.dispatchEvent(new CustomEvent(next.target.event, { detail: next.target.detail }));
+    };
+    window.addEventListener("popstate", follow);
+    return () => window.removeEventListener("popstate", follow);
+  }, []);
+  useEffect(() => {
+    document.title = activeTool === "overview" ? "Gramix — инструменты GRAM"
+      : `${activeTool === "settings" ? "Настройки" : activeTool === "privacy" ? "Конфиденциальность"
+        : toolTitles[activeTool as ToolId]} · Gramix`;
+    telemetry.track({ name: "page_view", path: window.location.pathname, tool: activeTool });
+  }, [activeTool]);
   useEffect(() => {
     const clearRecent = () => setRecentTools([]);
-    window.addEventListener("vantix:clear-recent-tools", clearRecent);
-    return () => window.removeEventListener("vantix:clear-recent-tools", clearRecent);
+    window.addEventListener("gramix:clear-recent-tools", clearRecent);
+    return () => window.removeEventListener("gramix:clear-recent-tools", clearRecent);
   }, []);
   const [visitedWorkspaces, setVisitedWorkspaces] = useState<WorkspaceId[]>([]);
   useEffect(() => {
@@ -110,6 +144,7 @@ export default function App() {
       const target = window.location.hash.slice(1);
       if (isWorkspaceId(target)) {
         setActiveTool(target);
+        if (web) window.history.replaceState(null, "", pathFor(target));
         document.querySelector(".main")?.scrollTo(0, 0);
       }
     };
@@ -120,17 +155,19 @@ export default function App() {
     setActiveTool(tool);
     if (isToolId(tool)) setRecentTools((current) => {
       const next = [tool, ...current.filter((id) => id !== tool)].slice(0, 4);
-      localStorage.setItem("vantix.ui.recentTools", JSON.stringify(next));
+      localStorage.setItem("gramix.ui.recentTools", JSON.stringify(next));
       return next;
     });
-    window.history.replaceState(null, "", `#${tool}`);
+    if (web) {
+      if (window.location.pathname !== pathFor(tool)) window.history.pushState(null, "", pathFor(tool));
+    } else window.history.replaceState(null, "", `#${tool}`);
     document.querySelector(".main")?.scrollTo(0, 0);
   }
   const running = app.status === "running" || app.status === "paused" ||
     app.status === "initializing" || app.status === "stopping";
   useEffect(() => {
-    localStorage.setItem("vantix.compute.gpuDuty", String(app.gpuDuty));
-    localStorage.setItem("vantix.compute.cpuThreads", String(app.cpuThreads));
+    localStorage.setItem("gramix.compute.gpuDuty", String(app.gpuDuty));
+    localStorage.setItem("gramix.compute.cpuThreads", String(app.cpuThreads));
   }, [app.gpuDuty, app.cpuThreads]);
   const verifiedGpuIds = new Set(app.validatedBackends
     .filter((backend) => backend.api !== "CPU").map((backend) => backend.device_id));
@@ -149,12 +186,19 @@ export default function App() {
   }, [app.status]);
 
   async function options(includePassword = false) {
-    const env: Record<string, string> = { VANTIX_RESOURCE_DIR: await resourceDir() };
-    if (includePassword && isLinux) env.VANTIX_WALLET_PASSWORD = walletPassword;
+    const env: Record<string, string> = { GRAMIX_RESOURCE_DIR: await resourceDir() };
+    if (includePassword && isLinux) env.GRAMIX_WALLET_PASSWORD = walletPassword;
     return { env };
   }
 
   async function refreshDevices() {
+    if (web) {
+      const threads = platform.browserThreads?.() ?? 1;
+      app.set({ devices: [{ id: "browser", name: `Браузер · ${threads} потоков`, vendor: "Web Worker, CPU",
+        driver: "", memory_bytes: 0, apis: ["CPU"] }],
+        validatedBackends: [{ api: "CPU", device_id: "browser", name: "Браузер" }], selectedDeviceId: "" });
+      return;
+    }
     if (!isTauri()) {
       return;
     }
@@ -205,7 +249,7 @@ export default function App() {
     void findUpdate();
     return () => { cancelled = true; };
   }, []);
-  useEffect(() => () => { void child.current?.write("STOP\n"); }, []);
+  useEffect(() => () => { vanity.current?.stop(); void child.current?.write("STOP\n"); }, []);
 
   async function checkUpdate() {
     if (!isTauri() || updateBusy) return;
@@ -277,13 +321,41 @@ export default function App() {
         app.set({ checked: Number(match[1]) });
         app.addSample(Number(match[2]));
       }
-    } else if (value.startsWith("VANTIX error: ")) {
-      app.set({ error: value.slice("VANTIX error: ".length) });
+    } else if (value.startsWith("Gramix error: ")) {
+      app.set({ error: value.slice("Gramix error: ".length) });
     }
+  }
+
+  function startInBrowser() {
+    const threadLimit = platform.browserThreads?.() ?? 1;
+    const threads = app.cpuThreads > 0 ? Math.min(app.cpuThreads, threadLimit) : threadLimit;
+    app.set({ status: "running", checked: 0, rate: 0, samples: [], resultPath: "", error: "" });
+    setElapsed(0);
+    foundPhrase.current = null;
+    vanityStarted.current = performance.now();
+    telemetry.track({ name: "vanity_started", pattern: app.pattern, mode: app.matchMode, scheme: app.scheme,
+      wallet: app.wallet, threads });
+    let lastSample = 0;
+    vanity.current = platform.startVanity!({ pattern: app.pattern, mode: app.matchMode, ignoreCase: app.ignoreCase,
+      scheme: app.scheme, version: app.wallet, threads }, {
+      onProgress: (checked, rate) => {
+        app.set({ checked });
+        if (performance.now() - lastSample > 950) { lastSample = performance.now(); app.addSample(rate); }
+      },
+      onFound: (wallet) => {
+        vanity.current = null;
+        foundPhrase.current = wallet.phrase;
+        app.set({ status: "finished", rate: 0, resultPath: wallet.address });
+        telemetry.track({ name: "vanity_stopped", found: true, checked: useApp.getState().checked,
+          seconds: Math.round((performance.now() - vanityStarted.current) / 1000) });
+      },
+      onError: (message) => { vanity.current = null; app.set({ status: "error", error: message, rate: 0 }); },
+    });
   }
 
   async function start() {
     if (!valid || running) return;
+    if (web) { startInBrowser(); return; }
     if (app.scheme === "24" && ["vulkan", "cuda", "hip"].includes(app.backend)) {
       app.set({ error: "Для 24 слов пока выберите CPU или Auto." });
       return;
@@ -317,7 +389,7 @@ export default function App() {
         lines.forEach(handleLine);
       });
       command.stderr.on("data", (line) => {
-        if (line.includes("VANTIX error: ")) app.set({ error: line.trim() });
+        if (line.includes("Gramix error: ")) app.set({ error: line.trim() });
       });
       command.on("close", (event) => {
         handleLine(pending.current);
@@ -334,6 +406,13 @@ export default function App() {
   }
 
   async function stop() {
+    if (web) {
+      vanity.current?.stop(); vanity.current = null;
+      app.set({ status: "finished", rate: 0 });
+      telemetry.track({ name: "vanity_stopped", found: false, checked: useApp.getState().checked,
+        seconds: Math.round((performance.now() - vanityStarted.current) / 1000) });
+      return;
+    }
     const process = child.current;
     if (!process) return;
     stopRequested.current = true;
@@ -348,6 +427,12 @@ export default function App() {
   }
 
   async function togglePause() {
+    if (web && vanity.current) {
+      const wasPaused = app.status === "paused";
+      if (wasPaused) vanity.current.resume(); else vanity.current.pause();
+      app.set({ status: wasPaused ? "running" : "paused", rate: wasPaused ? app.rate : 0 });
+      return;
+    }
     if (!child.current || (app.status !== "running" && app.status !== "paused")) return;
     const wasPaused = app.status === "paused";
     try {
@@ -360,6 +445,10 @@ export default function App() {
 
   async function reveal() {
     if (!app.resultPath || revealing) return;
+    if (web) {
+      if (!foundPhrase.current) { app.set({ error: "Фраза уже удалена из памяти страницы." }); return; }
+      setRecoveryPhrase(foundPhrase.current); setRevealOpen(true); return;
+    }
     if (!walletPasswordReady) {
       app.set({ error: "Введите пароль кошелька в настройках, чтобы открыть фразу." });
       return;
@@ -390,7 +479,7 @@ export default function App() {
       <main className={"content wrap" + (wide ? " wide" : "") + (activeTool === "overview" ? " home-content" : "")}>
         {activeTool !== "overview" && <div className="page-title">
           <div className="screen-heading">{isToolId(activeTool) && <ToolIcon tool={activeTool} className="screen-tool-icon" size={34} />}
-            <strong>{activeTool === "settings" ? "Настройки" : toolTitles[activeTool as ToolId]}</strong></div>
+            <strong>{activeTool === "settings" ? "Настройки" : activeTool === "privacy" ? "Конфиденциальность" : toolTitles[activeTool as ToolId]}</strong></div>
           <div className="page-meta">
             <span className="badge"><ShieldCheck size={13}/>
               {["address-inspector", "transaction-decoder", "contract-inspector"].includes(activeTool)
@@ -404,6 +493,7 @@ export default function App() {
             searchStatus={app.status} checked={app.checked} rate={app.rate} version={installedVersion}
             onOpen={openTool} onRefresh={() => void refreshDevices()}
             onPause={() => void togglePause()} onSettings={() => openTool("settings")} /></div>
+        {web && <div className="tool-screen workspace-screen" hidden={activeTool !== "privacy"}><PrivacyPage /></div>}
         <div className="tool-screen workspace-screen" hidden={activeTool !== "settings"}>
           <WorkspaceSettings devices={app.devices} backends={app.validatedBackends}
             version={installedVersion} updateState={updateError || updateState}
@@ -412,7 +502,7 @@ export default function App() {
             onInstallUpdate={() => void installUpdate()} /></div>
         <div className="vanity-screen" hidden={activeTool !== "generator"}>
         <div className="intro"><h1>Поиск адреса</h1>
-          <p>TON · Задайте фрагмент адреса, остальное VANTIX проверит локально</p>
+          <p>GRAM · Задайте фрагмент адреса, остальное Gramix проверит локально</p>
         </div>
         <div className="dashboard-grid">
           <section className="panel search-panel">
@@ -423,7 +513,7 @@ export default function App() {
                 value={app.pattern} maxLength={48}
                 onChange={(event) => app.set({ pattern: event.target.value })}
                 placeholder="например, lucky" disabled={running}/></div>
-            <div className="field-help">В TON-адресе доступны латинские буквы, цифры, «-» и «_».</div>
+            <div className="field-help">В GRAM-адресе доступны латинские буквы, цифры, «-» и «_».</div>
             <div className="field-row">
               <div className="field-column"><span className="field-label">Совпадение</span>
                 <UiSelect label="Тип совпадения" value={app.matchMode} disabled={running}
@@ -435,7 +525,7 @@ export default function App() {
                   options={[{ value: "v5", label: "Wallet V5R1" }, { value: "v4", label: "Wallet V4R2" }]}/></div>
             </div>
             <div className="toggle-row"><div><strong>Не учитывать регистр</strong>
-              <span>Например, «ton» найдёт «TON»</span></div>
+              <span>Например, «gram» найдёт «GRAM»</span></div>
               <Switch.Root className="switch" aria-label="Не учитывать регистр" checked={app.ignoreCase} disabled={running}
                 onCheckedChange={(value) => app.set({ ignoreCase: value })}><Switch.Thumb className="switch-thumb"/></Switch.Root></div>
             {running ? <div className="action-split">
@@ -449,12 +539,12 @@ export default function App() {
               : <button className="primary-button" onClick={() => void start()} disabled={!valid}>
                   <Zap size={19}/> Начать поиск <ArrowRight size={18}/>
                 </button>}
-            {!validPattern && app.pattern && <p className="validation">Используйте только символы TON-адреса.</p>}
+            {!validPattern && app.pattern && <p className="validation">Используйте только символы GRAM-адреса.</p>}
             {isLinux && !walletPasswordReady && <p className="validation">Задайте пароль кошелька от 12 символов в настройках.</p>}
           </section>
 
           <section className="panel monitor-panel">
-            <div className="panel-heading"><div><h2>Поиск в реальном времени</h2><p>Скорость полных TON-адресов</p></div>
+            <div className="panel-heading"><div><h2>Поиск в реальном времени</h2><p>Скорость полных GRAM-адресов</p></div>
               <span className={"monitor-pill " + (app.status === "running" ? "active" : "")}>{app.status === "paused" ? "Пауза" : app.status === "running" ? "Поиск" : "Ожидание"}</span></div>
             <div className="stats-row"><div className="speed-stat"><span>СКОРОСТЬ</span><strong>{fmt.format(app.rate)}<small> адресов/с</small></strong></div>
               <div><span>ПРОВЕРЕНО</span><strong>{fmt.format(app.checked)}</strong></div>
@@ -466,7 +556,7 @@ export default function App() {
                     <span>{running ? "Подготовка данных…" : "График появится после запуска"}</span>
                   </div>}</div>
             {app.resultPath && <div className="result-box"><Folder size={18}/>
-              <div><strong>Кошелёк найден и сохранён</strong><span>{app.resultPath}</span>
+              <div><strong>{web ? "Адрес найден" : "Кошелёк найден и сохранён"}</strong><span>{app.resultPath}</span>
                 <button className="reveal-button" onClick={() => void reveal()}>
                   Показать фразу восстановления</button></div></div>}
             {app.error && <div className="error-box">{app.error}</div>}
@@ -528,12 +618,12 @@ export default function App() {
             </Tabs.Content>
             <Tabs.Content value="wallet" className="tab-content">
               <div className="setting-row"><div><strong>Фраза восстановления</strong>
-                <span>12 слов — BIP39/SLIP-0010; 24 слова — TON Native</span></div>
+                <span>12 слов — BIP39/SLIP-0010; 24 слова — GRAM Native</span></div>
                 <UiSelect label="Фраза восстановления" value={app.scheme} disabled={running}
                   onValueChange={(value) => app.set({ scheme: value as typeof app.scheme,
                     backend: value === "24" && ["vulkan", "cuda", "hip"].includes(app.backend)
                       ? "auto" : app.backend })}
-                  options={[{ value: "12", label: "12 слов · Multichain" }, { value: "24", label: "24 слова · TON Native" }]}/></div>
+                  options={[{ value: "12", label: "12 слов · Multichain" }, { value: "24", label: "24 слова · GRAM Native" }]}/></div>
               {isLinux && <div className="setting-row"><div><strong>Пароль кошелька</strong>
                 <span>Шифрует найденную фразу; храните пароль отдельно. Он не сохраняется приложением.</span></div>
                 <input className="wallet-password" type="password" autoComplete="new-password"
@@ -567,6 +657,7 @@ export default function App() {
             <Suspense fallback={<p>Загружаю терминал…</p>}>
             <DeveloperCli /></Suspense>}</div>
       </main>
+      {web && <SiteFooter onOpen={openTool} />}
     </div>
     <Dialog.Root open={revealOpen} onOpenChange={(open) => {
       setRevealOpen(open);
@@ -574,19 +665,22 @@ export default function App() {
     }}>
       <Dialog.Portal>
         <Dialog.Overlay className="dialog-overlay"/>
-        <Dialog.Content className="dialog-content">
+        <Dialog.Content className="dialog-content" data-telemetry-off="">
           <div className="dialog-shield"><ShieldCheck size={23}/></div>
           <Dialog.Title>Фраза восстановления</Dialog.Title>
           <Dialog.Description>Любой, кто увидит эти слова, сможет управлять кошельком. Сохраните их в безопасном месте.</Dialog.Description>
           {revealing ? <div className="phrase-loading">Расшифровка и проверка адреса…</div>
             : <div className="phrase-grid">{recoveryPhrase.split(" ").map((word, index) =>
               <div className="phrase-word" key={index}><span>{index + 1}</span>{word}</div>)}</div>}
-          <div className="dialog-foot"><span>{isLinux
+          <div className="dialog-foot"><span>{web
+            ? "Фраза есть только в памяти этой вкладки. Запишите её и закройте окно."
+            : isLinux
             ? "Файл зашифрован вашим паролем."
             : "Файл зашифрован для вашей учётной записи Windows."}</span>
             <Dialog.Close className="dialog-close">Закрыть</Dialog.Close></div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
+    <ConsentBanner onPrivacy={() => openTool("privacy")} />
   </div>;
 }

@@ -12,7 +12,7 @@ project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 build_dir="${1:-$project_root/build/vendor-validation}"
 mkdir -p "$build_dir"
 report="$build_dir/vendor-report.txt"
-printf 'VANTIX vendor validation %s\nOS: %s\n' "$(date -Is)" "$(uname -a)" > "$report"
+printf 'Gramix vendor validation %s\nOS: %s\n' "$(date -Is)" "$(uname -a)" > "$report"
 trap 'status=$?; if (( status != 0 )); then printf "FAILED: exit %s\n" "$status" >> "$report"; printf "Validation failed; send %s and build output\n" "$report" >&2; fi' EXIT
 
 cmake_args=(-S "$project_root" -B "$build_dir")
@@ -23,9 +23,9 @@ elif [[ -f "$project_root/.tools/vcpkg/scripts/buildsystems/vcpkg.cmake" ]]; the
 fi
 cmake "${cmake_args[@]}"
 cmake --build "$build_dir" --config Release --parallel
-exe="$build_dir/vantix"
-if [[ ! -x "$exe" ]]; then exe="$build_dir/Release/vantix"; fi
-if [[ ! -x "$exe" ]]; then printf 'VANTIX executable missing\n' >&2; exit 1; fi
+exe="$build_dir/gramix"
+if [[ ! -x "$exe" ]]; then exe="$build_dir/Release/gramix"; fi
+if [[ ! -x "$exe" ]]; then printf 'Gramix executable missing\n' >&2; exit 1; fi
 
 "$exe" --devices-json > "$build_dir/devices.json"
 "$exe" --backends-json > "$build_dir/backends.json"

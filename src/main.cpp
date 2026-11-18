@@ -7,13 +7,13 @@
  * See LICENSE and LICENSING.md for details.
  */
 
-#include "vantix/compute.hpp"
-#include "vantix/address_inspector.hpp"
-#include "vantix/wallet_generator.hpp"
-#include "vantix/config.hpp"
-#include "vantix/vulkan_backend.hpp"
-#include "vantix/vendor_backend.hpp"
-#include "vantix/tuning_cache.hpp"
+#include "gramix/compute.hpp"
+#include "gramix/address_inspector.hpp"
+#include "gramix/wallet_generator.hpp"
+#include "gramix/config.hpp"
+#include "gramix/vulkan_backend.hpp"
+#include "gramix/vendor_backend.hpp"
+#include "gramix/tuning_cache.hpp"
 
 #include <CLI/CLI.hpp>
 #include <openssl/crypto.h>
@@ -33,7 +33,7 @@
 #include <unordered_set>
 
 namespace {
-std::string hex32(const vantix::Bytes32& value) {
+std::string hex32(const gramix::Bytes32& value) {
     std::ostringstream out;
     out << std::hex << std::setfill('0');
     for (const auto byte : value) out << std::setw(2) << static_cast<unsigned>(byte);
@@ -63,9 +63,9 @@ std::string json_string(const std::string& value) {
     return out.str();
 }
 
-std::vector<vantix::IComputeBackend*> one_backend_per_device(
-    const std::vector<vantix::TuningResult>& ranked) {
-    std::vector<vantix::IComputeBackend*> result;
+std::vector<gramix::IComputeBackend*> one_backend_per_device(
+    const std::vector<gramix::TuningResult>& ranked) {
+    std::vector<gramix::IComputeBackend*> result;
     std::unordered_set<std::string> seen;
     for (const auto& entry : ranked) {
         if (seen.insert(entry.backend->info().hardware_id).second)
@@ -76,7 +76,7 @@ std::vector<vantix::IComputeBackend*> one_backend_per_device(
 }
 
 int main(int argc, char** argv) {
-    CLI::App app{"VANTIX — TON vanity generator; V5R1 mainnet wallet by default"};
+    CLI::App app{"Gramix — TON vanity generator; V5R1 mainnet wallet by default"};
     auto* address_command = app.add_subcommand("address", "Offline TON address tools");
     auto* inspect_command = address_command->add_subcommand("inspect", "Validate raw or friendly address");
     address_command->require_subcommand(1);
@@ -112,7 +112,7 @@ int main(int argc, char** argv) {
     verify_phrase_command->add_option("--expected", expected_address, "Optional raw or friendly address to compare");
     std::string verify_file;
     bool verify_json = false;
-    verify_command->add_option("--file", verify_file, "Encrypted VANTIX wallet file")->required();
+    verify_command->add_option("--file", verify_file, "Encrypted Gramix wallet file")->required();
     verify_command->add_flag("--json", verify_json, "Print public verification status as JSON");
     std::string config_path;
     std::string cli_wallet;
@@ -181,21 +181,21 @@ int main(int argc, char** argv) {
             if (phrase_version != "v5" && phrase_version != "v4")
                 throw std::invalid_argument("--version must be v5 or v4");
             const auto expected_raw = expected_address.empty() ? std::string{}
-                : vantix::inspect_address(expected_address).raw;
+                : gramix::inspect_address(expected_address).raw;
             std::string phrase;
             if (!std::getline(std::cin, phrase) || phrase.empty() || phrase.size() > 4096) {
                 OPENSSL_cleanse(phrase.data(), phrase.size());
                 throw std::invalid_argument("Recovery phrase must be provided on stdin");
             }
-            vantix::WalletCandidate candidate;
+            gramix::WalletCandidate candidate;
             try {
                 const bool valid = phrase_scheme == "12"
-                    ? vantix::is_valid_multichain_mnemonic(phrase)
-                    : vantix::is_valid_ton_mnemonic(phrase);
+                    ? gramix::is_valid_multichain_mnemonic(phrase)
+                    : gramix::is_valid_ton_mnemonic(phrase);
                 if (!valid) throw std::invalid_argument("Invalid recovery phrase");
-                candidate = vantix::candidate_from_mnemonic(phrase,
-                    phrase_version == "v5" ? vantix::WalletVersion::v5r1 : vantix::WalletVersion::v4r2,
-                    phrase_scheme == "12" ? vantix::MnemonicScheme::multichain12 : vantix::MnemonicScheme::ton24);
+                candidate = gramix::candidate_from_mnemonic(phrase,
+                    phrase_version == "v5" ? gramix::WalletVersion::v5r1 : gramix::WalletVersion::v4r2,
+                    phrase_scheme == "12" ? gramix::MnemonicScheme::multichain12 : gramix::MnemonicScheme::ton24);
             } catch (...) {
                 OPENSSL_cleanse(phrase.data(), phrase.size());
                 throw std::runtime_error("Фраза восстановления не прошла локальную проверку.");
@@ -216,14 +216,14 @@ int main(int argc, char** argv) {
             if (session_version != "v5" && session_version != "v4")
                 throw std::invalid_argument("--version must be v5 or v4");
             const auto scheme = session_scheme == "12"
-                ? vantix::MnemonicScheme::multichain12 : vantix::MnemonicScheme::ton24;
+                ? gramix::MnemonicScheme::multichain12 : gramix::MnemonicScheme::ton24;
             const auto version = session_version == "v5"
-                ? vantix::WalletVersion::v5r1 : vantix::WalletVersion::v4r2;
-            auto phrase = scheme == vantix::MnemonicScheme::multichain12
-                ? vantix::generate_multichain_mnemonic() : vantix::generate_ton_mnemonic();
-            vantix::WalletCandidate candidate;
+                ? gramix::WalletVersion::v5r1 : gramix::WalletVersion::v4r2;
+            auto phrase = scheme == gramix::MnemonicScheme::multichain12
+                ? gramix::generate_multichain_mnemonic() : gramix::generate_ton_mnemonic();
+            gramix::WalletCandidate candidate;
             try {
-                candidate = vantix::candidate_from_mnemonic(phrase, version, scheme);
+                candidate = gramix::candidate_from_mnemonic(phrase, version, scheme);
                 OPENSSL_cleanse(phrase.data(), phrase.size());
                 phrase.clear();
                 std::cout << "{\"type\":\"generated\",\"address\":"
@@ -242,7 +242,7 @@ int main(int argc, char** argv) {
                     }
                     if (command == "SAVE") {
                         try {
-                            const auto path = vantix::save_wallet_candidate(candidate, session_output);
+                            const auto path = gramix::save_wallet_candidate(candidate, session_output);
                             std::cout << "{\"type\":\"saved\",\"encrypted_file\":"
                                       << json_string(path.string()) << "}\n" << std::flush;
                             break;
@@ -263,7 +263,7 @@ int main(int argc, char** argv) {
         }
         if (*verify_command) {
             try {
-                auto phrase = vantix::reveal_saved_mnemonic(verify_file);
+                auto phrase = gramix::reveal_saved_mnemonic(verify_file);
                 OPENSSL_cleanse(phrase.data(), phrase.size());
             } catch (const std::exception&) {
                 throw std::runtime_error("Файл кошелька не прошёл локальную проверку");
@@ -275,7 +275,7 @@ int main(int argc, char** argv) {
                     if (line.starts_with("address=")) address = line.substr(8);
                     if (line.starts_with("public_key=")) public_key = line.substr(11);
                 }
-                const auto raw = vantix::inspect_address(address).raw;
+                const auto raw = gramix::inspect_address(address).raw;
                 std::cout << "{\"source\":\"local\",\"verified\":true,\"address\":"
                           << json_string(address) << ",\"raw\":" << json_string(raw)
                           << ",\"public_key\":" << json_string(public_key) << "}\n";
@@ -290,10 +290,10 @@ int main(int argc, char** argv) {
             if (generate_version != "v5" && generate_version != "v4")
                 throw std::invalid_argument("--version must be v5 or v4");
             const auto scheme = generate_scheme == "12"
-                ? vantix::MnemonicScheme::multichain12 : vantix::MnemonicScheme::ton24;
+                ? gramix::MnemonicScheme::multichain12 : gramix::MnemonicScheme::ton24;
             const auto version = generate_version == "v5"
-                ? vantix::WalletVersion::v5r1 : vantix::WalletVersion::v4r2;
-            const auto wallet = vantix::generate_wallet_and_save(version, scheme, generate_output);
+                ? gramix::WalletVersion::v5r1 : gramix::WalletVersion::v4r2;
+            const auto wallet = gramix::generate_wallet_and_save(version, scheme, generate_output);
             const auto public_key = hex32(wallet.public_key);
             const auto raw = std::string("0:") + hex32(wallet.address_hash);
             if (generate_json) {
@@ -313,7 +313,7 @@ int main(int argc, char** argv) {
             return 0;
         }
         if (*inspect_command) {
-            const auto address = vantix::inspect_address(address_input);
+            const auto address = gramix::inspect_address(address_input);
             if (address_json) {
                 std::cout << "{\"source\":\"local\",\"raw\":" << json_string(address.raw)
                           << ",\"workchain\":" << address.workchain
@@ -342,22 +342,22 @@ int main(int argc, char** argv) {
             return 0;
         }
         if (!reveal_path.empty()) {
-            auto phrase = vantix::reveal_saved_mnemonic(reveal_path);
+            auto phrase = gramix::reveal_saved_mnemonic(reveal_path);
             std::cout << phrase << '\n';
             OPENSSL_cleanse(phrase.data(), phrase.size());
             return 0;
         }
-        auto config = config_path.empty() ? vantix::AppConfig{} : vantix::load_config(config_path);
+        auto config = config_path.empty() ? gramix::AppConfig{} : gramix::load_config(config_path);
         if (wallet_option->count()) {
-            if (cli_wallet == "v5") config.wallet = vantix::WalletVersion::v5r1;
-            else if (cli_wallet == "v4") config.wallet = vantix::WalletVersion::v4r2;
+            if (cli_wallet == "v5") config.wallet = gramix::WalletVersion::v5r1;
+            else if (cli_wallet == "v4") config.wallet = gramix::WalletVersion::v4r2;
             else throw std::invalid_argument("--wallet must be v5 or v4");
         }
         if (scheme_option->count()) {
             if (cli_mnemonic_scheme == "12")
-                config.mnemonic_scheme = vantix::MnemonicScheme::multichain12;
+                config.mnemonic_scheme = gramix::MnemonicScheme::multichain12;
             else if (cli_mnemonic_scheme == "24")
-                config.mnemonic_scheme = vantix::MnemonicScheme::ton24;
+                config.mnemonic_scheme = gramix::MnemonicScheme::ton24;
             else throw std::invalid_argument("--mnemonic must be 12 or 24");
         }
         if (prefix_option->count()) config.search.pattern.prefix = cli_prefix;
@@ -399,13 +399,13 @@ int main(int argc, char** argv) {
             }).detach();
         }
 
-        const auto devices = vantix::DeviceManager::discover();
+        const auto devices = gramix::DeviceManager::discover();
         if (!cli_device.empty()) {
             const auto found = std::find_if(devices.begin(), devices.end(),
                 [&](const auto& device) { return device.hardware_id == cli_device; });
             if (found == devices.end() ||
                 std::find(found->available_apis.begin(), found->available_apis.end(),
-                          vantix::ComputeApi::cpu) != found->available_apis.end())
+                          gramix::ComputeApi::cpu) != found->available_apis.end())
                 throw std::invalid_argument("--device must be a GPU hardware ID from --devices");
         }
         if (show_devices_json) {
@@ -424,7 +424,7 @@ int main(int argc, char** argv) {
                 for (const auto api : device.available_apis) {
                     if (!first_api) std::cout << ',';
                     first_api = false;
-                    std::cout << json_string(vantix::api_name(api));
+                    std::cout << json_string(gramix::api_name(api));
                 }
                 std::cout << "]}";
             }
@@ -438,14 +438,14 @@ int main(int argc, char** argv) {
                           << " memory=" << device.memory_bytes << " bytes\n"
                           << "  available APIs=";
                 for (const auto api : device.available_apis)
-                    std::cout << vantix::api_name(api) << ' ';
+                    std::cout << gramix::api_name(api) << ' ';
                 std::cout << " search=" << (device.usable_for_search ? "ready" : "verify-on-use")
                           << '\n';
             }
         }
 
-        vantix::BackendRegistry registry;
-        registry.add(std::make_shared<vantix::CpuBackend>(
+        gramix::BackendRegistry registry;
+        registry.add(std::make_shared<gramix::CpuBackend>(
             config.wallet, config.mnemonic_scheme));
         const bool search = !config.search.pattern.prefix.empty() ||
                             !config.search.pattern.suffix.empty() ||
@@ -459,7 +459,7 @@ int main(int argc, char** argv) {
         if (cli_backend != "cpu" &&
             (self_test || benchmark || benchmark_json || search || show_backends_json)) {
             try {
-                for (auto& gpu : vantix::VulkanBackend::create_all(
+                for (auto& gpu : gramix::VulkanBackend::create_all(
                          config.wallet, config.mnemonic_scheme)) {
                     if (!cli_device.empty() && gpu->info().hardware_id != cli_device)
                         continue;
@@ -480,9 +480,9 @@ int main(int argc, char** argv) {
         }
         if (cli_backend != "cpu" && cli_backend != "vulkan" &&
             (self_test || benchmark || benchmark_json || search || show_backends_json)) {
-            for (const auto api : {vantix::ComputeApi::cuda, vantix::ComputeApi::hip}) {
-                if ((cli_backend == "cuda" && api != vantix::ComputeApi::cuda) ||
-                    (cli_backend == "hip" && api != vantix::ComputeApi::hip)) continue;
+            for (const auto api : {gramix::ComputeApi::cuda, gramix::ComputeApi::hip}) {
+                if ((cli_backend == "cuda" && api != gramix::ComputeApi::cuda) ||
+                    (cli_backend == "hip" && api != gramix::ComputeApi::hip)) continue;
                 const bool detected = std::any_of(devices.begin(), devices.end(),
                     [api](const auto& device) {
                         return std::find(device.available_apis.begin(),
@@ -491,7 +491,7 @@ int main(int argc, char** argv) {
                     });
                 if (!detected) continue;
                 try {
-                    for (auto& gpu : vantix::load_vendor_backends(
+                    for (auto& gpu : gramix::load_vendor_backends(
                              api, config.wallet, config.mnemonic_scheme)) {
                         if (!cli_device.empty() && gpu->info().hardware_id != cli_device)
                             continue;
@@ -504,7 +504,7 @@ int main(int argc, char** argv) {
                         }
                     }
                 } catch (const std::exception& error) {
-                    std::cerr << vantix::api_name(api) << " unavailable: "
+                    std::cerr << gramix::api_name(api) << " unavailable: "
                               << error.what() << '\n';
                 }
             }
@@ -515,8 +515,8 @@ int main(int argc, char** argv) {
             if (self_test) std::cout << "CPU TON self-test passed\n";
         }
         if (cli_backend == "vulkan" || cli_backend == "cuda" || cli_backend == "hip") {
-            const auto required = cli_backend == "vulkan" ? vantix::ComputeApi::vulkan
-                : cli_backend == "cuda" ? vantix::ComputeApi::cuda : vantix::ComputeApi::hip;
+            const auto required = cli_backend == "vulkan" ? gramix::ComputeApi::vulkan
+                : cli_backend == "cuda" ? gramix::ComputeApi::cuda : gramix::ComputeApi::hip;
             if ((self_test || benchmark || benchmark_json || search) &&
                 std::none_of(registry.backends().begin(), registry.backends().end(),
                     [required](const auto& candidate) {
@@ -531,7 +531,7 @@ int main(int argc, char** argv) {
                 if (!first) std::cout << ',';
                 first = false;
                 const auto info = candidate->info();
-                std::cout << "{\"api\":" << json_string(vantix::api_name(info.api))
+                std::cout << "{\"api\":" << json_string(gramix::api_name(info.api))
                           << ",\"device_id\":" << json_string(info.hardware_id)
                           << ",\"name\":" << json_string(info.name) << '}';
             }
@@ -539,12 +539,12 @@ int main(int argc, char** argv) {
             return 0;
         }
         if (benchmark || benchmark_json) {
-            const auto results = vantix::AutoTuner::benchmark(registry);
+            const auto results = gramix::AutoTuner::benchmark(registry);
             if (benchmark_json)
                 std::cout << "{\"source\":\"local\",\"metric\":\"verified_ton_addresses_per_second\",\"warmup\":true,\"results\":[";
             bool first_result = true;
             for (const auto& result : results) {
-                const auto api = vantix::api_name(result.backend->info().api);
+                const auto api = gramix::api_name(result.backend->info().api);
                 if (cli_backend != "auto" && cli_backend != "hybrid" &&
                     !(cli_backend == "cpu" && api == "CPU") &&
                     !(cli_backend == "vulkan" && api == "Vulkan") &&
@@ -571,40 +571,40 @@ int main(int argc, char** argv) {
             if (!cli_device.empty() && cli_backend == "vulkan" &&
                 registry.backends().size() == 1)
                 throw std::runtime_error("Selected GPU has no validated Vulkan backend");
-            std::vector<vantix::IComputeBackend*> selected;
+            std::vector<gramix::IComputeBackend*> selected;
             if (cli_backend == "vulkan" || cli_backend == "cuda" || cli_backend == "hip") {
-                const auto api = cli_backend == "vulkan" ? vantix::ComputeApi::vulkan
-                    : cli_backend == "cuda" ? vantix::ComputeApi::cuda
-                    : vantix::ComputeApi::hip;
+                const auto api = cli_backend == "vulkan" ? gramix::ComputeApi::vulkan
+                    : cli_backend == "cuda" ? gramix::ComputeApi::cuda
+                    : gramix::ComputeApi::hip;
                 for (const auto& candidate : registry.backends())
                     if (candidate->info().api == api)
                         selected.push_back(candidate.get());
                 if (selected.empty())
                     throw std::runtime_error("No validated " + cli_backend + " backend available");
             } else if (cli_backend == "hybrid") {
-                selected = one_backend_per_device(vantix::AutoTuner::benchmark(registry));
+                selected = one_backend_per_device(gramix::AutoTuner::benchmark(registry));
             } else if (cli_backend == "auto" && registry.backends().size() > 1) {
                 selected = (retune || !cli_device.empty())
-                               ? std::vector<vantix::IComputeBackend*>{}
-                                  : vantix::load_tuning_profile(
+                               ? std::vector<gramix::IComputeBackend*>{}
+                                  : gramix::load_tuning_profile(
                                         registry, devices, config.wallet,
                                         config.mnemonic_scheme);
                 if (selected.empty()) {
-                    const auto results = vantix::AutoTuner::benchmark(registry);
-                    backend = vantix::FallbackManager::choose(results);
+                    const auto results = gramix::AutoTuner::benchmark(registry);
+                    backend = gramix::FallbackManager::choose(results);
                     selected.push_back(backend.get());
                     auto combined = one_backend_per_device(results);
                     if (combined.size() > 1) {
                         auto probe = config.search;
-                        probe.pattern = vantix::SearchPattern{"Z", "", "", false};
+                        probe.pattern = gramix::SearchPattern{"Z", "", "", false};
                         probe.max_candidates = 4096;
                         probe.batch_size = 64;
                         probe.progress = false;
                         try {
-                            vantix::PerformanceMonitor single_monitor;
-                            vantix::ComputeScheduler::search(selected, probe, single_monitor);
-                            vantix::PerformanceMonitor combined_monitor;
-                            vantix::ComputeScheduler::search(combined, probe, combined_monitor);
+                            gramix::PerformanceMonitor single_monitor;
+                            gramix::ComputeScheduler::search(selected, probe, single_monitor);
+                            gramix::PerformanceMonitor combined_monitor;
+                            gramix::ComputeScheduler::search(combined, probe, combined_monitor);
                             if (combined_monitor.rate() > single_monitor.rate() * 1.10)
                                 selected = std::move(combined);
                         } catch (const std::exception& error) {
@@ -613,7 +613,7 @@ int main(int argc, char** argv) {
                         }
                     }
                     if (cli_device.empty())
-                        vantix::save_tuning_profile(
+                        gramix::save_tuning_profile(
                             registry, selected, devices, config.wallet,
                             config.mnemonic_scheme);
                 } else {
@@ -625,12 +625,12 @@ int main(int argc, char** argv) {
                 const bool vendor_gpu = std::any_of(selected.begin(), selected.end(),
                     [](const auto* candidate) {
                         const auto api = candidate->info().api;
-                        return api == vantix::ComputeApi::cuda ||
-                               api == vantix::ComputeApi::hip;
+                        return api == gramix::ComputeApi::cuda ||
+                               api == gramix::ComputeApi::hip;
                     });
                 const bool any_gpu = vendor_gpu || std::any_of(selected.begin(), selected.end(),
                     [](const auto* candidate) {
-                        return candidate->info().api == vantix::ComputeApi::vulkan;
+                        return candidate->info().api == gramix::ComputeApi::vulkan;
                     });
                 if (any_gpu) config.search.batch_size = vendor_gpu ? 128 : 64;
             }
@@ -640,15 +640,15 @@ int main(int argc, char** argv) {
                 std::cout << selected[i]->info().name;
             }
             std::cout << '\n';
-            vantix::PerformanceMonitor monitor;
+            gramix::PerformanceMonitor monitor;
             try {
-                vantix::ComputeScheduler::search(selected, config.search, monitor);
-            } catch (const vantix::WalletPersistenceError&) {
+                gramix::ComputeScheduler::search(selected, config.search, monitor);
+            } catch (const gramix::WalletPersistenceError&) {
                 throw;
             } catch (const std::exception& error) {
                 const bool had_gpu = std::any_of(
                     selected.begin(), selected.end(), [](const auto* candidate) {
-                        return candidate->info().api != vantix::ComputeApi::cpu;
+                        return candidate->info().api != gramix::ComputeApi::cpu;
                     });
                 if (!had_gpu) throw;
                 std::cerr << "GPU search stopped: " << error.what()
@@ -661,15 +661,15 @@ int main(int argc, char** argv) {
                 }
                 if (!config.search.max_candidates ||
                     monitor.total() < config.search.max_candidates) {
-                    std::vector<vantix::IComputeBackend*> retry;
+                    std::vector<gramix::IComputeBackend*> retry;
                     std::unordered_set<std::string> seen_retry;
                     for (auto* failed : selected) {
                         const auto info = failed->info();
-                        if (info.api != vantix::ComputeApi::cuda &&
-                            info.api != vantix::ComputeApi::hip) continue;
+                        if (info.api != gramix::ComputeApi::cuda &&
+                            info.api != gramix::ComputeApi::hip) continue;
                         for (const auto& candidate : registry.backends()) {
                             const auto replacement = candidate->info();
-                            if (replacement.api == vantix::ComputeApi::vulkan &&
+                            if (replacement.api == gramix::ComputeApi::vulkan &&
                                 replacement.hardware_id == info.hardware_id &&
                                 seen_retry.insert(replacement.hardware_id).second)
                                 retry.push_back(candidate.get());
@@ -678,8 +678,8 @@ int main(int argc, char** argv) {
                     if (!retry.empty()) {
                         try {
                             std::cerr << "Retrying failed vendor GPU via Vulkan\n";
-                            vantix::ComputeScheduler::search(retry, fallback, monitor);
-                        } catch (const vantix::WalletPersistenceError&) {
+                            gramix::ComputeScheduler::search(retry, fallback, monitor);
+                        } catch (const gramix::WalletPersistenceError&) {
                             throw;
                         } catch (const std::exception& fallback_error) {
                             std::cerr << "Vulkan retry stopped: " << fallback_error.what()
@@ -692,7 +692,7 @@ int main(int argc, char** argv) {
                     }
                     if (retry.empty() && (!config.search.max_candidates ||
                         monitor.total() < config.search.max_candidates))
-                        vantix::ComputeScheduler::search(*registry.backends().front(),
+                        gramix::ComputeScheduler::search(*registry.backends().front(),
                                                           fallback, monitor);
                 }
             }
@@ -701,7 +701,7 @@ int main(int argc, char** argv) {
         }
         return 0;
     } catch (const std::exception& error) {
-        std::cerr << "VANTIX error: " << error.what() << '\n';
+        std::cerr << "Gramix error: " << error.what() << '\n';
         return 1;
     }
 }

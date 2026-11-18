@@ -72,16 +72,16 @@ jobs:
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v7
         with:
-          name: vantix-${{ matrix.platform }}
+          name: gramix-${{ matrix.platform }}
           path: |
-            desktop/src-tauri/target/release/bundle/nsis/VANTIX_*_x64-setup.exe
-            desktop/src-tauri/target/release/bundle/nsis/VANTIX_*_x64-setup.exe.sig
+            desktop/src-tauri/target/release/bundle/nsis/GRAMIX_*_x64-setup.exe
+            desktop/src-tauri/target/release/bundle/nsis/GRAMIX_*_x64-setup.exe.sig
           if-no-files-found: error
       - name: Upload Linux installers
         if: runner.os == 'Linux'
         uses: actions/upload-artifact@v7
         with:
-          name: vantix-${{ matrix.platform }}
+          name: gramix-${{ matrix.platform }}
           path: |
             desktop/src-tauri/target/release/bundle/deb/*.deb
             desktop/src-tauri/target/release/bundle/appimage/*.AppImage
@@ -97,10 +97,10 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/download-artifact@v8
         with:
-          pattern: vantix-*
+          pattern: gramix-*
           path: release-assets
           merge-multiple: true
-      - name: Publish VANTIX release
+      - name: Publish Gramix release
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
@@ -118,6 +118,6 @@ jobs:
           cd release-ready
           sha256sum * > SHA256SUMS.txt
           cd ..
-          gh release create "$RELEASE_TAG" --verify-tag --draft --title "VANTIX ${RELEASE_TAG#v}" --notes-file docs/release-notes-v0.1.0.md
+          gh release create "$RELEASE_TAG" --verify-tag --draft --title "Gramix ${RELEASE_TAG#v}" --notes-file docs/release-notes-v0.1.0.md
           gh release upload "$RELEASE_TAG" release-ready/*
           gh release edit "$RELEASE_TAG" --draft=false --latest

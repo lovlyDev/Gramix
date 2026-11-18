@@ -17,7 +17,7 @@ import urllib.request
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 CACHE = ROOT / "licenses/cargo-license-cache.json"
-USER_AGENT = "VANTIX license inventory (https://github.com/lovlyDev/VANTIX)"
+USER_AGENT = "Gramix license inventory (https://github.com/lovlyDev/Gramix)"
 
 
 def fetch_json(url):
@@ -61,7 +61,7 @@ def main():
     CACHE.write_text(json.dumps(dict(sorted(cache.items())), indent=2, ensure_ascii=False) + "\n", "utf-8")
 
     lines = [
-        "# VANTIX Third-Party Components",
+        "# Gramix Third-Party Components",
         "",
         "I record versions from the current lockfiles. A package in a lockfile is not necessarily present in every installer. Before release, inspect each delivered artifact and include the complete license text and copyright notices for redistributed components.",
         "",

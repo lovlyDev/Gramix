@@ -55,7 +55,7 @@ async fn get_json(client: &reqwest::Client, url: String) -> Result<Value, String
 fn client() -> Result<reqwest::Client, String> {
     reqwest::Client::builder().timeout(Duration::from_secs(10))
         .redirect(reqwest::redirect::Policy::none())
-        .user_agent("VANTIX/0.1.0")
+        .user_agent("Gramix/0.1.0")
         .build().map_err(|_| "Не удалось настроить сетевой клиент".into())
 }
 

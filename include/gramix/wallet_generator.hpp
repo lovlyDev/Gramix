@@ -9,11 +9,11 @@
 
 #pragma once
 
-#include "vantix/ton.hpp"
+#include "gramix/ton.hpp"
 
 #include <filesystem>
 
-namespace vantix {
+namespace gramix {
 
 struct GeneratedWalletPublic {
     Bytes32 public_key{};
@@ -28,4 +28,4 @@ GeneratedWalletPublic generate_wallet_and_save(
     WalletVersion version, MnemonicScheme scheme,
     const std::filesystem::path& output_directory);
 
-}  // namespace vantix
+}  // namespace gramix

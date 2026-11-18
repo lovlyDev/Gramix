@@ -12,14 +12,16 @@ import { ArrowLeftRight, Binary, Bookmark, ChevronDown, ChevronRight, FileCode,
   FlaskConical, Gauge, Hammer, ScanSearch, Search, Settings, ShieldCheck, Sparkles,
   SquareTerminal, Star, Wallet, WandSparkles, Zap, type LucideProps } from "lucide-react";
 import { SiGithub } from "react-icons/si";
-import vantixIcon from "../assets/icons/vantix-app.svg";
+import gramixIcon from "../assets/icons/gramix-app.svg";
+import { platform } from "@platform";
+import { parseValue, type LinkTarget } from "../lib/links";
 
 type ToolMeta = { id: string; label: string; description: string;
   icon: ComponentType<LucideProps>; color: string };
 
 export const toolGroups = [
   { title: "Кошельки", items: [
-    { id: "generator", label: "Поиск адреса", description: "TON-адрес с вашим словом на CPU и GPU", icon: WandSparkles, color: "#5856d6" },
+    { id: "generator", label: "Поиск адреса", description: "GRAM-адрес с вашим словом на CPU и GPU", icon: WandSparkles, color: "#5856d6" },
     { id: "wallet-generator", label: "Новый кошелёк", description: "Wallet V5R1 или V4R2 с фразой восстановления", icon: Wallet, color: "#007aff" },
     { id: "wallet-security", label: "Проверка кошелька", description: "Фраза, файл и сравнение адресов офлайн", icon: ShieldCheck, color: "#34c759" },
     { id: "address-inspector", label: "Проверка адреса", description: "Форматы, флаги и состояние в сети", icon: ScanSearch, color: "#30b0c7" },
@@ -33,25 +35,30 @@ export const toolGroups = [
   { title: "Разработка", items: [
     { id: "contract-sandbox", label: "Sandbox", description: "Сценарии транзакций в локальном блокчейне", icon: FlaskConical, color: "#32ade6" },
     { id: "contract-builder", label: "Builder", description: "Редактор и сборка контрактов Tolk", icon: Hammer, color: "#ff9f0a" },
-    { id: "gpu-benchmark", label: "GPU Benchmark", description: "Замер скорости полного TON-пайплайна", icon: Gauge, color: "#ff3b30" },
-    { id: "developer-cli", label: "Developer CLI", description: "Разрешённые команды ядра VANTIX", icon: SquareTerminal, color: "#8e8e93" },
+    { id: "gpu-benchmark", label: "GPU Benchmark", description: "Замер скорости полного GRAM-пайплайна", icon: Gauge, color: "#ff3b30" },
+    { id: "developer-cli", label: "Developer CLI", description: "Разрешённые команды ядра Gramix", icon: SquareTerminal, color: "#8e8e93" },
   ] },
 ] as const satisfies readonly { title: string; items: readonly ToolMeta[] }[];
 
 export type ToolId = (typeof toolGroups)[number]["items"][number]["id"];
-export type WorkspaceId = ToolId | "overview" | "settings";
+export type WorkspaceId = ToolId | "overview" | "settings" | "privacy";
 type ToolItem = { id: ToolId; label: string; description: string;
   icon: ComponentType<LucideProps>; color: string };
-export const allTools: ToolItem[] = toolGroups.flatMap((group) => [...group.items]);
+// На сайте нет Developer CLI: он запускает нативное ядро.
+const webHidden = new Set<string>(["developer-cli"]);
+export const toolAvailable = (id: string) => platform.kind !== "web" || !webHidden.has(id);
+export const allTools: ToolItem[] = toolGroups.flatMap((group) => [...group.items]).filter((item) => toolAvailable(item.id));
 export const toolTitles = Object.fromEntries(allTools.map((item) =>
   [item.id, item.label])) as Record<ToolId, string>;
-const toolById = Object.fromEntries(allTools.map((item) => [item.id, item])) as Record<ToolId, ToolItem>;
+const toolById = Object.fromEntries(toolGroups.flatMap((group): ToolItem[] => [...group.items])
+  .map((item) => [item.id, item])) as Record<ToolId, ToolItem>;
 
 export function isToolId(value: string): value is ToolId {
   return Object.hasOwn(toolTitles, value);
 }
 export function isWorkspaceId(value: string): value is WorkspaceId {
-  return value === "overview" || value === "settings" || isToolId(value);
+  return value === "overview" || value === "settings" || (value === "privacy" && platform.kind === "web") ||
+    (isToolId(value) && toolAvailable(value));
 }
 
 /** Цветная плитка инструмента в стиле системных иконок. */
@@ -83,26 +90,18 @@ export function matchesTool(item: { id: ToolId; label: string; description: stri
     .toLocaleLowerCase().includes(needle);
 }
 
-export type SmartTarget = { tool: ToolId; event: string; value: string; label: string };
-/** Распознаёт адрес, хэш транзакции или BOC во вставленной строке. */
-export function detectQuery(raw: string): SmartTarget | null {
-  const value = raw.trim();
-  if (/^[EUk0][Qf][A-Za-z0-9_-]{46}$/.test(value) || /^-?\d+:[0-9a-fA-F]{64}$/.test(value))
-    return { tool: "address-inspector", event: "vantix:inspect-address", value, label: "Проверить адрес" };
-  if (/^[0-9a-fA-F]{64}$/.test(value))
-    return { tool: "transaction-decoder", event: "vantix:transaction-id", value, label: "Разобрать транзакцию" };
-  if (/^te6cc[A-Za-z0-9+/=]+$/.test(value))
-    return { tool: "boc-explorer", event: "vantix:open-boc", value, label: "Открыть BOC" };
-  return null;
-}
+export type SmartTarget = LinkTarget;
+/** Распознаёт адрес, хэш транзакции, BOC или ссылку на эксплорер во вставленной строке. */
+export const detectQuery = parseValue;
 export function openSmart(target: SmartTarget, onSelect: (tool: WorkspaceId) => void) {
   onSelect(target.tool);
-  window.setTimeout(() => window.dispatchEvent(new CustomEvent(target.event, { detail: target.value })), 0);
+  if (platform.kind === "web") window.history.replaceState(null, "", target.path);
+  window.setTimeout(() => window.dispatchEvent(new CustomEvent(target.event, { detail: target.detail })), 0);
 }
 
 export function readFavorites(): ToolId[] {
   try {
-    const stored: unknown = JSON.parse(localStorage.getItem("vantix.ui.favorites") || "[]");
+    const stored: unknown = JSON.parse(localStorage.getItem("gramix.ui.favorites") || "[]");
     return Array.isArray(stored) ? stored.filter((id): id is ToolId =>
       typeof id === "string" && isToolId(id)) : [];
   } catch { return []; }
@@ -138,8 +137,8 @@ export default function ToolNavigation({ active, onSelect, live }: {
   const root = useRef<HTMLElement>(null);
   const search = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    localStorage.setItem("vantix.ui.favorites", JSON.stringify(favorites));
-    window.dispatchEvent(new CustomEvent("vantix:favorites", { detail: favorites }));
+    localStorage.setItem("gramix.ui.favorites", JSON.stringify(favorites));
+    window.dispatchEvent(new CustomEvent("gramix:favorites", { detail: favorites }));
   }, [favorites]);
   useEffect(() => {
     function onDown(event: MouseEvent) {
@@ -180,10 +179,10 @@ export default function ToolNavigation({ active, onSelect, live }: {
   return <header className="top" ref={root}>
     <div className="bar wrap">
       <button type="button" className="brand" title="Обзор" onClick={() => select("overview")}>
-        <span className="logo-tile"><img src={vantixIcon} alt="" /></span>
-        <span className="word">VANTIX</span>
+        <span className="logo-tile"><img src={gramixIcon} alt="" /></span>
+        <span className="word">Gramix</span>
       </button>
-      <nav className="nav" aria-label="Навигация VANTIX">
+      <nav className="nav" aria-label="Навигация Gramix">
         <button type="button" className={`nav-link ${active === "overview" ? "on" : ""}`}
           aria-current={active === "overview" ? "page" : undefined}
           onClick={() => select("overview")}>Обзор</button>
@@ -193,7 +192,7 @@ export default function ToolNavigation({ active, onSelect, live }: {
             onClick={() => setMenu((current) => current === group.title ? null : group.title)}>
             {group.title}<ChevronDown size={15} className={`caret ${menu === group.title ? "up" : ""}`} /></button>
           {menu === group.title && <div className="menu" role="menu" aria-label={group.title}>
-            {group.items.map((item) => <MenuItem key={item.id} item={item} active={active === item.id}
+            {group.items.filter((item) => toolAvailable(item.id)).map((item) => <MenuItem key={item.id} item={item} active={active === item.id}
               favorite={favorites.includes(item.id)} onSelect={() => select(item.id)}
               onFavorite={() => toggleFavorite(item.id)} />)}
           </div>}
@@ -204,8 +203,8 @@ export default function ToolNavigation({ active, onSelect, live }: {
         title="Открыть поиск адреса"><span className="pulse" />{live.label}<b>{live.value}</b></button>}
       <div className="top-search search" data-menu-root>
         <Search size={17} className="glass" aria-hidden="true" />
-        <input ref={search} value={query} placeholder="Адрес, хэш, BOC или инструмент"
-          aria-label="Поиск по VANTIX" spellCheck={false} autoComplete="off"
+        <input ref={search} value={query} placeholder="Адрес, хэш, ссылка или инструмент"
+          aria-label="Поиск по Gramix" spellCheck={false} autoComplete="off"
           onFocus={() => { setSearchFocus(true); setHighlight(0); }}
           onBlur={() => window.setTimeout(() => setSearchFocus(false), 120)}
           onChange={(event) => { setQuery(event.target.value); setHighlight(0); }}
@@ -233,7 +232,7 @@ export default function ToolNavigation({ active, onSelect, live }: {
               <ToolIcon tool={item.id} size={32} />
               <span><b>{item.label}</b><small>{item.description}</small></span></button>;
           })}
-          {choices === 0 && <p className="menu-empty">Ничего не найдено. Вставьте TON-адрес, хэш транзакции или BOC.</p>}
+          {choices === 0 && <p className="menu-empty">Ничего не найдено. Вставьте адрес, хэш транзакции, BOC или ссылку на эксплорер.</p>}
         </div>}
       </div>
       <div className="nav-group" data-menu-root>
@@ -243,13 +242,13 @@ export default function ToolNavigation({ active, onSelect, live }: {
           <Bookmark size={19} />{favorites.length > 0 && <span className="count">{favorites.length}</span>}</button>
         {menu === "favorites" && <div className="menu menu-end" role="menu" aria-label="Избранное">
           <div className="menu-caption">Избранное</div>
-          {favorites.length ? favorites.map((id) => <MenuItem key={id} item={toolById[id]}
+          {favorites.filter(toolAvailable).length ? favorites.filter(toolAvailable).map((id) => <MenuItem key={id} item={toolById[id]}
             active={active === id} favorite onSelect={() => select(id)} onFavorite={() => toggleFavorite(id)} />)
             : <p className="menu-empty">Отметьте инструменты звёздочкой в меню разделов.</p>}
         </div>}
       </div>
-      <a className="icon-btn" href="https://github.com/lovlyDev/VANTIX" target="_blank"
-        rel="noreferrer" title="GitHub VANTIX" aria-label="GitHub VANTIX"><SiGithub size={18} /></a>
+      <a className="icon-btn" href="https://github.com/lovlyDev/Gramix" target="_blank"
+        rel="noreferrer" title="Исходный код Gramix" aria-label="Исходный код Gramix"><SiGithub size={18} /></a>
       <button type="button" className={`icon-btn ${active === "settings" ? "on" : ""}`} title="Настройки"
         aria-label="Настройки" onClick={() => select("settings")}><Settings size={19} /></button>
       <button type="button" className="cta" onClick={() => select("generator")}>

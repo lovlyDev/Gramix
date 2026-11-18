@@ -7,7 +7,8 @@
  * See LICENSE and LICENSING.md for details.
  */
 
-#include "vantix/vendor_backend.hpp"
+#include "gramix/resources.hpp"
+#include "gramix/vendor_backend.hpp"
 
 #include <openssl/crypto.h>
 #include <algorithm>
@@ -25,7 +26,7 @@
 #include <unistd.h>
 #endif
 
-namespace vantix {
+namespace gramix {
 namespace {
 constexpr unsigned batch_limit = 128;
 
@@ -36,7 +37,7 @@ public:
         wchar_t path[MAX_PATH]{};
         if (!GetModuleFileNameW(nullptr, path, MAX_PATH)) return;
         auto file = std::filesystem::path(path).parent_path() /
-            (api == ComputeApi::cuda ? L"vantix_cuda.dll" : L"vantix_hip.dll");
+            (api == ComputeApi::cuda ? L"gramix_cuda.dll" : L"gramix_hip.dll");
         DLL_DIRECTORY_COOKIE hip_directory = nullptr;
         if (api == ComputeApi::hip) {
             wchar_t hip_path[MAX_PATH]{};
@@ -56,26 +57,26 @@ public:
         if (length <= 0) return;
         path[length] = 0;
         auto file = std::filesystem::path(path).parent_path() /
-            (api == ComputeApi::cuda ? "libvantix_cuda.so" : "libvantix_hip.so");
+            (api == ComputeApi::cuda ? "libgramix_cuda.so" : "libgramix_hip.so");
         handle_ = dlopen(file.c_str(), RTLD_NOW | RTLD_LOCAL);
         if (!handle_) {
-            if (const auto* resources = std::getenv("VANTIX_RESOURCE_DIR")) {
+            if (const auto* resources = environment_value("RESOURCE_DIR")) {
                 file = std::filesystem::path(resources) /
-                    (api == ComputeApi::cuda ? "libvantix_cuda.so" : "libvantix_hip.so");
+                    (api == ComputeApi::cuda ? "libgramix_cuda.so" : "libgramix_hip.so");
                 handle_ = dlopen(file.c_str(), RTLD_NOW | RTLD_LOCAL);
             }
         }
 #endif
         if (!handle_) return;
-        abi = reinterpret_cast<AbiFn>(symbol("vantix_vendor_abi_version"));
-        build_id = reinterpret_cast<BuildFn>(symbol("vantix_vendor_build_id"));
-        count = reinterpret_cast<CountFn>(symbol("vantix_vendor_device_count"));
-        name = reinterpret_cast<InfoFn>(symbol("vantix_vendor_device_name"));
-        id = reinterpret_cast<InfoFn>(symbol("vantix_vendor_device_id"));
-        create = reinterpret_cast<CreateFn>(symbol("vantix_vendor_create"));
-        derive = reinterpret_cast<DeriveFn>(symbol("vantix_vendor_derive"));
-        error = reinterpret_cast<ErrorFn>(symbol("vantix_vendor_error"));
-        destroy = reinterpret_cast<DestroyFn>(symbol("vantix_vendor_destroy"));
+        abi = reinterpret_cast<AbiFn>(symbol("gramix_vendor_abi_version"));
+        build_id = reinterpret_cast<BuildFn>(symbol("gramix_vendor_build_id"));
+        count = reinterpret_cast<CountFn>(symbol("gramix_vendor_device_count"));
+        name = reinterpret_cast<InfoFn>(symbol("gramix_vendor_device_name"));
+        id = reinterpret_cast<InfoFn>(symbol("gramix_vendor_device_id"));
+        create = reinterpret_cast<CreateFn>(symbol("gramix_vendor_create"));
+        derive = reinterpret_cast<DeriveFn>(symbol("gramix_vendor_derive"));
+        error = reinterpret_cast<ErrorFn>(symbol("gramix_vendor_error"));
+        destroy = reinterpret_cast<DestroyFn>(symbol("gramix_vendor_destroy"));
     }
     ~VendorLibrary() {
 #ifdef _WIN32
@@ -236,8 +237,8 @@ std::vector<std::shared_ptr<IComputeBackend>> load_vendor_backends(
     auto library = std::make_shared<VendorLibrary>(api);
     if (!library->ready())
         throw std::runtime_error(api == ComputeApi::cuda
-            ? "vantix_cuda module or CUDA runtime is missing"
-            : "vantix_hip module or HIP runtime is missing");
+            ? "gramix_cuda module or CUDA runtime is missing"
+            : "gramix_hip module or HIP runtime is missing");
     std::vector<std::shared_ptr<IComputeBackend>> result;
     const auto count = library->count();
     if (count < 0 || count > 64) return {};
@@ -247,4 +248,4 @@ std::vector<std::shared_ptr<IComputeBackend>> load_vendor_backends(
     }
     return result;
 }
-}  // namespace vantix
+}  // namespace gramix

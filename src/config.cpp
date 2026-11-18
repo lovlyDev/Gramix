@@ -7,14 +7,14 @@
  * See LICENSE and LICENSING.md for details.
  */
 
-#include "vantix/config.hpp"
+#include "gramix/config.hpp"
 
 #include <toml++/toml.hpp>
 
 #include <cstdint>
 #include <stdexcept>
 
-namespace vantix {
+namespace gramix {
 
 AppConfig load_config(const std::string& path) {
     const auto file = toml::parse_file(path);
@@ -56,4 +56,4 @@ AppConfig load_config(const std::string& path) {
     return config;
 }
 
-}  // namespace vantix
+}  // namespace gramix

@@ -7,7 +7,7 @@
  * See LICENSE and LICENSING.md for details.
  */
 
-#include "vantix/address_inspector.hpp"
+#include "gramix/address_inspector.hpp"
 
 #include <openssl/evp.h>
 
@@ -18,7 +18,7 @@
 #include <span>
 #include <stdexcept>
 
-namespace vantix {
+namespace gramix {
 namespace {
 
 int hex_digit(char value) {
@@ -139,4 +139,4 @@ InspectedAddress inspect_address(std::string_view input) {
     return result;
 }
 
-}  // namespace vantix
+}  // namespace gramix

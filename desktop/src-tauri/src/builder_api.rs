@@ -35,7 +35,7 @@ fn compile_fixed(node: PathBuf, path: PathBuf, source: String) -> Result<Value, 
     let runtime_dir = path.parent().ok_or("Не найден каталог Tolk-компилятора")?;
     let unique = SystemTime::now().duration_since(UNIX_EPOCH)
         .map_err(|_| "Не удалось создать временный файл")?.as_nanos();
-    let output_path = std::env::temp_dir().join(format!("vantix-tolk-{}-{unique}.json", std::process::id()));
+    let output_path = std::env::temp_dir().join(format!("gramix-tolk-{}-{unique}.json", std::process::id()));
     let file = std::fs::OpenOptions::new().write(true).create_new(true)
         .open(&output_path).map_err(|_| "Не удалось создать временный файл компиляции")?;
     let result = (|| {

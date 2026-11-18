@@ -7,7 +7,7 @@
  * See LICENSE and LICENSING.md for details.
  */
 
-#include "vantix/ton.hpp"
+#include "gramix/ton.hpp"
 
 #include <openssl/crypto.h>
 
@@ -32,11 +32,11 @@ int main() {
     std::array<unsigned char, 128> input{};
     std::array<unsigned char, 32> output{};
     std::memcpy(input.data(), phrase, sizeof(phrase) - 1);
-    vantix_gpu::derive_kernel(input.data(), output.data(), 1);
-    vantix::Bytes32 seed{};
+    gramix_gpu::derive_kernel(input.data(), output.data(), 1);
+    gramix::Bytes32 seed{};
     std::memcpy(seed.data(), output.data(), seed.size());
-    const auto actual = vantix::public_key_from_ed25519_seed(seed);
-    const auto expected = vantix::multichain_public_key(phrase);
+    const auto actual = gramix::public_key_from_ed25519_seed(seed);
+    const auto expected = gramix::multichain_public_key(phrase);
     OPENSSL_cleanse(seed.data(), seed.size());
     OPENSSL_cleanse(output.data(), output.size());
     OPENSSL_cleanse(input.data(), input.size());

@@ -1293,6 +1293,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "gramix-desktop"
+version = "0.1.0"
+dependencies = [
+ "reqwest",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-dialog",
+ "tauri-plugin-process",
+ "tauri-plugin-shell",
+ "tauri-plugin-updater",
+]
+
+[[package]]
 name = "gtk"
 version = "0.18.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4446,20 +4460,6 @@ dependencies = [
  "js-sys",
  "serde_core",
  "wasm-bindgen",
-]
-
-[[package]]
-name = "vantix-desktop"
-version = "0.1.0"
-dependencies = [
- "reqwest",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-dialog",
- "tauri-plugin-process",
- "tauri-plugin-shell",
- "tauri-plugin-updater",
 ]
 
 [[package]]

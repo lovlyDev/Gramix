@@ -128,6 +128,6 @@ export async function decodeTransactionBoc(bytes: Uint8Array): Promise<DecodedTr
       rawBocBase64: Buffer.from(bytes).toString("base64"),
     };
   } catch {
-    throw new Error("BOC не содержит корректную TON-транзакцию.");
+    throw new Error("BOC не содержит корректную GRAM-транзакцию.");
   }
 }

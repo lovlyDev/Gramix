@@ -14,12 +14,12 @@ import { chromium } from "playwright-core";
 import { preview } from "vite";
 import { beginCell } from "@ton/core";
 
-const browserCandidates = [process.env.VANTIX_E2E_BROWSER,
+const browserCandidates = [process.env.GRAMIX_E2E_BROWSER,
   "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
   "C:/Program Files/Google/Chrome/Application/chrome.exe",
   "/usr/bin/chromium", "/usr/bin/google-chrome"].filter(Boolean);
 const executablePath = browserCandidates.find((path) => existsSync(path));
-if (!executablePath) throw new Error("Укажите VANTIX_E2E_BROWSER: браузер для smoke-теста не найден.");
+if (!executablePath) throw new Error("Укажите GRAMIX_E2E_BROWSER: браузер для smoke-теста не найден.");
 
 const server = await preview({ preview: { host: "127.0.0.1", port: 1428, strictPort: true } });
 let browser;
@@ -40,7 +40,7 @@ try {
     ["gpu-benchmark", "GPU Benchmark"], ["developer-cli", "Developer CLI"],
   ];
   const screenshotDir = join(process.cwd(), "..", "build", "visual", "e2e");
-  if (process.env.VANTIX_E2E_SCREENSHOTS === "1") mkdirSync(screenshotDir, { recursive: true });
+  if (process.env.GRAMIX_E2E_SCREENSHOTS === "1") mkdirSync(screenshotDir, { recursive: true });
   for (const [route, title] of routes) {
     await page.evaluate((value) => { location.hash = value; }, route);
     await page.waitForFunction((value) =>
@@ -51,7 +51,7 @@ try {
     assert.equal(await page.locator(activeScreen).count(), 1, route);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false,
       `${route}: горизонтальная прокрутка при 1024px`);
-    if (process.env.VANTIX_E2E_SCREENSHOTS === "1")
+    if (process.env.GRAMIX_E2E_SCREENSHOTS === "1")
       await page.screenshot({ path: join(screenshotDir, `${route}-1024.png`) });
   }
 
@@ -66,14 +66,14 @@ try {
   await page.waitForTimeout(220);
   assert.equal(await page.locator(".ui-select-content").evaluate((element) =>
     getComputedStyle(element).opacity), "1");
-  if (process.env.VANTIX_E2E_SCREENSHOTS === "1")
+  if (process.env.GRAMIX_E2E_SCREENSHOTS === "1")
     await page.screenshot({ path: join(screenshotDir, "select-search-open-1024.png") });
   await page.keyboard.press("Escape");
   await page.evaluate(() => { location.hash = "wallet-generator"; });
   await page.getByRole("combobox", { name: "Формат публичного адреса" }).click();
   assert.equal(await page.locator(".ui-select-content .ui-select-item").count(), 2);
   await page.waitForTimeout(220);
-  if (process.env.VANTIX_E2E_SCREENSHOTS === "1")
+  if (process.env.GRAMIX_E2E_SCREENSHOTS === "1")
     await page.screenshot({ path: join(screenshotDir, "select-wallet-open-1024.png") });
   await page.keyboard.press("Escape");
 
@@ -82,20 +82,20 @@ try {
   const blockchainMenu = page.getByRole("menu", { name: "Блокчейн" });
   await blockchainMenu.waitFor();
   assert.equal(await blockchainMenu.getByRole("menuitem").count(), 4);
-  if (process.env.VANTIX_E2E_SCREENSHOTS === "1")
+  if (process.env.GRAMIX_E2E_SCREENSHOTS === "1")
     await page.screenshot({ path: join(screenshotDir, "header-menu-1024.png") });
   await blockchainMenu.getByRole("menuitem", { name: "BOC Explorer" }).click();
   await page.waitForFunction(() =>
     document.querySelector(".screen-heading strong")?.textContent === "BOC Explorer");
   assert.equal(await page.getByRole("menu", { name: "Блокчейн" }).count(), 0, "Меню закрывается после выбора");
   const rawAddress = `0:${"1".repeat(64)}`;
-  await page.getByRole("textbox", { name: "Поиск по VANTIX", exact: true }).fill(rawAddress);
+  await page.getByRole("textbox", { name: "Поиск по Gramix", exact: true }).fill(rawAddress);
   await page.keyboard.press("Enter");
   await page.waitForFunction(() =>
     document.querySelector(".screen-heading strong")?.textContent === "Проверка адреса");
   assert.equal(await page.locator("#address-value").inputValue(), rawAddress);
 
-  if (process.env.VANTIX_E2E_SCREENSHOTS === "1") {
+  if (process.env.GRAMIX_E2E_SCREENSHOTS === "1") {
     for (const [theme, button] of [["light", "Светлая"], ["dark", "Тёмная"]]) {
       await page.evaluate(() => { location.hash = "settings"; });
       await page.getByRole("tab", { name: "Интерфейс" }).click();
@@ -136,7 +136,7 @@ try {
           Boolean(main && main.scrollWidth > main.clientWidth);
       });
       assert.equal(overflow, false, `${route}: горизонтальная прокрутка при ${width}px`);
-      if (width === 683 && route === "wallet-generator" && process.env.VANTIX_E2E_SCREENSHOTS === "1")
+      if (width === 683 && route === "wallet-generator" && process.env.GRAMIX_E2E_SCREENSHOTS === "1")
         await page.screenshot({ path: join(screenshotDir, "wallet-generator-683.png") });
     }
   }
@@ -164,14 +164,14 @@ try {
 
   const publicAddress = `0:${"0".repeat(64)}`;
   await page.evaluate((address) => {
-    window.dispatchEvent(new CustomEvent("vantix:verify-wallet", { detail: {
+    window.dispatchEvent(new CustomEvent("gramix:verify-wallet", { detail: {
       address, scheme: "24", version: "v4",
     } }));
     location.hash = "wallet-security";
   }, publicAddress);
   await page.getByRole("tab", { name: "Recovery phrase" }).click();
   assert.deepEqual(await page.locator(".security-selectors button").allTextContents(),
-    ["24 слова · TON Native", "Wallet V4R2"]);
+    ["24 слова · GRAM Native", "Wallet V4R2"]);
   assert.equal(await page.locator(".security-form-fields input[placeholder='EQ… / UQ… / 0:…']").first().inputValue(),
     publicAddress);
 

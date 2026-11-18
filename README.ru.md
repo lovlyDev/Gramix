@@ -1,27 +1,29 @@
-# VANTIX
+# Gramix
 
 [English README](README.md).
+
+Gramix — новое название проекта VANTIX. Сайт с инструментами: [gram.lovlydev.ru](https://gram.lovlydev.ru).
 
 ## Лицензия
 
 Gramix — свободная программа на условиях **AGPL-3.0-only**: см. [текст лицензии](LICENSE), [пояснения](LICENSING.ru.md), [уведомления](NOTICE.ru.md), [правила названия и логотипа](TRADEMARKS.ru.md) и [сторонние компоненты](licenses/THIRD_PARTY.ru.md).
 
-Я разрабатываю VANTIX — генератор TON-адресов с заданным фрагментом. Вычислительное ядро написано на C++23, приложение для Windows и Linux — на Tauri и React. В выпуске 0.1.0 доступны CPU и Vulkan Compute. Исходники CUDA/HIP есть в проекте, но их модули не входят в установщики: сборка и работа на поддерживаемых видеокартах ещё не проверены.
+Я разрабатываю Gramix — генератор GRAM-адресов и набор инструментов сети GRAM с заданным фрагментом. Вычислительное ядро написано на C++23, приложение для Windows и Linux — на Tauri и React. В выпуске 0.1.0 доступны CPU и Vulkan Compute. Исходники CUDA/HIP есть в проекте, но их модули не входят в установщики: сборка и работа на поддерживаемых видеокартах ещё не проверены.
 
 ## Скачать и установить
 
-На странице [выпуска 0.1.0](https://github.com/lovlyDev/VANTIX/releases/tag/v0.1.0) доступны:
+На странице [выпуска 0.1.0](https://github.com/lovlyDev/Gramix/releases/tag/v0.1.0) доступны:
 
-- VANTIX_0.1.0_x64-setup.exe — установщик Windows;
-- VANTIX_0.1.0_amd64.deb — пакет Linux;
-- VANTIX_0.1.0_amd64.AppImage — переносимый пакет Linux;
+- GRAMIX_0.1.0_x64-setup.exe — установщик Windows;
+- GRAMIX_0.1.0_amd64.deb — пакет Linux;
+- GRAMIX_0.1.0_amd64.AppImage — переносимый пакет Linux;
 - SHA256SUMS.txt — контрольные суммы.
 
 При запуске приложение обнаруживает устройства и проверяет вычислительные режимы. Режим Auto выбирает самую быструю проверенную конфигурацию. Движок и GPU можно выбрать вручную.
 
 ## Возможности
 
-- Кошельки TON V5R1 и V4R2; фразы восстановления на 12 или 24 слова.
+- Кошельки GRAM V5R1 и V4R2; фразы восстановления на 12 или 24 слова.
 - Поиск фрагмента в начале, конце или любой части адреса, в том числе без учёта регистра.
 - Параллельный поиск на CPU, Vulkan Compute для 12-словной схемы и гибридный режим CPU/GPU. Результат GPU повторно проверяется на CPU.
 - Автоматическая калибровка и кэш профиля для оборудования и драйвера.
@@ -65,23 +67,23 @@ ctest --test-dir build --output-on-failure
 ## Командная строка
 
 ~~~text
-vantix --devices
-vantix --backends-json
-vantix --self-test
-vantix --benchmark
-vantix --contains lucky --ignore-case --mnemonic 12 --backend auto
-vantix --prefix UQabc --wallet v5 --max 100000 --out matches
-vantix --suffix xyz --wallet v4 --batch 16
-vantix --contains ton --backend hybrid --progress
+gramix --devices
+gramix --backends-json
+gramix --self-test
+gramix --benchmark
+gramix --contains lucky --ignore-case --mnemonic 12 --backend auto
+gramix --prefix UQabc --wallet v5 --max 100000 --out matches
+gramix --suffix xyz --wallet v4 --batch 16
+gramix --contains ton --backend hybrid --progress
 ~~~
 
 Совпадение проверяется по полному дружественному адресу основной сети. Без --max поиск продолжается до совпадения или остановки. Ключ --device ограничивает поиск выбранным GPU, а --backend задаёт режим вручную. CUDA/HIP появляются как варианты только после проверки их модулей на устройстве.
 
-Фраза восстановления даёт контроль над кошельком. На Linux приложение запрашивает пароль длиной от 12 символов; CLI читает его из переменной VANTIX_WALLET_PASSWORD. Пароль не сохраняется приложением, и при его потере расшифровать результат нельзя. Команда --reveal перед показом фразы проверяет сохранённый адрес. Тестовые фразы из исходников нельзя использовать для средств.
+Фраза восстановления даёт контроль над кошельком. На Linux приложение запрашивает пароль длиной от 12 символов; CLI читает его из переменной GRAMIX_WALLET_PASSWORD. Пароль не сохраняется приложением, и при его потере расшифровать результат нельзя. Команда --reveal перед показом фразы проверяет сохранённый адрес. Тестовые фразы из исходников нельзя использовать для средств.
 
-## Источники по TON
+## Источники по протоколу GRAM
 
-- [Описание кошельков TON](https://github.com/ton-blockchain/TEPs/blob/master/text/0003-wallets.md)
+- [Описание кошельков](https://github.com/ton-blockchain/TEPs/blob/master/text/0003-wallets.md)
 - [Эталонная реализация мнемоники](https://github.com/ton-org/ton-crypto/blob/master/src/mnemonic/mnemonic.ts)
 - [Контракт Wallet V4R2](https://github.com/ton-org/ton/blob/master/src/wallets/v4/WalletContractV4.ts)
 - [Контракт Wallet V5R1](https://github.com/ton-org/ton/blob/master/src/wallets/v5r1/WalletContractV5R1.ts)

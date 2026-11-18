@@ -9,11 +9,11 @@
 
 #pragma once
 
-#include "vantix/compute.hpp"
+#include "gramix/compute.hpp"
 
 #include <string>
 
-namespace vantix {
+namespace gramix {
 
 struct AppConfig {
     WalletVersion wallet = WalletVersion::v5r1;
@@ -23,4 +23,4 @@ struct AppConfig {
 
 AppConfig load_config(const std::string& path);
 
-}  // namespace vantix
+}  // namespace gramix

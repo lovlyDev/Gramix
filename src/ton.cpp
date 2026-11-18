@@ -7,8 +7,8 @@
  * See LICENSE and LICENSING.md for details.
  */
 
-#include "vantix/ton.hpp"
-#include "vantix/resources.hpp"
+#include "gramix/ton.hpp"
+#include "gramix/resources.hpp"
 
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
@@ -24,7 +24,7 @@
 #include <stdexcept>
 #include <string_view>
 
-namespace vantix {
+namespace gramix {
 namespace {
 
 constexpr std::array<std::uint8_t, 32> v4_code_hash = {
@@ -382,4 +382,4 @@ WalletCandidate candidate_from_mnemonic(
     return candidate;
 }
 
-}  // namespace vantix
+}  // namespace gramix

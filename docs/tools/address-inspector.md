@@ -3,8 +3,8 @@
 Я добавил в разработку 0.2.0 автономную проверку raw и friendly адресов. Локальная операция не делает сетевых запросов.
 
 ```text
-vantix address inspect EQAs9VlT6S776tq3unJcP5Ogsj-ELLunLXuOb1EKcOQi4wJB
-vantix address inspect 0:2cf55953e92efbeadab7ba725c3f93a0b23f842cbba72d7b8e6f510a70e422e3 --json
+gramix address inspect EQAs9VlT6S776tq3unJcP5Ogsj-ELLunLXuOb1EKcOQi4wJB
+gramix address inspect 0:2cf55953e92efbeadab7ba725c3f93a0b23f842cbba72d7b8e6f510a70e422e3 --json
 ```
 
 Проверяются длина, алфавит, CRC16, теги bounceable/testnet, workchain и 256-битный хеш. На выходе есть канонический raw, bounceable и non-bounceable варианты того же адреса. Для raw входа сеть из самого адреса определить нельзя; отображаемые friendly варианты используют флаг mainnet. Это кодировка адреса, а не доказательство существования аккаунта в сети.

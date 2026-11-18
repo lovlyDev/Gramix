@@ -1,18 +1,18 @@
-# VANTIX
+# Gramix
 
-I develop VANTIX, a TON vanity address generator with a C++23 compute core and a Tauri/React desktop app for Windows and Linux. Release 0.1.0 includes CPU and Vulkan Compute modes. CUDA and HIP sources are present, but their modules are absent from the installers and have not been validated on supported GPUs.
+Gramix (formerly VANTIX) is my toolkit for the GRAM network: a vanity address generator with a C++23 compute core and a Tauri/React desktop app for Windows and Linux. Release 0.1.0, published as VANTIX, includes CPU and Vulkan Compute modes. CUDA and HIP sources are present, but their modules are absent from the installers and have not been validated on supported GPUs.
 
 [Русский README](README.ru.md).
 
 ## Download
 
-[Release 0.1.0](https://github.com/lovlyDev/VANTIX/releases/tag/v0.1.0) provides a Windows NSIS installer (`VANTIX_0.1.0_x64-setup.exe`), Linux DEB (`VANTIX_0.1.0_amd64.deb`), Linux AppImage (`VANTIX_0.1.0_amd64.AppImage`), and `SHA256SUMS.txt`.
+[Release 0.1.0](https://github.com/lovlyDev/Gramix/releases/tag/v0.1.0) provides a Windows NSIS installer (`GRAMIX_0.1.0_x64-setup.exe`), Linux DEB (`GRAMIX_0.1.0_amd64.deb`), Linux AppImage (`GRAMIX_0.1.0_amd64.AppImage`), and `SHA256SUMS.txt`.
 
 The app detects devices, tests available compute modes, and lets you choose automatic or manual mode selection. The 12-word search can use Vulkan Compute, with results rechecked on CPU. The 24-word search uses CPU. Multiple physical GPUs have not yet been hardware-validated together. The Windows installer is not publisher certificate signed.
 
 ## Features
 
-- TON Wallet V5R1 and V4R2; 12- and 24-word recovery phrases.
+- GRAM Wallet V5R1 and V4R2; 12- and 24-word recovery phrases.
 - Prefix, suffix, or substring search, with an optional case-insensitive mode.
 - CPU, Vulkan Compute, and hybrid CPU/GPU modes where validated.
 - Pause/resume, device selection, speed chart, and GPU load control.
@@ -46,23 +46,23 @@ For the desktop frontend, run `npm ci` and `npm run build` in `desktop/`. Vendor
 ## Command Line
 
 ```text
-vantix --devices
-vantix --backends-json
-vantix --self-test
-vantix --benchmark
-vantix --contains lucky --ignore-case --mnemonic 12 --backend auto
-vantix --prefix UQabc --wallet v5 --max 100000 --out matches
+gramix --devices
+gramix --backends-json
+gramix --self-test
+gramix --benchmark
+gramix --contains lucky --ignore-case --mnemonic 12 --backend auto
+gramix --prefix UQabc --wallet v5 --max 100000 --out matches
 ```
 
-A recovery phrase controls a wallet. Never use source test phrases for funds. The Linux app requires a password of at least 12 characters; the CLI reads `VANTIX_WALLET_PASSWORD`. Losing the password prevents decryption of a saved result.
+A recovery phrase controls a wallet. Never use source test phrases for funds. The Linux app requires a password of at least 12 characters; the CLI reads `GRAMIX_WALLET_PASSWORD`. Losing the password prevents decryption of a saved result.
 
 ## License
 
 Gramix is free software under **AGPL-3.0-only**: see the [license text](LICENSE), [licensing notes](LICENSING.md), [notices](NOTICE.md), [name and logo rules](TRADEMARKS.md), and [third-party components](licenses/THIRD_PARTY.md).
 
-## TON References
+## GRAM Protocol References
 
-- [TON wallet description](https://github.com/ton-blockchain/TEPs/blob/master/text/0003-wallets.md)
-- [TON mnemonic reference](https://github.com/ton-org/ton-crypto/blob/master/src/mnemonic/mnemonic.ts)
+- [Wallet specification](https://github.com/ton-blockchain/TEPs/blob/master/text/0003-wallets.md)
+- [Mnemonic reference](https://github.com/ton-org/ton-crypto/blob/master/src/mnemonic/mnemonic.ts)
 - [Wallet V4R2 contract](https://github.com/ton-org/ton/blob/master/src/wallets/v4/WalletContractV4.ts)
 - [Wallet V5R1 contract](https://github.com/ton-org/ton/blob/master/src/wallets/v5r1/WalletContractV5R1.ts)

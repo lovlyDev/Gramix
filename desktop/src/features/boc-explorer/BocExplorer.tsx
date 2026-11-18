@@ -30,7 +30,7 @@ function downloadBoc(value: string) {
   const bytes = Uint8Array.from(atob(value), (character) => character.charCodeAt(0));
   const url = URL.createObjectURL(new Blob([bytes], { type: "application/octet-stream" }));
   const link = document.createElement("a");
-  link.href = url; link.download = "vantix.boc"; link.click();
+  link.href = url; link.download = "gramix.boc"; link.click();
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
@@ -84,8 +84,8 @@ export default function BocExplorer() {
       try { void load(decodeBocText(value, "base64")); }
       catch (cause) { setError(String(cause)); }
     };
-    window.addEventListener("vantix:open-boc", receive);
-    return () => window.removeEventListener("vantix:open-boc", receive);
+    window.addEventListener("gramix:open-boc", receive);
+    return () => window.removeEventListener("gramix:open-boc", receive);
   }, []);
 
   async function chooseFile(event: ChangeEvent<HTMLInputElement>) {
@@ -137,7 +137,7 @@ export default function BocExplorer() {
   return <section className="panel boc-explorer" id="boc-explorer" aria-labelledby="boc-title">
     <div className="panel-heading"><div>
       <h2 id="boc-title">BOC Explorer</h2>
-      <p>Локальный разбор TON Bag of Cells. Лимит входа — 64 КиБ.</p>
+      <p>Локальный разбор GRAM Bag of Cells. Лимит входа — 64 КиБ.</p>
     </div></div>
     <div className="boc-import">
       <label>Формат текста
@@ -167,7 +167,7 @@ export default function BocExplorer() {
         <span>Корней: {document.roots.length}</span>
         <span>Узлов: {document.nodes.length}</span>
         <button type="button" onClick={() => downloadBoc(document.bocBase64)}>Сохранить BOC</button>
-        <button type="button" onClick={() => downloadJson("vantix-boc.json", document)}>Экспорт JSON</button>
+        <button type="button" onClick={() => downloadJson("gramix-boc.json", document)}>Экспорт JSON</button>
       </div>
       <label>Поиск по пути или хешу
         <input className="address-input" value={search} onChange={(event) => {
@@ -233,7 +233,7 @@ export default function BocExplorer() {
               <CopyButton value={selected.hash} label="Копировать хеш"
                 onCopyError={() => setError("Не удалось скопировать хеш.")} /></div>}
             {detailTab === "raw" && <div className="boc-detail-content"><pre>{JSON.stringify(selected, null, 2)}</pre>
-              <button type="button" onClick={() => downloadJson("vantix-cell.json", selected)}>Экспорт JSON</button></div>}
+              <button type="button" onClick={() => downloadJson("gramix-cell.json", selected)}>Экспорт JSON</button></div>}
           </> : <span>Выберите ячейку.</span>}
         </div>
       </div>

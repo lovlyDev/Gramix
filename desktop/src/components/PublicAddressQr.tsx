@@ -22,7 +22,7 @@ export default function PublicAddressQr({ address, label = "Показать QR"
     const url = URL.createObjectURL(new Blob([content], { type: "image/svg+xml;charset=utf-8" }));
     const link = document.createElement("a");
     link.href = url;
-    link.download = "vantix-public-address.svg";
+    link.download = "gramix-public-address.svg";
     link.click();
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
@@ -32,7 +32,7 @@ export default function PublicAddressQr({ address, label = "Показать QR"
         <Dialog.Title>QR публичного адреса</Dialog.Title>
         <Dialog.Description>QR содержит только адрес. Сверьте его с текстом перед использованием.</Dialog.Description>
         <div className="public-qr-canvas" ref={qr}><QRCodeSVG value={address} size={240}
-          level="M" bgColor="#ffffff" fgColor="#111827" title="Публичный TON-адрес" /></div>
+          level="M" bgColor="#ffffff" fgColor="#111827" title="Публичный GRAM-адрес" /></div>
         <code>{address}</code>
         <div className="public-qr-actions"><button type="button" onClick={download}>Скачать SVG</button>
           <Dialog.Close type="button">Закрыть</Dialog.Close></div>

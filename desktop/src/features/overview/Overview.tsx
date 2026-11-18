@@ -10,7 +10,7 @@
 import { useState, type ComponentType } from "react";
 import { Activity, ChevronRight, CircleCheck, Cpu, Gauge, Pause, Play, RefreshCw,
   Search, ShieldCheck, Zap, type LucideProps } from "lucide-react";
-import { ToolIcon, allTools, detectQuery, matchesTool, openSmart, toolGroups,
+import { ToolIcon, allTools, detectQuery, matchesTool, openSmart, toolAvailable, toolGroups,
   type ToolId, type WorkspaceId } from "../../components/ToolNavigation";
 import type { Device, ValidatedBackend } from "../../store";
 import { readBenchmarkHistory } from "../gpu-benchmark/benchmarkHistory";
@@ -52,12 +52,12 @@ export default function Overview({ devices, backends, recent, searchStatus, chec
 
   return <div className="overview-page home">
     <section className="hero">
-      <h1>VANTIX<span className="org">TON</span></h1>
-      <p>Локальная мастерская TON: адреса, кошельки, контракты и GPU в одном окне</p>
+      <h1>Gramix<span className="org">GRAM</span></h1>
+      <p>Локальная мастерская GRAM: адреса, кошельки, контракты и GPU в одном окне</p>
       <form className="hero-search search" onSubmit={(event) => { event.preventDefault(); submit(); }}>
         <Search size={19} className="glass" aria-hidden="true" />
         <input value={query} onChange={(event) => setQuery(event.target.value)} spellCheck={false}
-          placeholder="TON-адрес, хэш транзакции, BOC или инструмент"
+          placeholder="GRAM-адрес, хэш транзакции, BOC или инструмент"
           aria-label="Поиск по адресам, транзакциям и инструментам" autoComplete="off" />
       </form>
       <div className="hero-hint" aria-live="polite">{smart
@@ -98,7 +98,7 @@ export default function Overview({ devices, backends, recent, searchStatus, chec
     {active && <section className="card task-card" aria-label="Активная задача">
       <div className="item task-item">
         <ToolIcon tool="generator" size={40} />
-        <div className="main"><b>Поиск TON-адреса</b>
+        <div className="main"><b>Поиск GRAM-адреса</b>
           <small className="muted">{searchStatus === "paused" ? "На паузе" : "Работает"} · {whole.format(checked)} проверено · {number(rate)} адресов/с</small></div>
         <div className="task-actions">
           <button type="button" className="btn" onClick={onPause}>{searchStatus === "paused"
@@ -110,8 +110,8 @@ export default function Overview({ devices, backends, recent, searchStatus, chec
 
     <div className="grid-3">
       {toolGroups.map((group) => <section className="card" key={group.title} aria-label={group.title}>
-        <div className="card-head"><h2>{group.title}</h2><span className="muted">{group.items.length} инструмента</span></div>
-        <ul className="list">{group.items.map((item) => <li key={item.id}>
+        <div className="card-head"><h2>{group.title}</h2><span className="muted">{group.items.filter((item) => toolAvailable(item.id)).length} инструмента</span></div>
+        <ul className="list">{group.items.filter((item) => toolAvailable(item.id)).map((item) => <li key={item.id}>
           <button type="button" className="item link tool-item" onClick={() => onOpen(item.id)}>
             <ToolIcon tool={item.id} size={36} />
             <span className="main"><b>{item.label}</b><small className="muted">{item.description}</small></span>
@@ -123,7 +123,7 @@ export default function Overview({ devices, backends, recent, searchStatus, chec
     <div className="grid-2">
       <section className="card" aria-labelledby="overview-recent-title">
         <div className="card-head"><h2 id="overview-recent-title">Недавние инструменты</h2></div>
-        {recent.length ? <ul className="list">{recent.slice(0, 4).map((id) => {
+        {recent.filter(toolAvailable).length ? <ul className="list">{recent.filter(toolAvailable).slice(0, 4).map((id) => {
           const item = allTools.find((tool) => tool.id === id);
           return item && <li key={id}><button type="button" className="item link tool-item" onClick={() => onOpen(id)}>
             <ToolIcon tool={id} size={36} />

@@ -27,10 +27,10 @@ values = {
     "package-lock": lock["version"],
     "package-lock root": lock["packages"][""]["version"],
     "Tauri": tauri["version"],
-    "CMake": re.search(r"project\(VANTIX VERSION ([0-9.]+)", cmake).group(1),
+    "CMake": re.search(r"project\(Gramix VERSION ([0-9.]+)", cmake).group(1),
     "Cargo": re.search(r'^version = "([0-9.]+)"', cargo, re.M).group(1),
     "Cargo.lock": re.search(
-        r'\[\[package\]\]\s+name = "vantix-desktop"\s+version = "([0-9.]+)"',
+        r'\[\[package\]\]\s+name = "gramix-desktop"\s+version = "([0-9.]+)"',
         cargo_lock,
     ).group(1),
 }
@@ -40,4 +40,4 @@ if tag.startswith("v"):
 for name, actual in values.items():
     if actual != version:
         raise SystemExit(f"{name}: {actual} differs from desktop package {version}")
-print(f"VANTIX version {version} is consistent")
+print(f"Gramix version {version} is consistent")

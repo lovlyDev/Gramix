@@ -10,5 +10,5 @@
 
 
 fn main() {
-    vantix_desktop_lib::run();
+    gramix_desktop_lib::run();
 }

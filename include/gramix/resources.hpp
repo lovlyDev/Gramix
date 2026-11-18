@@ -11,6 +11,8 @@
 
 #include <filesystem>
 
-namespace vantix {
+namespace gramix {
 std::filesystem::path resource_path(const std::filesystem::path& relative);
+// Reads GRAMIX_<name>; falls back to the pre-rename VANTIX_<name> for existing scripts.
+const char* environment_value(const char* name);
 }

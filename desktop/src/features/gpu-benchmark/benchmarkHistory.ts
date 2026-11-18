@@ -12,7 +12,7 @@ export type BenchmarkResult = { api: string; device_id: string; name: string;
 export type BenchmarkReport = { source: "local"; metric: "verified_ton_addresses_per_second";
   warmup: boolean; results: BenchmarkResult[]; measuredAt: string; os: string; version: string };
 
-export const BENCHMARK_HISTORY_KEY = "vantix.benchmark.history.v1";
+export const BENCHMARK_HISTORY_KEY = "gramix.benchmark.history.v1";
 const MAX_REPORTS = 80;
 
 export function normalizeBenchmarkHistory(value: unknown): BenchmarkReport[] {

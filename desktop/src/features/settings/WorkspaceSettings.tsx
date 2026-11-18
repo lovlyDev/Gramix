@@ -11,7 +11,9 @@ import { useEffect, useState } from "react";
 import * as Tabs from "@radix-ui/react-tabs";
 import * as Switch from "@radix-ui/react-switch";
 import * as Dialog from "@radix-ui/react-dialog";
-import { Activity, Cpu, Info, Minus, Monitor, Network, Plus, RefreshCw, ShieldCheck } from "lucide-react";
+import { Activity, BarChart3, Cpu, Info, Minus, Monitor, Network, Plus, RefreshCw, ShieldCheck } from "lucide-react";
+import { platform } from "@platform";
+import { telemetry } from "@telemetry";
 import type { Device, ValidatedBackend } from "../../store";
 import { useApp, type Backend } from "../../store";
 import Select from "../../components/ui/Select";
@@ -27,6 +29,8 @@ function readOption<T extends string>(key: string, values: readonly T[], fallbac
   return values.find((value) => value === stored) ?? fallback;
 }
 
+const web = platform.kind === "web";
+
 export default function WorkspaceSettings({ devices, backends, version, updateState,
   updateBusy, canInstallUpdate, onRefreshDevices, onCheckUpdate, onInstallUpdate }: {
   devices: Device[]; backends: ValidatedBackend[]; version: string; updateState: string;
@@ -34,11 +38,12 @@ export default function WorkspaceSettings({ devices, backends, version, updateSt
   onRefreshDevices: () => void; onCheckUpdate: () => void;
   onInstallUpdate: () => void;
 }) {
-  const [theme, setTheme] = useState<Theme>(() => readOption("vantix.ui.theme", themes, "dark"));
-  const [density, setDensity] = useState<Density>(() => readOption("vantix.ui.density", densities, "comfortable"));
-  const [lowMotion, setLowMotion] = useState(() => localStorage.getItem("vantix.ui.lowMotion") === "true");
+  const [consent, setConsent] = useState(telemetry.consent() === "granted");
+  const [theme, setTheme] = useState<Theme>(() => readOption("gramix.ui.theme", themes, "dark"));
+  const [density, setDensity] = useState<Density>(() => readOption("gramix.ui.density", densities, "comfortable"));
+  const [lowMotion, setLowMotion] = useState(() => localStorage.getItem("gramix.ui.lowMotion") === "true");
   const [defaultNetwork, setDefaultNetwork] = useState<"mainnet" | "testnet">(() =>
-    localStorage.getItem("vantix.network.default") === "testnet" ? "testnet" : "mainnet");
+    localStorage.getItem("gramix.network.default") === "testnet" ? "testnet" : "mainnet");
   const [historyStatus, setHistoryStatus] = useState("");
   const [clearHistoryOpen, setClearHistoryOpen] = useState(false);
   const [diagnosticsStatus, setDiagnosticsStatus] = useState("");
@@ -56,31 +61,32 @@ export default function WorkspaceSettings({ devices, backends, version, updateSt
   const maxThreads = Math.max(1, navigator.hardwareConcurrency || 1);
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    localStorage.setItem("vantix.ui.theme", theme);
+    localStorage.setItem("gramix.ui.theme", theme);
   }, [theme]);
   useEffect(() => {
     document.documentElement.dataset.density = density;
-    localStorage.setItem("vantix.ui.density", density);
+    localStorage.setItem("gramix.ui.density", density);
   }, [density]);
   useEffect(() => {
     document.documentElement.dataset.lowMotion = String(lowMotion);
-    localStorage.setItem("vantix.ui.lowMotion", String(lowMotion));
+    localStorage.setItem("gramix.ui.lowMotion", String(lowMotion));
   }, [lowMotion]);
   useEffect(() => {
-    localStorage.setItem("vantix.network.default", defaultNetwork);
-    window.dispatchEvent(new CustomEvent("vantix:default-network", { detail: defaultNetwork }));
+    localStorage.setItem("gramix.network.default", defaultNetwork);
+    window.dispatchEvent(new CustomEvent("gramix:default-network", { detail: defaultNetwork }));
   }, [defaultNetwork]);
   return <div className="workspace-settings-page">
     <div className="settings-intro"><p>Внешний вид, устройства и сведения о приложении.</p></div>
     <Tabs.Root defaultValue="interface" className="settings-layout">
       <Tabs.List className="settings-tabs" aria-label="Разделы настроек">
         <Tabs.Trigger value="interface"><Monitor size={18} /> Интерфейс</Tabs.Trigger>
-        <Tabs.Trigger value="compute"><Cpu size={18} /> Вычисления</Tabs.Trigger>
+        {!web && <Tabs.Trigger value="compute"><Cpu size={18} /> Вычисления</Tabs.Trigger>}
         <Tabs.Trigger value="network"><Network size={18} /> Сеть</Tabs.Trigger>
         <Tabs.Trigger value="security"><ShieldCheck size={18} /> Безопасность</Tabs.Trigger>
-        <Tabs.Trigger value="updates"><RefreshCw size={18} /> Обновления</Tabs.Trigger>
-        <Tabs.Trigger value="diagnostics"><Activity size={18} /> Диагностика</Tabs.Trigger>
-        <Tabs.Trigger value="about"><Info size={18} /> О программе</Tabs.Trigger>
+        {web && telemetry.enabled && <Tabs.Trigger value="privacy"><BarChart3 size={18} /> Статистика</Tabs.Trigger>}
+        {!web && <Tabs.Trigger value="updates"><RefreshCw size={18} /> Обновления</Tabs.Trigger>}
+        {!web && <Tabs.Trigger value="diagnostics"><Activity size={18} /> Диагностика</Tabs.Trigger>}
+        {!web && <Tabs.Trigger value="about"><Info size={18} /> О программе</Tabs.Trigger>}
       </Tabs.List>
       <div className="settings-content">
         <Tabs.Content value="interface"><div className="settings-panel-heading"><h2>Интерфейс</h2>
@@ -153,9 +159,12 @@ export default function WorkspaceSettings({ devices, backends, version, updateSt
         </Tabs.Content>
         <Tabs.Content value="security"><div className="settings-panel-heading"><h2>Безопасность</h2>
           <p>Секреты кошелька не входят в историю инструментов и диагностический отчёт.</p></div>
-          <div className="settings-control"><div><strong>Зашифрованный файл кошелька</strong>
+          {web ? <div className="settings-control"><div><strong>Фразы восстановления на сайте</strong>
+            <span>Фраза нового кошелька создаётся в браузере и не сохраняется. Ввод своей фразы доступен только в приложении.</span></div>
+            <span>Только в памяти</span></div>
+          : <div className="settings-control"><div><strong>Зашифрованный файл кошелька</strong>
             <span>На Windows фраза защищена учётной записью пользователя; на Linux требуется пароль.</span></div>
-            <span>Локально</span></div>
+            <span>Локально</span></div>}
           <div className="settings-control"><div><strong>Раскрытие фразы</strong>
             <span>Только после явного подтверждения. Окно закрывается через 45 секунд.</span></div>
             <span>Подтверждение</span></div>
@@ -164,6 +173,16 @@ export default function WorkspaceSettings({ devices, backends, version, updateSt
             <button className="settings-secondary" onClick={() => setClearHistoryOpen(true)}>Очистить историю</button></div>
           {historyStatus && <p role="status">{historyStatus}</p>}
         </Tabs.Content>
+        {web && <Tabs.Content value="privacy"><div className="settings-panel-heading"><h2>Статистика</h2>
+          <p>Сайт отправляет события только с вашего согласия. Фразы, ключи и файлы не отправляются никогда.</p></div>
+          <div className="settings-control"><div><strong>Отправлять статистику</strong>
+            <span>Обезличенный ID устройства, страницы, нажатия и проверенные публичные адреса.</span></div>
+            <Switch.Root className="settings-switch" aria-label="Отправлять статистику" checked={consent}
+              onCheckedChange={(value) => { telemetry.setConsent(value); setConsent(value); }}><Switch.Thumb /></Switch.Root></div>
+          <div className="settings-control"><div><strong>Политика конфиденциальности</strong>
+            <span>Что собирается, где хранится и как удалить данные.</span></div>
+            <a className="settings-secondary" href="/privacy">Открыть</a></div>
+        </Tabs.Content>}
         <Tabs.Content value="updates"><div className="settings-panel-heading"><h2>Обновления</h2>
           <p>Установленная версия: {version || "определяется"}</p></div>
           <p className="settings-status" role="status">{updateState || "Состояние обновлений пока неизвестно."}</p>
@@ -185,7 +204,7 @@ export default function WorkspaceSettings({ devices, backends, version, updateSt
               {diagnosticsStatus && <div className="settings-toast" role="status">{diagnosticsStatus}</div>}
         </Tabs.Content>
         <Tabs.Content value="about"><div className="settings-panel-heading"><h2>О программе</h2>
-          <p>VANTIX {version || "Preview"} · TON Workspace</p></div>
+          <p>Gramix {version || "Preview"} · GRAM Workspace</p></div>
           <AboutWorkspace version={version} />
         </Tabs.Content>
       </div>
@@ -198,10 +217,10 @@ export default function WorkspaceSettings({ devices, backends, version, updateSt
           <div className="settings-clear-actions">
             <Dialog.Close className="dialog-close">Отмена</Dialog.Close>
             <button type="button" className="dialog-close settings-clear-confirm" onClick={() => {
-              localStorage.removeItem("vantix.ui.recentTools");
+              localStorage.removeItem("gramix.ui.recentTools");
               localStorage.removeItem(BENCHMARK_HISTORY_KEY);
-              window.dispatchEvent(new Event("vantix:clear-recent-tools"));
-              window.dispatchEvent(new Event("vantix:clear-benchmark-history"));
+              window.dispatchEvent(new Event("gramix:clear-recent-tools"));
+              window.dispatchEvent(new Event("gramix:clear-benchmark-history"));
               setHistoryStatus("История инструментов и измерений очищена.");
               setClearHistoryOpen(false);
             }}>Очистить</button>

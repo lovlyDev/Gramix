@@ -7,7 +7,7 @@
  * See LICENSE and LICENSING.md for details.
  */
 
-// VANTIX Vulkan seed derivation. One invocation handles one BIP39 phrase.
+// Gramix Vulkan seed derivation. One invocation handles one BIP39 phrase.
 // SHA-512 follows FIPS 180-4; all arithmetic is unsigned modulo 2^64.
 // The host verifies every exported match with its independent OpenSSL path.
 

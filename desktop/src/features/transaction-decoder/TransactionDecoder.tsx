@@ -8,8 +8,9 @@
  */
 
 import { useEffect, useState, type ChangeEvent } from "react";
-import { invoke } from "@tauri-apps/api/core";
-import { isTauri } from "@tauri-apps/api/core";
+import { formatGram } from "../../lib/format";
+import { platform } from "@platform";
+import { telemetry } from "@telemetry";
 import * as Tabs from "@radix-ui/react-tabs";
 import { Group, Panel, Separator } from "react-resizable-panels";
 import { ArrowDownLeft, ArrowUpRight, Download, ExternalLink,
@@ -29,22 +30,17 @@ type RemoteTransaction = {
   received_at: number;
 };
 
-function formatTon(nanoton: string) {
-  const negative = nanoton.startsWith("-");
-  const padded = (negative ? nanoton.slice(1) : nanoton).padStart(10, "0");
-  const whole = padded.slice(0, -9);
-  const fractional = padded.slice(-9).replace(/0+$/, "");
-  return `${negative ? "-" : ""}${whole}${fractional ? `.${fractional}` : ""}`;
-}
+const formatTon = (nano: string) => formatGram(nano, 9).replace(/ GRAM$/, "");
 
 type SelectedNode = "transaction" | "incoming" | `outgoing-${number}`;
 
 export default function TransactionDecoder() {
+  const [autoRun, setAutoRun] = useState("");
   const [bocText, setBocText] = useState("");
   const [format, setFormat] = useState<"base64" | "hex">("base64");
   const [hash, setHash] = useState("");
   const [inputMode, setInputMode] = useState<"id" | "boc">("id");
-  const [testnet, setTestnet] = useState(() => localStorage.getItem("vantix.network.default") === "testnet");
+  const [testnet, setTestnet] = useState(() => localStorage.getItem("gramix.network.default") === "testnet");
   const [selected, setSelected] = useState<SelectedNode>("transaction");
   const [detailTab, setDetailTab] = useState<"overview" | "body" | "raw" | "json">("overview");
   const [transaction, setTransaction] = useState<DecodedTransaction | null>(null);
@@ -56,18 +52,18 @@ export default function TransactionDecoder() {
     const receive = (event: Event) => {
       const value = (event as CustomEvent<string>).detail;
       if (typeof value !== "string") return;
-      setHash(value); setInputMode("id"); setError("");
+      setHash(value); setInputMode("id"); setError(""); setAutoRun(value);
     };
-    window.addEventListener("vantix:transaction-id", receive);
-    return () => window.removeEventListener("vantix:transaction-id", receive);
+    window.addEventListener("gramix:transaction-id", receive);
+    return () => window.removeEventListener("gramix:transaction-id", receive);
   }, []);
   useEffect(() => {
     const receive = (event: Event) => {
       const network = (event as CustomEvent<"mainnet" | "testnet">).detail;
       if (network === "mainnet" || network === "testnet") setTestnet(network === "testnet");
     };
-    window.addEventListener("vantix:default-network", receive);
-    return () => window.removeEventListener("vantix:default-network", receive);
+    window.addEventListener("gramix:default-network", receive);
+    return () => window.removeEventListener("gramix:default-network", receive);
   }, []);
 
   async function load(bytes: Uint8Array, source: RemoteTransaction | null = null) {
@@ -111,21 +107,20 @@ export default function TransactionDecoder() {
     }
   }
 
+  useEffect(() => {
+    if (autoRun && hash === autoRun) { setAutoRun(""); void fetchById(); }
+  }, [autoRun, hash]);
+
   async function fetchById() {
     if (!/^[a-fA-F0-9]{64}$/.test(hash.trim())) {
       setError("ID транзакции должен содержать ровно 64 hex-символа.");
       return;
     }
-    if (!isTauri()) {
-      setError("Сетевой запрос доступен в установленном приложении VANTIX.");
-      return;
-    }
     setBusy(true);
     setError("");
     try {
-      const data = await invoke<RemoteTransaction>("fetch_transaction", {
-        hash: hash.trim(), testnet,
-      });
+      const data = await platform.fetchTransaction(hash.trim(), testnet);
+      telemetry.track({ name: "transaction_opened", hash: data.hash, network: data.network });
       await load(decodeBocText(data.raw_boc_hex, "hex"), data);
     } catch (cause) {
       setError(String(cause));
@@ -139,7 +134,7 @@ export default function TransactionDecoder() {
       { type: "application/json" }));
     const link = document.createElement("a");
     link.href = url;
-    link.download = `vantix-transaction-${transaction.hash}.json`;
+    link.download = `gramix-transaction-${transaction.hash}.json`;
     link.click();
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
@@ -196,8 +191,8 @@ export default function TransactionDecoder() {
         <strong>{transaction.aborted === true || transaction.computeSuccess === false ? "Ошибка исполнения" : "Транзакция декодирована"}</strong>
         <small>{remote ? `OpenTonAPI · ${remote.network} · ${new Date(remote.received_at * 1000).toLocaleString("ru-RU")}`
           : "Локальный BOC · без запроса к сети"}</small></div>
-        <div><span>КОМИССИЯ</span><strong>{formatTon(transaction.totalFeesNanoton)} TON</strong>
-          <small>{transaction.totalFeesNanoton} nanoTON</small></div>
+        <div><span>КОМИССИЯ</span><strong>{formatTon(transaction.totalFeesNanoton)} GRAM</strong>
+          <small>{transaction.totalFeesNanoton} nano</small></div>
         <div><span>СООБЩЕНИЯ</span><strong>{Number(Boolean(transaction.inMessage)) + transaction.outMessages.length}</strong>
           <small>{transaction.inMessage ? "1 входящее · " : ""}{transaction.outMessages.length} исходящих</small></div>
       </div>
@@ -206,7 +201,7 @@ export default function TransactionDecoder() {
         <CopyButton value={transaction.hash} label="Копировать хеш" />
         <CopyButton value={JSON.stringify(transaction, null, 2)} label="Копировать JSON" />
         <button onClick={exportJson}><Download size={15}/> Экспорт</button>
-        <button onClick={() => { window.dispatchEvent(new CustomEvent("vantix:open-boc", { detail: transaction.rawBocBase64 }));
+        <button onClick={() => { window.dispatchEvent(new CustomEvent("gramix:open-boc", { detail: transaction.rawBocBase64 }));
           window.location.hash = "boc-explorer"; }}><FileCode2 size={15}/> BOC Explorer</button>
         <a href={explorerUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={15}/> Tonviewer</a>
       </div>
@@ -240,7 +235,7 @@ export default function TransactionDecoder() {
                 <dt>Тип</dt><dd>{selectedMessage.type}</dd>
                 <dt>От</dt><dd><code>{selectedMessage.source ?? "адрес отсутствует"}</code></dd>
                 <dt>Кому</dt><dd><code>{selectedMessage.destination ?? "адрес отсутствует"}</code></dd>
-                <dt>Сумма</dt><dd>{selectedMessage.valueNanoton === null ? "не указана" : `${formatTon(selectedMessage.valueNanoton)} TON · ${selectedMessage.valueNanoton} nanoTON`}</dd>
+                <dt>Сумма</dt><dd>{selectedMessage.valueNanoton === null ? "не указана" : `${formatTon(selectedMessage.valueNanoton)} GRAM · ${selectedMessage.valueNanoton} nano`}</dd>
                 <dt>Opcode</dt><dd>{selectedMessage.opcode ?? "нет"}{selectedMessage.knownOperation ? ` · ${selectedMessage.knownOperation}` : ""}</dd>
                 {selectedMessage.comment !== null && <><dt>Комментарий</dt><dd>{selectedMessage.comment}</dd></>}
                 {selectedMessage.jettonAmount !== null && <><dt>Jetton</dt><dd>{selectedMessage.jettonAmount} базовых единиц</dd></>}
@@ -256,8 +251,8 @@ export default function TransactionDecoder() {
                 <dt>Exit code</dt><dd>{transaction.computeExitCode ?? "нет данных"}</dd>
                 <dt>Action result</dt><dd>{transaction.actionResultCode ?? "нет данных"}</dd>
                 <dt>Gas used</dt><dd>{transaction.gasUsed ?? "нет данных"}</dd>
-                <dt>Gas fee</dt><dd>{transaction.gasFeesNanoton === null ? "нет данных" : `${formatTon(transaction.gasFeesNanoton)} TON`}</dd>
-                <dt>Total fee</dt><dd>{formatTon(transaction.totalFeesNanoton)} TON · {transaction.totalFeesNanoton} nanoTON</dd>
+                <dt>Gas fee</dt><dd>{transaction.gasFeesNanoton === null ? "нет данных" : `${formatTon(transaction.gasFeesNanoton)} GRAM`}</dd>
+                <dt>Total fee</dt><dd>{formatTon(transaction.totalFeesNanoton)} GRAM · {transaction.totalFeesNanoton} nano</dd>
               </dl>}
             </Tabs.Content>
             <Tabs.Content value="body" className="tx-detail-content"><pre>{selectedMessage?.bodyBocBase64}</pre></Tabs.Content>

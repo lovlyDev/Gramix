@@ -15,7 +15,7 @@ $build = Join-Path $root "build/package-windows"
 $configPath = Join-Path $tauri "tauri.release.json"
 $version = "0.1.0"
 if (-not $env:TAURI_SIGNING_PRIVATE_KEY) {
-    $localKey = Join-Path $root ".tools/signing/vantix.key"
+    $localKey = Join-Path $root ".tools/signing/gramix.key"
     if (Test-Path -LiteralPath $localKey) {
         $env:TAURI_SIGNING_PRIVATE_KEY = $localKey
     } elseif (-not $SkipBundle) {
@@ -66,7 +66,7 @@ if ($cmakeCommand) {
         Select-Object -First 1 -ExpandProperty FullName
 }
 if (-not $cmake -or -not (Test-Path -LiteralPath $cmake)) {
-    throw "CMake is required to build VANTIX"
+    throw "CMake is required to build Gramix"
 }
 $toolchain = if ($env:VCPKG_ROOT) {
     Join-Path $env:VCPKG_ROOT "scripts/buildsystems/vcpkg.cmake"
@@ -88,14 +88,14 @@ try {
     Invoke-Checked $cmake @("--build", $build, "--config", "Release", "--parallel", "8")
     $ctest = Join-Path (Split-Path $cmake) "ctest.exe"
     Invoke-Checked $ctest @("--test-dir", $build, "-C", "Release", "--output-on-failure")
-    $exe = Join-Path $build "Release/vantix.exe"
-    if (-not (Test-Path -LiteralPath $exe)) { throw "Fresh vantix.exe was not built" }
+    $exe = Join-Path $build "Release/gramix.exe"
+    if (-not (Test-Path -LiteralPath $exe)) { throw "Fresh gramix.exe was not built" }
     Invoke-Checked $exe @("--self-test", "--backend", "cpu")
     Invoke-Checked $exe @("--backends-json")
 
     $target = (& rustc --print host-tuple).Trim()
     if ($LASTEXITCODE -ne 0 -or -not $target) { throw "Rust target triple is unavailable" }
-    $sidecar = Join-Path $tauri "binaries/vantix-$target.exe"
+    $sidecar = Join-Path $tauri "binaries/gramix-$target.exe"
     New-Item -ItemType Directory -Force -Path (Split-Path $sidecar) | Out-Null
     Copy-Item -LiteralPath $exe -Destination $sidecar -Force
 
@@ -104,9 +104,9 @@ try {
         "../../gpu/vulkan/derive.spv" = "gpu/vulkan/derive.spv"
     }
     foreach ($api in @("cuda", "hip")) {
-        $dll = Join-Path $build "Release/vantix_$api.dll"
+        $dll = Join-Path $build "Release/gramix_$api.dll"
         if (Test-Path -LiteralPath $dll) {
-            $resources["../../build/package-windows/Release/vantix_$api.dll"] = "vantix_$api.dll"
+            $resources["../../build/package-windows/Release/gramix_$api.dll"] = "gramix_$api.dll"
             Write-Host "Including optional $api module"
         }
     }
@@ -118,7 +118,7 @@ try {
         try {
             Invoke-Checked "npm" @("run", "tauri", "--", "build", "--config", "src-tauri/tauri.release.json")
         } finally { Pop-Location }
-        $installer = Join-Path $tauri "target/release/bundle/nsis/VANTIX_${version}_x64-setup.exe"
+        $installer = Join-Path $tauri "target/release/bundle/nsis/GRAMIX_${version}_x64-setup.exe"
         if (-not (Test-Path -LiteralPath $installer)) { throw "NSIS installer is missing" }
         if (-not (Test-Path -LiteralPath "$installer.sig")) { throw "Signed update artifact is missing" }
         Get-FileHash -LiteralPath $installer -Algorithm SHA256 |

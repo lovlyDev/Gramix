@@ -9,12 +9,12 @@
 
 #pragma once
 
-#include "vantix/ton.hpp"
+#include "gramix/ton.hpp"
 
 #include <string>
 #include <string_view>
 
-namespace vantix {
+namespace gramix {
 
 // Offline representation of a TON address. Network account state is not inferred.
 struct InspectedAddress {
@@ -32,4 +32,4 @@ struct InspectedAddress {
 // standard/URL-safe friendly addresses. Throws std::invalid_argument on errors.
 InspectedAddress inspect_address(std::string_view input);
 
-}  // namespace vantix
+}  // namespace gramix

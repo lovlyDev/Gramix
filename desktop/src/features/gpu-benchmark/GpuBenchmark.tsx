@@ -17,6 +17,7 @@ import BenchmarkChart, { type BenchmarkSample, type BenchmarkSeries } from "./Be
 import { useApp } from "../../store";
 import Select from "../../components/ui/Select";
 import CopyButton from "../../components/ui/CopyButton";
+import { platform } from "@platform";
 import { readBenchmarkHistory, saveBenchmarkHistory,
   type BenchmarkReport, type BenchmarkResult } from "./benchmarkHistory";
 
@@ -27,7 +28,7 @@ async function measure(backend: string, current: { child: Child | null }, cancel
     let stdout = "";
     let stderr = "";
     let settled = false;
-    const command = Command.sidecar("binaries/vantix", ["--benchmark-json", "--backend", backend]);
+    const command = Command.sidecar("binaries/gramix", ["--benchmark-json", "--backend", backend]);
     command.stdout.on("data", (chunk) => { if (stdout.length < 256_000) stdout += chunk; });
     command.stderr.on("data", (chunk) => { if (stderr.length < 16_000) stderr += chunk; });
     command.on("error", (cause) => {
@@ -51,6 +52,30 @@ async function measure(backend: string, current: { child: Child | null }, cancel
   });
 }
 
+const web = platform.kind === "web";
+
+// Сайт: тот же полный путь (фраза → ключ → адрес кошелька) в Web Worker браузера, только CPU.
+function measureInBrowser(seconds: number, cancelled: { value: boolean }) {
+  return new Promise<Omit<Report, "measuredAt" | "os" | "version">>((resolve, reject) => {
+    const threads = platform.browserThreads?.() ?? 1;
+    let rate = 0;
+    const handle = platform.startVanity!({ pattern: "", mode: "contains", ignoreCase: false,
+      scheme: "12", version: "v5", threads }, {
+      onProgress: (_checked, current) => { rate = current; },
+      onFound: () => undefined,
+      onError: (message) => { clearInterval(timer); handle.stop(); reject(new Error(message)); },
+    });
+    const started = performance.now();
+    const timer = setInterval(() => {
+      if (!cancelled.value && performance.now() - started < seconds * 1000) return;
+      clearInterval(timer); handle.stop();
+      if (cancelled.value) { reject(new Error("Измерение остановлено.")); return; }
+      resolve({ source: "local", metric: "verified_ton_addresses_per_second", warmup: true,
+        results: [{ api: "CPU", device_id: "browser", name: `Браузер · ${threads} потоков`, addresses_per_second: rate }] });
+    }, 200);
+  });
+}
+
 export default function GpuBenchmark() {
   const validated = useApp((state) => state.validatedBackends);
   const devices = useApp((state) => state.devices);
@@ -71,8 +96,8 @@ export default function GpuBenchmark() {
   useEffect(() => {
     const clear = () => { cancelled.current.value = true; void child.current.child?.kill();
       setReports([]); setSamples([]); setSelected(null); setCompared([]); };
-    window.addEventListener("vantix:clear-benchmark-history", clear);
-    return () => window.removeEventListener("vantix:clear-benchmark-history", clear);
+    window.addEventListener("gramix:clear-benchmark-history", clear);
+    return () => window.removeEventListener("gramix:clear-benchmark-history", clear);
   }, []);
 
   const available = new Set(validated.map((item) => item.api.toLowerCase()));
@@ -97,7 +122,7 @@ export default function GpuBenchmark() {
 
   async function run() {
     setError("");
-    if (!isTauri()) { setError("Аппаратный тест доступен в установленном приложении VANTIX."); return; }
+    if (!web && !isTauri()) { setError("Аппаратный тест недоступен в этом окружении."); return; }
     if (busy || (engine !== "auto" && !available.has(engine))) {
       setError("Выбранный движок не прошёл самопроверку."); return;
     }
@@ -107,10 +132,11 @@ export default function GpuBenchmark() {
     setCompared([]);
     setElapsed(0);
     try {
-      const version = await getVersion();
+      const version = web ? "web" : await getVersion();
       const started = performance.now();
       while (!cancelled.current.value) {
-        const parsed = await measure(engine, child.current, cancelled.current);
+        const parsed = web ? await measureInBrowser(3, cancelled.current)
+          : await measure(engine, child.current, cancelled.current);
         if (cancelled.current.value) break;
         if (parsed.source !== "local" || parsed.metric !== "verified_ton_addresses_per_second" ||
             !Array.isArray(parsed.results) || !parsed.results.length || parsed.results.some((item) =>
@@ -145,7 +171,7 @@ export default function GpuBenchmark() {
             .map((value) => `"${String(value).replaceAll('"', '""')}"`).join(",")))].join("\n");
     const url = URL.createObjectURL(new Blob([body], { type: format === "json" ? "application/json" : "text/csv" }));
     const link = document.createElement("a"); link.href = url;
-    link.download = `vantix-benchmark.${format}`; link.click();
+    link.download = `gramix-benchmark.${format}`; link.click();
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
@@ -153,11 +179,11 @@ export default function GpuBenchmark() {
   return <section className="panel gpu-benchmark" id="gpu-benchmark" aria-labelledby="benchmark-title">
     <div className="panel-heading"><div>
       <h2 id="benchmark-title">GPU Benchmark</h2>
-      <p>Полный TON-пайплайн: только результаты движков, прошедших самопроверку</p>
+      <p>{web ? "Полный GRAM-пайплайн в вашем браузере: фраза, ключ и адрес кошелька на CPU" : "Полный GRAM-пайплайн: только результаты движков, прошедших самопроверку"}</p>
     </div></div>
     <div className="benchmark-toolbar">
       <label>Движок<Select label="Движок" value={engine} disabled={busy} onValueChange={setEngine}
-        options={[{ value: "cpu", label: "CPU" },
+        options={web ? [{ value: "cpu", label: "Браузер · CPU" }] : [{ value: "cpu", label: "CPU" },
           ...(["vulkan", "cuda", "hip"] as const).filter((api) => available.has(api))
             .map((api) => ({ value: api, label: api === "hip" ? "HIP / ROCm" : api.toUpperCase() })),
           { value: "auto", label: "Все проверенные" }]} /></label>
@@ -169,7 +195,7 @@ export default function GpuBenchmark() {
       {busy && <button type="button" className="benchmark-stop" onClick={() => void stop()}>
         <Square size={16} /> Остановить</button>}
     </div>
-    <p className="benchmark-note">Каждая точка — завершённый тест полного TON-пайплайна с разогревом. Линии показывают только измеренные устройства.</p>
+    <p className="benchmark-note">Каждая точка — завершённый тест полного GRAM-пайплайна с разогревом. Линии показывают только измеренные устройства.</p>
     {error && <p className="error-box" role="alert">{error}</p>}
     <div className="benchmark-chart-panel"><div className="benchmark-chart-header">
       <strong>Скорость по времени</strong><span role="status">{busy ? `Измерение · ${elapsed.toFixed(1)} с` :

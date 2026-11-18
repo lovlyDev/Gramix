@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "vantix/ton.hpp"
+#include "gramix/ton.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -22,7 +22,7 @@
 #include <string_view>
 #include <vector>
 
-namespace vantix {
+namespace gramix {
 
 enum class ComputeApi { cpu, vulkan, cuda, hip };
 
@@ -191,4 +191,4 @@ std::string reveal_saved_mnemonic(const std::string& file_path);
 std::filesystem::path save_wallet_candidate(
     const WalletCandidate& candidate, const std::filesystem::path& output_directory);
 
-}  // namespace vantix
+}  // namespace gramix

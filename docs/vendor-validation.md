@@ -10,7 +10,7 @@ pwsh -File tools/verify-vendor.ps1
 
 На Linux запустите `bash tools/verify-vendor.sh`. Скрипт также сам выбирает доступные модули и устройства и записывает отчёт в `build/vendor-validation/vendor-report.txt`.
 
-Перед запуском нужны совместимые драйвер, SDK соответствующего производителя, C++ toolchain и vcpkg. CUDA и HIP независимы: для проверки NVIDIA не требуется HIP SDK, для AMD не требуется CUDA Toolkit. Если SDK или карта несовместимы, отчёт отмечает `UNAVAILABLE`, приложение продолжает работать через Vulkan или CPU. Проверяйте поддержку конкретной AMD GPU по [матрице HIP SDK](https://rocm.docs.amd.com/projects/install-on-windows/en/latest/reference/system-requirements.html). AMD RX 6650 XT на основной машине VANTIX не входит в матрицу HIP SDK 7.2.0 для Windows.
+Перед запуском нужны совместимые драйвер, SDK соответствующего производителя, C++ toolchain и vcpkg. CUDA и HIP независимы: для проверки NVIDIA не требуется HIP SDK, для AMD не требуется CUDA Toolkit. Если SDK или карта несовместимы, отчёт отмечает `UNAVAILABLE`, приложение продолжает работать через Vulkan или CPU. Проверяйте поддержку конкретной AMD GPU по [матрице HIP SDK](https://rocm.docs.amd.com/projects/install-on-windows/en/latest/reference/system-requirements.html). AMD RX 6650 XT на основной машине Gramix не входит в матрицу HIP SDK 7.2.0 для Windows.
 
 Windows HIP SDK не поддерживает CMake HIP language, поэтому проект автоматически вызывает `hipcc` для отдельной DLL. На Linux сборка HIP использует CMake HIP language. После проверки сравнивайте только скорость **полной генерации проверенных TON-адресов**, которую печатает `--benchmark`.
 

@@ -9,9 +9,9 @@
 
 #pragma once
 
-#include "vantix/compute.hpp"
+#include "gramix/compute.hpp"
 
-namespace vantix {
+namespace gramix {
 
 class VulkanBackend final : public IComputeBackend {
 public:
@@ -28,4 +28,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-} // namespace vantix
+} // namespace gramix

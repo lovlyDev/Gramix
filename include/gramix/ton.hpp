@@ -14,7 +14,7 @@
 #include <string>
 #include <vector>
 
-namespace vantix {
+namespace gramix {
 
 using Bytes32 = std::array<std::uint8_t, 32>;
 enum class WalletVersion { v4r2, v5r1 };
@@ -45,4 +45,4 @@ std::string generate_ton_mnemonic();
 std::string generate_multichain_mnemonic();
 std::vector<std::string> load_wordlist();
 
-}  // namespace vantix
+}  // namespace gramix

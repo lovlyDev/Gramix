@@ -9,9 +9,9 @@
 
 #pragma once
 
-#include "vantix/compute.hpp"
+#include "gramix/compute.hpp"
 
-namespace vantix {
+namespace gramix {
 std::vector<IComputeBackend*> load_tuning_profile(
     const BackendRegistry& registry, const std::vector<DeviceInfo>& devices,
     WalletVersion wallet, MnemonicScheme scheme);

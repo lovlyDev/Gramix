@@ -7,14 +7,14 @@
  * See LICENSE and LICENSING.md for details.
  */
 
-#include "vantix/wallet_generator.hpp"
-#include "vantix/compute.hpp"
+#include "gramix/wallet_generator.hpp"
+#include "gramix/compute.hpp"
 
 #include <openssl/crypto.h>
 
 #include <stdexcept>
 
-namespace vantix {
+namespace gramix {
 
 GeneratedWalletPublic generate_wallet_and_save(
     WalletVersion version, MnemonicScheme scheme,
@@ -42,4 +42,4 @@ GeneratedWalletPublic generate_wallet_and_save(
     }
 }
 
-}  // namespace vantix
+}  // namespace gramix

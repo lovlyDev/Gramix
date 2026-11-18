@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "VANTIX",
+  "productName": "Gramix",
   "version": "0.1.0",
-  "identifier": "app.vantix.desktop",
+  "identifier": "app.gramix.desktop",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -11,7 +11,7 @@
   },
   "app": {
     "windows": [{
-      "title": "VANTIX",
+      "title": "Gramix",
       "width": 1360,
       "height": 850,
       "minWidth": 1000,
@@ -25,7 +25,7 @@
     "createUpdaterArtifacts": true,
     "targets": ["nsis"],
     "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.png", "icons/icon.ico"],
-    "externalBin": ["binaries/vantix"],
+    "externalBin": ["binaries/gramix"],
     "resources": {
       "../../data/ton-english.txt": "data/ton-english.txt",
       "../../gpu/vulkan/derive.spv": "gpu/vulkan/derive.spv",
@@ -45,7 +45,7 @@
   "plugins": {
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDE5QjA5MUY2OUUxQ0U1RTkKUldUcDVSeWU5cEd3R2FQekNBNGVMNzhHMFRka1E2L2x3a3hCRFo5TU81OHpPSENuWXF2Lzd3NWUK",
-      "endpoints": ["https://github.com/lovlyDev/VANTIX/releases/latest/download/latest.json"],
+      "endpoints": ["https://github.com/lovlyDev/Gramix/releases/latest/download/latest.json"],
       "windows": { "installMode": "passive" }
     }
   }

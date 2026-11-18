@@ -7,7 +7,7 @@
  * See LICENSE and LICENSING.md for details.
  */
 
-#include "vantix/compute.hpp"
+#include "gramix/compute.hpp"
 
 #include <openssl/crypto.h>
 
@@ -20,7 +20,7 @@
 #include <string_view>
 #include <thread>
 
-namespace vantix {
+namespace gramix {
 
 BackendInfo CpuBackend::info() const {
     return {std::string("OpenSSL CPU ") +
@@ -175,4 +175,4 @@ std::string api_name(ComputeApi api) {
     return "Unknown";
 }
 
-}  // namespace vantix
+}  // namespace gramix

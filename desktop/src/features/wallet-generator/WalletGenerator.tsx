@@ -17,6 +17,7 @@ import Checkbox from "../../components/ui/Checkbox";
 import Select from "../../components/ui/Select";
 import { Check, Copy, Wallet } from "lucide-react";
 import { Buffer } from "buffer";
+import { platform } from "@platform";
 
 type PublicWallet = {
   address: string;
@@ -27,14 +28,15 @@ type PublicWallet = {
   encrypted_file?: string;
 };
 
-const isLinux = typeof navigator !== "undefined" && /Linux/i.test(navigator.userAgent);
+const web = platform.kind === "web";
+const isLinux = !web && typeof navigator !== "undefined" && /Linux/i.test(navigator.userAgent);
 
 export default function WalletGenerator() {
   const [scheme, setScheme] = useState<"12" | "24">("12");
   const [version, setVersion] = useState<"v5" | "v4">("v5");
   const [addressFormat, setAddressFormat] = useState<"bounceable" | "nonBounceable">("bounceable");
   const [network, setNetwork] = useState<"mainnet" | "testnet">(() =>
-    localStorage.getItem("vantix.network.default") === "testnet" ? "testnet" : "mainnet");
+    localStorage.getItem("gramix.network.default") === "testnet" ? "testnet" : "mainnet");
   const [friendlyAddress, setFriendlyAddress] = useState("");
   const [password, setPassword] = useState("");
   const [confirmed, setConfirmed] = useState(false);
@@ -43,6 +45,7 @@ export default function WalletGenerator() {
   const [regenerateOpen, setRegenerateOpen] = useState(false);
   const session = useRef<Child | null>(null);
   const generationRef = useRef(0);
+  const webPhrase = useRef<string | null>(null);
   const [wallet, setWallet] = useState<PublicWallet | null>(null);
   const [error, setError] = useState("");
   useEffect(() => {
@@ -65,6 +68,7 @@ export default function WalletGenerator() {
   const revealRequest = useRef(0);
   const pendingReveal = useRef<number | null>(null);
   const [revealing, setRevealing] = useState(false);
+  const [revealTick, setRevealTick] = useState(0);
   const [copied, setCopied] = useState("");
   const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   function clearRevealedPhrase() {
@@ -94,8 +98,9 @@ export default function WalletGenerator() {
       clearRevealedPhrase();
       setRevealOpen(false);
     }, 45_000);
-  }, [revealing, revealOpen]);
+  }, [revealing, revealOpen, revealTick]);
   useEffect(() => () => {
+    webPhrase.current = null;
     clearRevealedPhrase();
     clearRevealResponseTimer();
     if (copyTimer.current) clearTimeout(copyTimer.current);
@@ -106,8 +111,8 @@ export default function WalletGenerator() {
 
   async function sidecarEnv() {
     return {
-      VANTIX_RESOURCE_DIR: await resourceDir(),
-      ...(isLinux ? { VANTIX_WALLET_PASSWORD: password } : {}),
+      GRAMIX_RESOURCE_DIR: await resourceDir(),
+      ...(isLinux ? { GRAMIX_WALLET_PASSWORD: password } : {}),
     };
   }
 
@@ -121,14 +126,24 @@ export default function WalletGenerator() {
     const generation = ++generationRef.current;
     setWallet(null);
     setError("");
-    if (!isTauri()) {
-      setError("Генерация доступна в установленном приложении VANTIX.");
+    if (platform.generateWallet) {
+      setBusy(true);
+      try {
+        const created = await platform.generateWallet(scheme, version);
+        if (generationRef.current !== generation) return;
+        webPhrase.current = created.phrase;
+        setWallet({ address: created.address, raw: created.raw, public_key: created.publicKey,
+          wallet: version, scheme });
+        setConfirmed(false);
+      } catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); }
+      finally { setBusy(false); }
       return;
     }
+    if (!isTauri()) { setError("Генерация недоступна в этом окружении."); return; }
     setBusy(true);
     try {
       const directory = await join(await appDataDir(), "wallets");
-      const command = Command.sidecar("binaries/vantix", [
+      const command = Command.sidecar("binaries/gramix", [
         "wallet", "session", "--scheme", scheme, "--version", version,
         "--out", directory,
       ], { env: await sidecarEnv() });
@@ -193,7 +208,7 @@ export default function WalletGenerator() {
   }
 
   function requestGenerate() {
-    if (wallet && !wallet.encrypted_file) {
+    if (wallet && (web || !wallet.encrypted_file)) {
       setRegenerateOpen(true);
       return;
     }
@@ -219,6 +234,13 @@ export default function WalletGenerator() {
     const request = ++revealRequest.current;
     setRevealing(true);
     setError("");
+    if (web) {
+      pendingPhrase.current = webPhrase.current;
+      setRevealing(false);
+      setRevealTick((value) => value + 1);
+      if (!pendingPhrase.current) { setError("Фраза уже удалена из памяти страницы."); setRevealOpen(false); }
+      return;
+    }
     try {
       if (!wallet.encrypted_file) {
         if (!session.current) throw new Error("Сессия кошелька уже закрыта.");
@@ -233,7 +255,7 @@ export default function WalletGenerator() {
         }, 10_000);
         return;
       }
-      const output = await Command.sidecar("binaries/vantix",
+      const output = await Command.sidecar("binaries/gramix",
         ["--reveal", wallet.encrypted_file], { env: await sidecarEnv() }).execute();
       if (output.code !== 0) throw new Error("Не удалось расшифровать или проверить файл кошелька.");
       if (request === revealRequest.current) pendingPhrase.current = output.stdout.trim();
@@ -269,21 +291,21 @@ export default function WalletGenerator() {
     const url = URL.createObjectURL(new Blob([JSON.stringify(report, null, 2)],
       { type: "application/json" }));
     const link = document.createElement("a");
-    link.href = url; link.download = `vantix-wallet-public-${Date.now()}.json`; link.click();
+    link.href = url; link.download = `gramix-wallet-public-${Date.now()}.json`; link.click();
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   function verifyRecovery() {
     if (!wallet?.encrypted_file) return;
-    window.dispatchEvent(new CustomEvent("vantix:verify-wallet", {
+    window.dispatchEvent(new CustomEvent("gramix:verify-wallet", {
       detail: { address: friendlyAddress || wallet.address,
         scheme: wallet.scheme, version: wallet.wallet } }));
     window.location.hash = "wallet-security";
   }
 
-  return <section className="panel wallet-generator" id="wallet-generator" aria-labelledby="wallet-title">
+  return <section className="panel wallet-generator" id="wallet-generator" aria-labelledby="wallet-title" data-telemetry-off="">
     <div className="panel-heading"><div>
-      <h2 id="wallet-title">Создать обычный TON-кошелёк</h2>
+      <h2 id="wallet-title">Создать обычный GRAM-кошелёк</h2>
       <p>Новый ключ создаётся локально; в обычный вывод попадают только публичные данные</p>
     </div></div>
     <div className="wallet-workspace"><div className="wallet-form">
@@ -301,7 +323,7 @@ export default function WalletGenerator() {
             <input type="radio" name="wallet-scheme" value="24" checked={scheme === "24"}
               disabled={busy} onChange={() => setScheme("24")} />
             <span className="wallet-scheme-dot" aria-hidden="true" />
-            <span><strong>24 слова</strong><small>TON Native</small></span>
+            <span><strong>24 слова</strong><small>GRAM Native</small></span>
           </label>
         </div>
         <p id="wallet-scheme-note">Схемы восстанавливаются по разным правилам. При проверке выбирайте ту же схему.</p>
@@ -359,20 +381,21 @@ export default function WalletGenerator() {
           onClick={() => void copyPublic(wallet.public_key, "public_key")}>
           {copied === "public_key" ? <><Check size={16} /><span>Скопировано</span></> : <Copy size={16} />}</button></div></div>
       <span>Workchain: 0 · {wallet.wallet === "v5" ? "Wallet V5R1" : "Wallet V4R2"} · {network}</span>
-      {wallet.encrypted_file ? <span>Зашифрованный файл: {wallet.encrypted_file}</span>
+      {web ? <span>Фраза создана в вашем браузере и хранится только в памяти этой страницы. Запишите её: после закрытия вкладки восстановить её нельзя. Для больших сумм используйте приложение Gramix без сети.</span>
+        : wallet.encrypted_file ? <span>Зашифрованный файл: {wallet.encrypted_file}</span>
         : <span>Фраза хранится только в памяти локального процесса до сохранения или закрытия приложения.</span>}
       <div className="wallet-public-actions">{friendlyAddress && <PublicAddressQr address={friendlyAddress} />}
         <button type="button" disabled={!friendlyAddress} onClick={exportPublic}>Экспорт публичных данных</button></div>
-      {!wallet.encrypted_file && <button type="button" className="primary-button"
+      {!web && !wallet.encrypted_file && <button type="button" className="primary-button"
         disabled={saving || !session.current} onClick={() => void save()}>
         {saving ? "Сохраняю…" : "Сохранить зашифрованно"}</button>}
       <div className="wallet-public-actions">
-        <button type="button" disabled={!friendlyAddress} onClick={verifyRecovery}>Проверить восстановление</button>
+        {!web && <button type="button" disabled={!friendlyAddress} onClick={verifyRecovery}>Проверить восстановление</button>}
         <button type="button" onClick={() => { setRevealConfirmed(false); setRevealOpen(true); }}>
           Раскрыть фразу</button></div>
     </div> : <div className="wallet-empty"><Wallet size={35} aria-hidden="true" />
       <strong>Кошелёк ещё не создан</strong>
-      <p>После создания здесь появятся адрес, публичный ключ и путь к защищённому файлу.</p></div>}
+      <p>{web ? "После создания здесь появятся адрес и публичный ключ." : "После создания здесь появятся адрес, публичный ключ и путь к защищённому файлу."}</p></div>}
     </div></div>
     <Dialog.Root open={regenerateOpen} onOpenChange={setRegenerateOpen}>
       <Dialog.Portal><Dialog.Overlay className="dialog-overlay" />

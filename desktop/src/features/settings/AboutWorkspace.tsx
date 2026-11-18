@@ -17,7 +17,7 @@ import license from "../../../../LICENSE?raw";
 import licensingRu from "../../../../LICENSING.ru.md?raw";
 import noticeRu from "../../../../NOTICE.ru.md?raw";
 
-const repository = "https://github.com/lovlyDev/VANTIX";
+const repository = "https://github.com/lovlyDev/Gramix";
 const sourceRevision = import.meta.env.VITE_SOURCE_REVISION || "";
 const documents = [
   { id: "readme-ru", title: "README · Русский", icon: BookOpen, text: readmeRu },
@@ -38,13 +38,13 @@ export default function AboutWorkspace({ version }: { version: string }) {
   const document = documents.find((item) => item.id === selected) ?? documents[0];
   return <div className="about-workspace">
     <div className="about-intro">
-      <div><strong>VANTIX Community Edition</strong><span>Версия {version || "определяется"}</span></div>
+      <div><strong>Gramix</strong><span>Версия {version || "определяется"}</span></div>
       <a href={sourceRevision ? `${repository}/tree/${sourceRevision}` : repository}
         target="_blank" rel="noreferrer"><ExternalLink size={16} /> Исходный код</a>
     </div>
     <p className="about-licensing">Собственный код предоставляется по GNU AGPLv3. Коммерческая лицензия оформляется отдельным письменным договором.</p>
     <div className="about-document-layout">
-      <nav className="about-document-nav" aria-label="Документы VANTIX">
+      <nav className="about-document-nav" aria-label="Документы Gramix">
         {documents.map((item) => { const Icon = item.icon; return <button type="button"
           key={item.id} aria-pressed={selected === item.id} onClick={() => setSelected(item.id)}>
           <Icon size={18} aria-hidden="true" /><span>{item.title}</span></button>; })}

@@ -115,7 +115,7 @@ export default function ContractVanity() {
 
   function openStateInit() {
     if (!candidate) return;
-    window.dispatchEvent(new CustomEvent("vantix:open-boc", { detail: candidate.stateInitBocBase64 }));
+    window.dispatchEvent(new CustomEvent("gramix:open-boc", { detail: candidate.stateInitBocBase64 }));
     window.location.hash = "boc-explorer";
   }
 
@@ -124,7 +124,7 @@ export default function ContractVanity() {
     const bytes = Buffer.from(candidate.stateInitBocBase64, "base64");
     const url = URL.createObjectURL(new Blob([bytes], { type: "application/octet-stream" }));
     const link = document.createElement("a"); link.href = url;
-    link.download = `vantix-stateinit-${candidate.nonce}.boc`; link.click();
+    link.download = `gramix-stateinit-${candidate.nonce}.boc`; link.click();
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
@@ -135,7 +135,7 @@ export default function ContractVanity() {
       verified: true, candidate };
     const url = URL.createObjectURL(new Blob([JSON.stringify(report, null, 2)], { type: "application/json" }));
     const link = document.createElement("a"); link.href = url;
-    link.download = `vantix-contract-${candidate.raw.split(":")[1]}.json`; link.click();
+    link.download = `gramix-contract-${candidate.raw.split(":")[1]}.json`; link.click();
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 

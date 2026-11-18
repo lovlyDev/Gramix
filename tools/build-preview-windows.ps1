@@ -46,14 +46,14 @@ if (-not (Test-Path -LiteralPath (Join-Path $native 'CMakeCache.txt'))) {
 New-Item -ItemType Directory -Force -Path $preview | Out-Null
 Invoke-Checked $cmake @('--build', $native, '--config', 'Release', '--parallel', '4')
 Invoke-Checked $ctest @('--test-dir', $native, '-C', 'Release', '--output-on-failure')
-$exe = Join-Path $native 'Release/vantix.exe'
+$exe = Join-Path $native 'Release/gramix.exe'
 Invoke-Checked $exe @('--self-test', '--backend', 'cpu')
 
 $target = (& rustc --print host-tuple).Trim()
 if ($LASTEXITCODE -ne 0 -or $target -ne 'x86_64-pc-windows-msvc') {
     throw 'Only Windows x64 MSVC is supported by this preview script'
 }
-$sidecar = Join-Path $tauri "binaries/vantix-$target.exe"
+$sidecar = Join-Path $tauri "binaries/gramix-$target.exe"
 New-Item -ItemType Directory -Force -Path (Split-Path $sidecar) | Out-Null
 Copy-Item -LiteralPath $exe -Destination $sidecar -Force
 
@@ -66,8 +66,8 @@ New-Item -ItemType Directory -Force -Path (Split-Path $nodePath) | Out-Null
 Copy-Item -LiteralPath (Get-Command node).Source -Destination $nodePath -Force
 
 @{
-    productName = 'VANTIX Preview'
-    identifier = 'app.vantix.desktop.preview'
+    productName = 'Gramix Preview'
+    identifier = 'app.gramix.desktop.preview'
     version = $PreviewVersion
     bundle = @{
         createUpdaterArtifacts = $false
@@ -102,7 +102,7 @@ try {
 } finally { Pop-Location }
 
 if (-not $SkipBundle) {
-    $installer = Join-Path $tauri "target/release/bundle/nsis/VANTIX Preview_${PreviewVersion}_x64-setup.exe"
+    $installer = Join-Path $tauri "target/release/bundle/nsis/Gramix Preview_${PreviewVersion}_x64-setup.exe"
     if (-not (Test-Path -LiteralPath $installer)) { throw 'Preview NSIS installer is missing' }
     Get-FileHash -LiteralPath $installer -Algorithm SHA256 |
         Select-Object Path, Hash | Format-List

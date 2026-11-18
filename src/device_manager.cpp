@@ -7,7 +7,7 @@
  * See LICENSE and LICENSING.md for details.
  */
 
-#include "vantix/compute.hpp"
+#include "gramix/compute.hpp"
 
 #include <vulkan/vulkan.h>
 
@@ -27,7 +27,7 @@
 #include <dlfcn.h>
 #endif
 
-namespace vantix {
+namespace gramix {
 namespace {
 
 class DynamicLibrary {
@@ -143,9 +143,9 @@ void discover_vulkan(std::vector<DeviceInfo>& devices) {
 
     VkApplicationInfo app{};
     app.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    app.pApplicationName = "VANTIX";
+    app.pApplicationName = "Gramix";
     app.applicationVersion = VK_MAKE_API_VERSION(0, 0, 1, 0);
-    app.pEngineName = "VANTIX";
+    app.pEngineName = "Gramix";
     app.engineVersion = VK_MAKE_API_VERSION(0, 0, 1, 0);
     app.apiVersion = version >= VK_API_VERSION_1_1 ? VK_API_VERSION_1_1 : VK_API_VERSION_1_0;
 
@@ -374,4 +374,4 @@ std::vector<DeviceInfo> DeviceManager::discover() {
     return devices;
 }
 
-}  // namespace vantix
+}  // namespace gramix

@@ -29,6 +29,6 @@ describe("Transaction Decoder", () => {
   it("rejects a valid BOC that is not a transaction", async () => {
     const { beginCell } = await import("@ton/core");
     await expect(decodeTransactionBoc(beginCell().endCell().toBoc())).rejects.toThrow(
-      "корректную TON-транзакцию");
+      "корректную GRAM-транзакцию");
   });
 });

@@ -15,6 +15,7 @@ tools/oracle/node_modules/
 .vs/
 *.user
 desktop/dist/
+desktop/dist-web/
 desktop/runtime/bundle/
 desktop/runtime/bin/
 desktop/src-tauri/target/

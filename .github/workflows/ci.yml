@@ -23,7 +23,17 @@ jobs:
       - run: python tools/check-version.py
       - run: npm ci
         working-directory: desktop
-      - run: npm run build
+      - run: npm test
+        working-directory: desktop
+      - name: Build application with a fake collector address
+        run: npm run build
+        working-directory: desktop
+        env:
+          VITE_TELEMETRY_URL: https://telemetry.invalid/api/send
+          VITE_TELEMETRY_SITE_ID: ci
+      - name: Application contains no telemetry
+        run: python scripts/check_app_telemetry.py
+      - run: npm run build:web
         working-directory: desktop
   native:
     strategy:

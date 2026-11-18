@@ -7,12 +7,13 @@
  * See LICENSE and LICENSING.md for details.
  */
 
-import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { exactGram, formatGram } from "../../lib/format";
 import { Buffer } from "buffer";
 import * as Tabs from "@radix-ui/react-tabs";
 import { Download, FileCode2, RefreshCw, SearchCheck } from "lucide-react";
-import { invoke, isTauri } from "@tauri-apps/api/core";
-import { Command } from "@tauri-apps/plugin-shell";
+import { platform } from "@platform";
+import { telemetry } from "@telemetry";
 import { decodeBocText, parseBocBytes } from "../boc-explorer/bocService";
 import Checkbox from "../../components/ui/Checkbox";
 import CopyButton from "../../components/ui/CopyButton";
@@ -53,8 +54,10 @@ async function localHash(bocHex: string): Promise<string> {
 }
 
 export default function ContractInspector() {
+  const [autoRun, setAutoRun] = useState("");
+  const formRef = useRef<HTMLFormElement>(null);
   const [input, setInput] = useState("");
-  const [testnet, setTestnet] = useState(() => localStorage.getItem("vantix.network.default") === "testnet");
+  const [testnet, setTestnet] = useState(() => localStorage.getItem("gramix.network.default") === "testnet");
   const [account, setAccount] = useState<ContractAccount | null>(null);
   const [codeHash, setCodeHash] = useState("");
   const [dataHash, setDataHash] = useState("");
@@ -76,11 +79,11 @@ export default function ContractInspector() {
     const receive = (event: Event) => {
       const detail = (event as CustomEvent<{ address: string; testnet: boolean }>).detail;
       if (!detail || typeof detail.address !== "string") return;
-      setInput(detail.address); setTestnet(detail.testnet);
+      setInput(detail.address); setTestnet(Boolean(detail.testnet)); setAutoRun(detail.address);
       setAccount(null); setInspection(null); setResult(null); setError("");
     };
-    window.addEventListener("vantix:contract-address", receive);
-    return () => window.removeEventListener("vantix:contract-address", receive);
+    window.addEventListener("gramix:contract-address", receive);
+    return () => window.removeEventListener("gramix:contract-address", receive);
   }, []);
   useEffect(() => {
     const receive = (event: Event) => {
@@ -88,9 +91,13 @@ export default function ContractInspector() {
       if (network !== "mainnet" && network !== "testnet") return;
       setTestnet(network === "testnet"); setAccount(null); setInspection(null); setResult(null);
     };
-    window.addEventListener("vantix:default-network", receive);
-    return () => window.removeEventListener("vantix:default-network", receive);
+    window.addEventListener("gramix:default-network", receive);
+    return () => window.removeEventListener("gramix:default-network", receive);
   }, []);
+
+  useEffect(() => {
+    if (autoRun && input === autoRun) { setAutoRun(""); formRef.current?.requestSubmit(); }
+  }, [autoRun, input]);
 
   async function load(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -100,16 +107,11 @@ export default function ContractInspector() {
     setCodeHash("");
     setDataHash("");
     setError("");
-    if (!isTauri()) {
-      setError("Сетевой запрос доступен в установленном приложении VANTIX.");
-      return;
-    }
     setBusy(true);
     try {
-      const parsed = await Command.sidecar("binaries/vantix", ["address", "inspect", input.trim(), "--json"]).execute();
-      if (parsed.code !== 0) throw new Error(parsed.stderr.trim() || "Некорректный TON-адрес.");
-      const raw = (JSON.parse(parsed.stdout) as { raw: string }).raw;
-      const loaded = await invoke<ContractAccount>("fetch_contract", { raw, testnet });
+      const { raw } = await platform.inspectAddress(input.trim());
+      const loaded = await platform.fetchContract(raw, testnet);
+      telemetry.track({ name: "contract_opened", address: raw, network: loaded.network });
       if (loaded.code_hex) setCodeHash(await localHash(loaded.code_hex));
       if (loaded.data_hex) setDataHash(await localHash(loaded.data_hex));
       setAccount(loaded);
@@ -126,7 +128,7 @@ export default function ContractInspector() {
     setInspectionError("");
     setBusy(true);
     try {
-      const data = await invoke<CodeInspection>("inspect_contract_code", { raw: account.raw, testnet });
+      const data = await platform.inspectContractCode(account.raw, testnet);
       const actual = await localHash(data.code_hex);
       if (actual.toLowerCase() !== data.code_hash.toLowerCase() ||
           (codeHash && actual.toLowerCase() !== codeHash.toLowerCase())) {
@@ -148,9 +150,8 @@ export default function ContractInspector() {
     const args = argsText.trim() ? argsText.split(/\r?\n/).map((value) => value.trim()) : [];
     setMethodBusy(true);
     try {
-      setResult(await invoke<MethodResult>("run_get_method", {
-        raw: account.raw, testnet, method: method.trim(), args,
-      }));
+      setResult(await platform.runGetMethod(account.raw, testnet, method.trim(), args));
+      telemetry.track({ name: "get_method", address: account.raw, method: method.trim() });
     } catch (cause) {
       setError(String(cause));
     } finally {
@@ -173,7 +174,7 @@ export default function ContractInspector() {
   }
 
   function openBoc(hex: string) {
-    window.dispatchEvent(new CustomEvent("vantix:open-boc", {
+    window.dispatchEvent(new CustomEvent("gramix:open-boc", {
       detail: Buffer.from(hex, "hex").toString("base64"),
     }));
     window.location.hash = "boc-explorer";
@@ -188,15 +189,15 @@ export default function ContractInspector() {
       last_transaction_hash: account.last_transaction_hash, received_at: account.received_at };
     const url = URL.createObjectURL(new Blob([JSON.stringify(report, null, 2)], { type: "application/json" }));
     const link = document.createElement("a"); link.href = url;
-    link.download = `vantix-contract-${Date.now()}.json`; link.click();
+    link.download = `gramix-contract-${Date.now()}.json`; link.click();
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   return <section className="contract-inspector" id="contract-inspector" aria-labelledby="contract-title">
     <div className="panel-heading"><div><h2 id="contract-title">Контракты</h2>
       <p>Состояние и код из OpenTonAPI, локальная проверка BOC и read-only get-методы</p></div></div>
-    <form onSubmit={(event) => void load(event)} className="contract-address-bar">
-      <label>TON-адрес контракта<input className="address-input" value={input}
+    <form ref={formRef} onSubmit={(event) => void load(event)} className="contract-address-bar">
+      <label>GRAM-адрес контракта<input className="address-input" value={input}
         onChange={(event) => setInput(event.target.value)} maxLength={80}
         autoComplete="off" spellCheck={false} placeholder="EQ… или 0:…" /></label>
       <Checkbox checked={testnet} onCheckedChange={(value) => {
@@ -209,7 +210,7 @@ export default function ContractInspector() {
     {error && <p className="error-box" role="alert">{error}</p>}
     {account && <><div className="contract-summary">
       <div><span>СОСТОЯНИЕ</span><strong>{account.status}</strong></div>
-      <div><span>БАЛАНС</span><strong>{account.balance_nanoton} nanoTON</strong></div>
+      <div><span>БАЛАНС</span><strong title={exactGram(account.balance_nanoton)}>{formatGram(account.balance_nanoton)}</strong></div>
       <div><span>ХЕШ КОДА</span><code>{codeHash || "код не опубликован"}</code></div>
       <div><span>ХЕШ ДАННЫХ</span><code>{dataHash || "данные не опубликованы"}</code></div>
     </div><div className="contract-source-line"><span>OpenTonAPI · {account.network} · {new Date(account.received_at * 1000).toLocaleString("ru-RU")}</span>
@@ -225,14 +226,14 @@ export default function ContractInspector() {
           <dt>Адрес</dt><dd><code>{account.raw}</code></dd>
           <dt>Сеть</dt><dd>{account.network}</dd>
           <dt>Статус</dt><dd>{account.status}</dd>
-          <dt>Баланс</dt><dd>{account.balance_nanoton} nanoTON</dd>
+          <dt>Баланс</dt><dd>{formatGram(account.balance_nanoton)} · {account.balance_nanoton} nano</dd>
           <dt>LT последней транзакции</dt><dd>{account.last_transaction_lt ?? "нет данных"}</dd>
           <dt>Хеш последней транзакции</dt><dd><code>{account.last_transaction_hash ?? "нет данных"}</code></dd>
           <dt>Интерфейс</dt><dd>Не определён без подтверждённых метаданных</dd>
         </dl><div className="contract-actions">
           <CopyButton value={account.raw} label="Копировать адрес" />
           {account.last_transaction_hash && <button onClick={() => {
-            window.dispatchEvent(new CustomEvent("vantix:transaction-id", { detail: account.last_transaction_hash }));
+            window.dispatchEvent(new CustomEvent("gramix:transaction-id", { detail: account.last_transaction_hash }));
             window.location.hash = "transaction-decoder";
           }}>Открыть транзакцию</button>}
         </div></> : <div className="contract-empty"><SearchCheck size={31}/><strong>Контракт ещё не загружен</strong>

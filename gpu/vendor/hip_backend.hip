@@ -8,5 +8,5 @@
  */
 
 #include <hip/hip_runtime.h>
-#define VANTIX_HIP 1
+#define GRAMIX_HIP 1
 #include "backend_impl.hpp"

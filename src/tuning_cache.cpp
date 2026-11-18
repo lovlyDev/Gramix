@@ -7,8 +7,8 @@
  * See LICENSE and LICENSING.md for details.
  */
 
-#include "vantix/tuning_cache.hpp"
-#include "vantix/resources.hpp"
+#include "gramix/tuning_cache.hpp"
+#include "gramix/resources.hpp"
 
 #include <openssl/evp.h>
 
@@ -20,18 +20,18 @@
 #include <sstream>
 #include <unordered_set>
 
-namespace vantix {
+namespace gramix {
 namespace {
 std::filesystem::path cache_file() {
 #ifdef _WIN32
     const auto* base = std::getenv("LOCALAPPDATA");
     if (!base) return {};
-    return std::filesystem::path(base) / "VANTIX" / "tuning.profile";
+    return std::filesystem::path(base) / "Gramix" / "tuning.profile";
 #else
     if (const auto* base = std::getenv("XDG_CACHE_HOME"))
-        return std::filesystem::path(base) / "vantix" / "tuning.profile";
+        return std::filesystem::path(base) / "gramix" / "tuning.profile";
     const auto* home = std::getenv("HOME");
-    return home ? std::filesystem::path(home) / ".cache" / "vantix" /
+    return home ? std::filesystem::path(home) / ".cache" / "gramix" /
                       "tuning.profile" : std::filesystem::path{};
 #endif
 }
@@ -49,7 +49,7 @@ std::string key_for(const BackendRegistry& registry,
     }
     std::sort(parts.begin(), parts.end());
     std::ostringstream input;
-    input << "VANTIX/profile-2/" << static_cast<int>(wallet) << '/'
+    input << "Gramix/profile-2/" << static_cast<int>(wallet) << '/'
           << static_cast<int>(scheme) << '\n';
     for (const auto& part : parts) input << part << '\n';
     std::vector<std::string> backends;

@@ -7,8 +7,8 @@
  * See LICENSE and LICENSING.md for details.
  */
 
-#include "vantix/vulkan_backend.hpp"
-#include "vantix/resources.hpp"
+#include "gramix/vulkan_backend.hpp"
+#include "gramix/resources.hpp"
 
 #include <volk.h>
 #include <openssl/crypto.h>
@@ -23,7 +23,7 @@
 #include <sstream>
 #include <stdexcept>
 
-namespace vantix {
+namespace gramix {
 namespace {
 constexpr std::uint32_t group_size = 64;
 constexpr VkDeviceSize input_bytes = group_size * 128;
@@ -70,7 +70,7 @@ std::shared_ptr<Instance> make_instance() {
     check(init_result, "Vulkan loader initialization");
     auto result = std::make_shared<Instance>();
     VkApplicationInfo app{VK_STRUCTURE_TYPE_APPLICATION_INFO};
-    app.pApplicationName = "VANTIX";
+    app.pApplicationName = "Gramix";
     app.apiVersion = VK_API_VERSION_1_1;
     VkInstanceCreateInfo create{VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};
     create.pApplicationInfo = &app;
@@ -422,4 +422,4 @@ std::uint64_t VulkanBackend::run_batch(
     }
     return checked;
 }
-} // namespace vantix
+} // namespace gramix

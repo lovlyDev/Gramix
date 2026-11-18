@@ -20,7 +20,7 @@
 #include <stdexcept>
 #include <string>
 
-#ifdef VANTIX_VENDOR_MOCK
+#ifdef GRAMIX_VENDOR_MOCK
 #define gpuError_t int
 #define gpuSuccess 0
 #define gpuStream_t void*
@@ -41,7 +41,7 @@
 #define gpuGetLastError mockGetLastError
 #define gpuGetErrorString mockGetErrorString
 #define gpuMemset mockMemset
-#elif defined(VANTIX_HIP)
+#elif defined(GRAMIX_HIP)
 #define gpuError_t hipError_t
 #define gpuSuccess hipSuccess
 #define gpuStream_t hipStream_t
@@ -85,7 +85,7 @@
 #define gpuMemset cudaMemset
 #endif
 
-namespace vantix_vendor {
+namespace gramix_vendor {
 constexpr unsigned slot_size = 64;
 constexpr std::size_t input_bytes = slot_size * 128;
 constexpr std::size_t output_bytes = slot_size * 32;
@@ -162,14 +162,14 @@ struct Context {
             std::memcpy(slot.host_input, input + offset * 128, bytes);
             check(gpuMemcpyAsync(slot.device_input, slot.host_input, bytes,
                                  gpuMemcpyHostToDevice, slot.stream), "GPU input transfer");
-#ifdef VANTIX_VENDOR_MOCK
+#ifdef GRAMIX_VENDOR_MOCK
             for (unsigned lane = 0; lane < slot.count; ++lane) {
                 threadIdx.x = lane;
-                vantix_gpu::derive_kernel(slot.device_input, slot.device_output,
+                gramix_gpu::derive_kernel(slot.device_input, slot.device_output,
                                           slot.count);
             }
 #else
-            vantix_gpu::derive_kernel<<<1, 64, 0, slot.stream>>>(
+            gramix_gpu::derive_kernel<<<1, 64, 0, slot.stream>>>(
                 slot.device_input, slot.device_output, slot.count);
 #endif
             check(gpuGetLastError(), "GPU kernel launch");
@@ -195,9 +195,9 @@ struct Context {
 };
 
 std::string device_id(int index) {
-#ifdef VANTIX_VENDOR_MOCK
+#ifdef GRAMIX_VENDOR_MOCK
     auto id = std::string("mock:") + std::to_string(index);
-#elif defined(VANTIX_HIP)
+#elif defined(GRAMIX_HIP)
     hipUUID uuid{};
     std::string id;
     if (hipDeviceGetUuid(&uuid, index) == hipSuccess)
@@ -230,46 +230,46 @@ std::string device_id(int index) {
     if (id.empty()) id = std::string("vendor:") + std::to_string(index);
     return id;
 }
-}  // namespace vantix_vendor
+}  // namespace gramix_vendor
 
 #ifdef _WIN32
-#define VANTIX_EXPORT extern "C" __declspec(dllexport)
+#define GRAMIX_EXPORT extern "C" __declspec(dllexport)
 #else
-#define VANTIX_EXPORT extern "C" __attribute__((visibility("default")))
+#define GRAMIX_EXPORT extern "C" __attribute__((visibility("default")))
 #endif
 
-VANTIX_EXPORT int vantix_vendor_abi_version() { return 1; }
-VANTIX_EXPORT const char* vantix_vendor_build_id() { return __DATE__ " " __TIME__; }
-VANTIX_EXPORT int vantix_vendor_device_count() {
+GRAMIX_EXPORT int gramix_vendor_abi_version() { return 1; }
+GRAMIX_EXPORT const char* gramix_vendor_build_id() { return __DATE__ " " __TIME__; }
+GRAMIX_EXPORT int gramix_vendor_device_count() {
     int count = 0;
     return gpuGetDeviceCount(&count) == gpuSuccess ? count : 0;
 }
-VANTIX_EXPORT int vantix_vendor_device_name(int index, char* out, std::size_t size) {
+GRAMIX_EXPORT int gramix_vendor_device_name(int index, char* out, std::size_t size) {
     if (!out || size == 0 || size > 4096) return 0;
     return gpuDeviceGetName(out, static_cast<int>(size), index) == gpuSuccess;
 }
-VANTIX_EXPORT int vantix_vendor_device_id(int index, char* out, std::size_t size) {
+GRAMIX_EXPORT int gramix_vendor_device_id(int index, char* out, std::size_t size) {
     if (!out || size == 0) return 0;
-    const auto id = vantix_vendor::device_id(index);
+    const auto id = gramix_vendor::device_id(index);
     if (id.size() + 1 > size) return 0;
     std::memcpy(out, id.c_str(), id.size() + 1);
     return 1;
 }
-VANTIX_EXPORT void* vantix_vendor_create(int index) {
-    try { return new vantix_vendor::Context(index); }
+GRAMIX_EXPORT void* gramix_vendor_create(int index) {
+    try { return new gramix_vendor::Context(index); }
     catch (...) { return nullptr; }
 }
-VANTIX_EXPORT int vantix_vendor_derive(void* pointer, const unsigned char* input,
+GRAMIX_EXPORT int gramix_vendor_derive(void* pointer, const unsigned char* input,
                                        unsigned count, unsigned char* output) {
     if (!pointer) return 0;
-    auto& context = *static_cast<vantix_vendor::Context*>(pointer);
+    auto& context = *static_cast<gramix_vendor::Context*>(pointer);
     try { context.derive(input, count, output); context.error.clear(); return 1; }
     catch (const std::exception& failure) { context.error = failure.what(); return 0; }
 }
-VANTIX_EXPORT const char* vantix_vendor_error(void* pointer) {
-    return pointer ? static_cast<vantix_vendor::Context*>(pointer)->error.c_str()
+GRAMIX_EXPORT const char* gramix_vendor_error(void* pointer) {
+    return pointer ? static_cast<gramix_vendor::Context*>(pointer)->error.c_str()
                    : "No vendor GPU context";
 }
-VANTIX_EXPORT void vantix_vendor_destroy(void* pointer) {
-    delete static_cast<vantix_vendor::Context*>(pointer);
+GRAMIX_EXPORT void gramix_vendor_destroy(void* pointer) {
+    delete static_cast<gramix_vendor::Context*>(pointer);
 }

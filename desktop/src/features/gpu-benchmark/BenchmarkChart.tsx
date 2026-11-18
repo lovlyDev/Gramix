@@ -27,7 +27,7 @@ export default function BenchmarkChart({ samples, series }: {
     const divider = css.getPropertyValue("--divider").trim() || "rgba(255,255,255,.06)";
     const chart = new uPlot({
       width: Math.max(320, host.current.clientWidth), height: 290,
-      title: "Полный TON-пайплайн · проверенных адресов/с",
+      title: "Полный GRAM-пайплайн · проверенных адресов/с",
       cursor: { show: true }, legend: { show: true },
       scales: { x: { time: false }, y: { auto: true,
         range: (_chart, _min, max) => [0, Math.max(1, max * 1.12)] } },
@@ -50,5 +50,5 @@ export default function BenchmarkChart({ samples, series }: {
       samples.map((sample) => sample.rates[item.key] ?? null))]);
   }, [samples, signature]);
   return <div className="benchmark-chart" ref={host} role="img"
-    aria-label="Измеренная скорость полного TON-пайплайна по времени" />;
+    aria-label="Измеренная скорость полного GRAM-пайплайна по времени" />;
 }

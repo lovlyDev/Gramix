@@ -14,8 +14,8 @@ desktop="$root/desktop"
 tauri="$desktop/src-tauri"
 version=0.1.0
 if [[ -z "${TAURI_SIGNING_PRIVATE_KEY:-}" ]]; then
-    if [[ -f "$root/.tools/signing/vantix.key" ]]; then
-        export TAURI_SIGNING_PRIVATE_KEY="$root/.tools/signing/vantix.key"
+    if [[ -f "$root/.tools/signing/gramix.key" ]]; then
+        export TAURI_SIGNING_PRIVATE_KEY="$root/.tools/signing/gramix.key"
     elif [[ "${1:-}" != --skip-bundle ]]; then
         echo 'TAURI_SIGNING_PRIVATE_KEY is required to sign updater artifacts' >&2
         exit 1
@@ -37,12 +37,12 @@ cmake -S "$root" -B "$build" -G Ninja \
     "-DCMAKE_TOOLCHAIN_FILE=$toolchain" -DVCPKG_TARGET_TRIPLET=x64-linux
 cmake --build "$build" --parallel
 ctest --test-dir "$build" --output-on-failure
-"$build/vantix" --self-test --backend cpu
-"$build/vantix" --backends-json
+"$build/gramix" --self-test --backend cpu
+"$build/gramix" --backends-json
 
 mkdir -p "$tauri/binaries"
-cp "$build/vantix" "$tauri/binaries/vantix-$target"
-chmod 755 "$tauri/binaries/vantix-$target"
+cp "$build/gramix" "$tauri/binaries/gramix-$target"
+chmod 755 "$tauri/binaries/gramix-$target"
 
 python3 - "$root" "$build" "$tauri" <<'PY'
 import json
@@ -55,8 +55,8 @@ resources = {
     "../../gpu/vulkan/derive.spv": "gpu/vulkan/derive.spv",
 }
 for api in ("cuda", "hip"):
-    if (build / f"libvantix_{api}.so").exists():
-        resources[f"../../build/package-linux/libvantix_{api}.so"] = f"libvantix_{api}.so"
+    if (build / f"libgramix_{api}.so").exists():
+        resources[f"../../build/package-linux/libgramix_{api}.so"] = f"libgramix_{api}.so"
 config = {"bundle": {"targets": ["deb", "appimage"], "resources": resources}}
 (tauri / "tauri.release.json").write_text(json.dumps(config, indent=2) + "\n")
 PY

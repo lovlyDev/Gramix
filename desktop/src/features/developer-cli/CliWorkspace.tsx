@@ -23,11 +23,11 @@ const commands = [
   { id: "backends", label: "Проверенные движки", group: "Диагностика", args: ["--backends-json"],
     description: "Список движков, прошедших криптографическую самопроверку." },
   { id: "selftest", label: "Самопроверка", group: "Тесты", args: ["--self-test"],
-    description: "Проверка выбранного движка по эталонным векторам TON." },
+    description: "Проверка выбранного движка по эталонным векторам GRAM." },
   { id: "benchmark", label: "Полный Benchmark", group: "Тесты", args: ["--benchmark-json"],
-    description: "Измерение полного TON-пайплайна выбранного проверенного движка." },
+    description: "Измерение полного GRAM-пайплайна выбранного проверенного движка." },
   { id: "address", label: "Проверка адреса", group: "Блокчейн", args: ["address", "inspect", "--json"],
-    description: "Локальная проверка raw или friendly TON-адреса, без сети." },
+    description: "Локальная проверка raw или friendly GRAM-адреса, без сети." },
   { id: "autotune", label: "Повторная настройка", group: "Тесты", args: ["--retune", "--benchmark-json", "--backend", "auto"],
     description: "Повторная калибровка и измерение проверенных движков ядра." },
 ] as const;
@@ -57,7 +57,7 @@ export default function CliWorkspace() {
   const args = selected === "address" ? [...current.args, address.trim()] :
     selected === "selftest" || selected === "benchmark"
       ? [...current.args, "--backend", effectiveBackend] : [...current.args];
-  const cliEquivalent = `vantix ${args.join(" ")}`;
+  const cliEquivalent = `gramix ${args.join(" ")}`;
 
   useEffect(() => {
     if (!terminalNode.current) return;
@@ -70,7 +70,7 @@ export default function CliWorkspace() {
     const fit = new FitAddon();
     instance.loadAddon(fit);
     instance.open(terminalNode.current);
-    instance.writeln("VANTIX Developer CLI\r\nВыберите разрешённую команду и нажмите «Выполнить».");
+    instance.writeln("Gramix Developer CLI\r\nВыберите разрешённую команду и нажмите «Выполнить».");
     const observer = new ResizeObserver(() => fit.fit());
     observer.observe(terminalNode.current);
     requestAnimationFrame(() => fit.fit());
@@ -87,20 +87,20 @@ export default function CliWorkspace() {
   async function run() {
     if (busy) return;
     if (selected === "address" && !validAddress) {
-      setStatus("Введите raw или friendly TON-адрес."); return;
+      setStatus("Введите raw или friendly GRAM-адрес."); return;
     }
     terminal.current?.clear();
     output.current = "";
     setExitCode(null); setDuration(null);
-    if (!isTauri()) { setStatus("Команды доступны в установленном приложении VANTIX.");
-      write("Команды доступны в установленном приложении VANTIX.\n"); return; }
+    if (!isTauri()) { setStatus("Команды доступны в установленном приложении Gramix.");
+      write("Команды доступны в установленном приложении Gramix.\n"); return; }
     const commandArgs = [...args];
-    const cli = `vantix ${commandArgs.join(" ")}`;
+    const cli = `gramix ${commandArgs.join(" ")}`;
     write(`> ${cli}\n\n`);
     setStatus("Выполняется"); setBusy(true);
     const started = performance.now();
     try {
-      const command = Command.sidecar("binaries/vantix", commandArgs);
+      const command = Command.sidecar("binaries/gramix", commandArgs);
       command.stdout.on("data", (value) => write(value + "\n"));
       command.stderr.on("data", (value) => write(`\x1b[31m${value}\x1b[0m\n`));
       command.on("close", ({ code }) => {
@@ -130,7 +130,7 @@ export default function CliWorkspace() {
     if (!output.current) return;
     const url = URL.createObjectURL(new Blob([output.current], { type: "text/plain;charset=utf-8" }));
     const link = document.createElement("a"); link.href = url;
-    link.download = `vantix-cli-${selected}.txt`; link.click();
+    link.download = `gramix-cli-${selected}.txt`; link.click();
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
@@ -151,12 +151,12 @@ export default function CliWorkspace() {
         {(selected === "selftest" || selected === "benchmark") && <label className="cli-arg-field">Движок
           <Select label="Движок CLI" value={effectiveBackend} disabled={busy}
             onValueChange={setBackend} options={backendOptions} /></label>}
-        {selected === "address" && <label className="cli-arg-field">TON-адрес
+        {selected === "address" && <label className="cli-arg-field">GRAM-адрес
           <input value={address} disabled={busy} spellCheck={false}
             onChange={(event) => setAddress(event.target.value)} placeholder="EQ… или 0:…" />
           {address.trim() && !validAddress && <small>Нужны 48 символов friendly или raw-адрес.</small>}</label>}
         <code>{selected === "address" && !address.trim()
-          ? "vantix address inspect --json <адрес>" : cliEquivalent}</code></div>
+          ? "gramix address inspect --json <адрес>" : cliEquivalent}</code></div>
       <div className="cli-command-actions"><button type="button" title="Копировать эквивалентную CLI-команду"
         disabled={selected === "address" && !validAddress}
         onClick={() => void navigator.clipboard.writeText(cliEquivalent)}>
@@ -174,7 +174,7 @@ export default function CliWorkspace() {
       <button type="button" title="Очистить вывод" aria-label="Очистить вывод"
         onClick={() => { terminal.current?.clear(); output.current = ""; }}><Trash2 size={15} /></button></div>
     <div ref={terminalNode} className="cli-terminal" aria-label="Терминальный вывод" />
-    <p className="cli-safety">В этой панели выполняются только перечисленные команды VANTIX. Фразы восстановления и приватные ключи не принимаются.</p>
+    <p className="cli-safety">В этой панели выполняются только перечисленные команды Gramix. Фразы восстановления и приватные ключи не принимаются.</p>
     </div>
   </section>;
 }

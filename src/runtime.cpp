@@ -7,7 +7,8 @@
  * See LICENSE and LICENSING.md for details.
  */
 
-#include "vantix/compute.hpp"
+#include "gramix/resources.hpp"
+#include "gramix/compute.hpp"
 
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
@@ -37,7 +38,7 @@
 #include <wincrypt.h>
 #endif
 
-namespace vantix {
+namespace gramix {
 void SearchPattern::validate() const {
     const auto allowed = [](const std::string& part) {
         return part.size() <= 48 &&
@@ -75,10 +76,10 @@ std::string base64_encode(const std::uint8_t* data, std::size_t size) {
 
 #ifndef _WIN32
 const char* linux_wallet_password() {
-    const auto* password = std::getenv("VANTIX_WALLET_PASSWORD");
+    const auto* password = environment_value("WALLET_PASSWORD");
     if (!password || std::strlen(password) < 12 || std::strlen(password) > 1024)
         throw std::runtime_error(
-            "Linux wallet encryption requires VANTIX_WALLET_PASSWORD (12..1024 characters)");
+            "Linux wallet encryption requires GRAMIX_WALLET_PASSWORD (12..1024 characters)");
     return password;
 }
 
@@ -167,7 +168,7 @@ std::string protect_mnemonic(const std::string& mnemonic) {
     DATA_BLOB input{static_cast<DWORD>(mnemonic.size()),
                     reinterpret_cast<BYTE*>(const_cast<char*>(mnemonic.data()))};
     DATA_BLOB encrypted{};
-    if (!CryptProtectData(&input, L"VANTIX TON recovery phrase", nullptr,
+    if (!CryptProtectData(&input, L"Gramix TON recovery phrase", nullptr,
                           nullptr, nullptr, CRYPTPROTECT_UI_FORBIDDEN, &encrypted))
         throw std::runtime_error("Windows wallet encryption failed");
     try {
@@ -427,4 +428,4 @@ std::uint64_t ComputeScheduler::search(
     return monitor.total();
 }
 
-}  // namespace vantix
+}  // namespace gramix

@@ -1,12 +1,12 @@
 [package]
-name = "vantix-desktop"
+name = "gramix-desktop"
 version = "0.1.0"
-description = "VANTIX TON vanity generator desktop application"
-authors = ["VANTIX"]
+description = "Gramix TON vanity generator desktop application"
+authors = ["Gramix"]
 edition = "2021"
 
 [lib]
-name = "vantix_desktop_lib"
+name = "gramix_desktop_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

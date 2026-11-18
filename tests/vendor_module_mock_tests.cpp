@@ -7,7 +7,7 @@
  * See LICENSE and LICENSING.md for details.
  */
 
-#include "vantix/ton.hpp"
+#include "gramix/ton.hpp"
 
 #include <array>
 #include <cstdlib>
@@ -18,7 +18,7 @@
 #define __constant__
 #define __forceinline__ inline
 #define __global__
-#define VANTIX_VENDOR_MOCK 1
+#define GRAMIX_VENDOR_MOCK 1
 struct ThreadCoordinate { unsigned x; };
 ThreadCoordinate blockIdx{0}, blockDim{64}, threadIdx{0};
 
@@ -58,26 +58,26 @@ int main() {
     constexpr char phrase[] =
         "abandon abandon abandon abandon abandon abandon abandon abandon "
         "abandon abandon abandon about";
-    if (vantix_vendor_abi_version() != 1 || vantix_vendor_device_count() != 1)
+    if (gramix_vendor_abi_version() != 1 || gramix_vendor_device_count() != 1)
         return 1;
     char name[64]{}, id[64]{};
-    if (!vantix_vendor_device_name(0, name, sizeof(name)) ||
-        !vantix_vendor_device_id(0, id, sizeof(id)) ||
+    if (!gramix_vendor_device_name(0, name, sizeof(name)) ||
+        !gramix_vendor_device_id(0, id, sizeof(id)) ||
         std::strcmp(name, "Mock GPU") != 0 || std::strcmp(id, "mock:0") != 0)
         return 2;
-    auto* context = vantix_vendor_create(0);
+    auto* context = gramix_vendor_create(0);
     if (!context) return 3;
     std::array<unsigned char, 128> input{};
     std::array<unsigned char, 32> output{};
     std::memcpy(input.data(), phrase, sizeof(phrase) - 1);
-    const auto valid = vantix_vendor_derive(context, input.data(), 1, output.data());
-    vantix::Bytes32 seed{};
+    const auto valid = gramix_vendor_derive(context, input.data(), 1, output.data());
+    gramix::Bytes32 seed{};
     std::memcpy(seed.data(), output.data(), seed.size());
-    const auto matches = vantix::public_key_from_ed25519_seed(seed) ==
-                         vantix::multichain_public_key(phrase);
-    const auto invalid = vantix_vendor_derive(context, input.data(), 0, output.data());
-    const auto error_set = std::strlen(vantix_vendor_error(context)) > 0;
-    vantix_vendor_destroy(context);
+    const auto matches = gramix::public_key_from_ed25519_seed(seed) ==
+                         gramix::multichain_public_key(phrase);
+    const auto invalid = gramix_vendor_derive(context, input.data(), 0, output.data());
+    const auto error_set = std::strlen(gramix_vendor_error(context)) > 0;
+    gramix_vendor_destroy(context);
     if (!valid || !matches || invalid || !error_set) {
         std::cerr << "Vendor module ABI or derivation failed\n";
         return 4;
