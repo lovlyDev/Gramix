@@ -17,7 +17,15 @@ export type NftInfo = {
   raw: string; name: string; collection: string; collectionRaw: string | null; description: string;
   thumb: string | null; image: string | null; trust: NftTrust; verified: boolean;
   attributes: { trait: string; value: string }[]; index: string;
+  /** Юзернейм или номер Telegram с Fragment: своя картинка с именем, без голографии. */
+  telegram: boolean;
 };
+
+// Коллекции Fragment: Telegram Usernames и Anonymous Telegram Numbers.
+const TELEGRAM_COLLECTIONS = new Set([
+  "0:80d78a35f955a14b679faa887ff4cd5bfc0f43b4a4eea2a7e6927f3701b273c2",
+  "0:0e41dc1dc3c9067ed24248580e12b3359818d83dee0304fabcf80845eafafdb2",
+]);
 
 const obj = (value: unknown): Record<string, unknown> =>
   value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
@@ -38,6 +46,7 @@ export function normalizeNft(value: unknown, raw: string): NftInfo {
     thumb: preview("100x100"), image: preview("500x500") ?? preview("1500x1500"),
     trust: ["whitelist", "graylist", "blacklist"].includes(trust) ? trust : "none",
     verified: data.verified === true,
+    telegram: TELEGRAM_COLLECTIONS.has(str(collection.address).toLowerCase()),
     attributes: (Array.isArray(meta.attributes) ? meta.attributes : []).slice(0, 24).map(obj)
       .map((item) => ({ trait: str(item.trait_type, 60), value: str(typeof item.value === "number" ? String(item.value) : item.value, 80) }))
       .filter((item) => item.trait || item.value),

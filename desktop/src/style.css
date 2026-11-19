@@ -1585,3 +1585,8 @@ button.status-live { height: 22px; padding: 0 9px; border: 0; border-radius: 11p
 .nft-noimage svg { filter: drop-shadow(0 6px 18px rgba(0, 0, 0, .4)); }
 .nft-noimage small { opacity: .75; font-size: 12px; }
 .nft-thumb.ready > svg { color: #fff; background: linear-gradient(135deg, #5b3bd1, #1d6fd6); }
+/* NFT Telegram: исходная картинка Fragment без радужной плёнки, только мягкий белый блик */
+.nft-holo.clean .nft-glare { mix-blend-mode: soft-light; opacity: 0; transition: opacity .3s;
+  background: radial-gradient(circle at var(--mx) var(--my), rgba(255, 255, 255, .35), rgba(255, 255, 255, 0) 55%); }
+.nft-holo.clean.tilting .nft-glare { opacity: 1; }
+.nft-holo.clean.tilting { box-shadow: 0 26px 60px rgba(0, 0, 0, .55); }

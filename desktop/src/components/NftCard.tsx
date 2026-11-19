@@ -71,12 +71,12 @@ function HoloCard({ nft }: { nft: NftInfo }) {
     node.style.setProperty("--mx", "50%"); node.style.setProperty("--my", "50%");
   }
   return <div className="nft-stage" onPointerMove={move} onPointerLeave={leave}>
-    <div ref={card} className={`nft-holo ${nft.trust === "blacklist" ? "spam" : ""}`}>
+    <div ref={card} className={`nft-holo ${nft.trust === "blacklist" ? "spam" : ""} ${nft.telegram ? "clean" : ""}`}>
       {nft.image && !broken ? <img src={nft.image} alt={nft.name} draggable={false} onError={() => setBroken(true)} />
         : <div className="nft-noimage"><Gem size={46} /><small>{nft.image ? "Картинка недоступна" : "Без картинки"}</small></div>}
       <span className="nft-glare" aria-hidden="true" />
-      <span className="nft-foil" aria-hidden="true" />
-      <div className="nft-plate"><b>{nft.name}</b>{nft.index && <small>#{nft.index}</small>}</div>
+      {!nft.telegram && <span className="nft-foil" aria-hidden="true" />}
+      {!nft.telegram && <div className="nft-plate"><b>{nft.name}</b>{nft.index && <small>#{nft.index}</small>}</div>}
     </div>
   </div>;
 }
