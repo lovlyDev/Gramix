@@ -1504,3 +1504,4 @@ button.status-live { height: 22px; padding: 0 9px; border: 0; border-radius: 11p
 .history-spam-toggle { margin-top: 10px; padding: 0; border: 0; background: none; color: var(--text-muted); font-size: 12.5px; }
 .history-spam-toggle:hover { color: var(--text); text-decoration: underline; }
 .settings-control .workspace-actions { flex-wrap: nowrap; align-items: center; }
+.switch > .switch-thumb, .settings-switch > span, .settings-control .settings-switch > span { margin: 0; }
