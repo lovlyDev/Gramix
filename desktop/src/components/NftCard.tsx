@@ -45,6 +45,15 @@ function useVisible<T extends Element>() {
   return { ref, visible };
 }
 
+/** Карточка домена .ton: своя картинка, потому что у доменов её нет. */
+export function DnsArt({ name, size = "big" }: { name: string; size?: "big" | "small" }) {
+  const stem = name.replace(/\.ton$/i, "");
+  return <span className={`dns-art ${size}`} aria-hidden="true">
+    <svg viewBox="0 0 56 56" className="dns-diamond"><path d="M28 4 52 18v20L28 52 4 38V18Z" fill="none" stroke="currentColor" strokeWidth="3" strokeLinejoin="round" /><path d="M16 22h24L28 40Z" fill="currentColor" /></svg>
+    {size === "big" && <span className="dns-name"><b>{stem}</b><i>.ton</i></span>}
+  </span>;
+}
+
 function TrustBadge({ nft }: { nft: NftInfo }) {
   if (nft.trust === "whitelist") return <span className="nft-trust ok"><BadgeCheck size={13} /> проверенная коллекция</span>;
   if (nft.trust === "blacklist") return <span className="nft-trust bad"><ShieldAlert size={13} /> отмечена как спам</span>;
@@ -72,11 +81,11 @@ function HoloCard({ nft }: { nft: NftInfo }) {
   }
   return <div className="nft-stage" onPointerMove={move} onPointerLeave={leave}>
     <div ref={card} className={`nft-holo ${nft.trust === "blacklist" ? "spam" : ""} ${nft.telegram ? "clean" : ""}`}>
-      {nft.image && !broken ? <img src={nft.image} alt={nft.name} draggable={false} onError={() => setBroken(true)} />
+      {nft.dns ? <DnsArt name={nft.name} /> : nft.image && !broken ? <img src={nft.image} alt={nft.name} draggable={false} onError={() => setBroken(true)} />
         : <div className="nft-noimage"><Gem size={46} /><small>{nft.image ? "Картинка недоступна" : "Без картинки"}</small></div>}
       <span className="nft-glare" aria-hidden="true" />
       {!nft.telegram && <span className="nft-foil" aria-hidden="true" />}
-      {!nft.telegram && <div className="nft-plate"><b>{nft.name}</b>{nft.index && <small>#{nft.index}</small>}</div>}
+      {!nft.telegram && !nft.dns && <div className="nft-plate"><b>{nft.name}</b>{nft.index && <small>#{nft.index}</small>}</div>}
     </div>
   </div>;
 }
@@ -126,7 +135,7 @@ export function NftThumb({ raw, testnet }: { raw: string; testnet: boolean }) {
   return <NftDialog raw={raw} testnet={testnet} trigger={
     <button ref={ref} type="button" className={`nft-thumb ${nft ? "ready" : ""} ${nft?.trust === "blacklist" ? "spam" : ""}`}
       title={nft ? `${nft.name}${nft.collection ? ` · ${nft.collection}` : ""}` : "NFT"}>
-      {nft?.thumb && !broken ? <img src={nft.thumb} alt="" draggable={false} onError={() => setBroken(true)} />
+      {nft?.dns ? <DnsArt name={nft.name} size="small" /> : nft?.thumb && !broken ? <img src={nft.thumb} alt="" draggable={false} onError={() => setBroken(true)} />
         : failed || nft ? <Gem size={16} /> : <span className="nft-skeleton" />}
     </button>} />;
 }

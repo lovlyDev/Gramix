@@ -9,10 +9,11 @@
 
 // Распознавание адресов, хэшей, BOC и ссылок на эксплореры, а также пути сайта.
 import { Address } from "@ton/core";
+import { domainFromInput } from "./domain";
 
 export type LinkTool = "address-inspector" | "transaction-decoder" | "boc-explorer" | "contract-inspector";
 export type LinkTarget = { tool: LinkTool; event: string; detail: unknown; value: string; label: string;
-  kind: "address" | "transaction" | "boc" | "contract"; path: string };
+  kind: "address" | "transaction" | "boc" | "contract" | "domain"; path: string };
 
 const rawAddress = /^-?\d{1,3}:[0-9a-fA-F]{64}$/;
 const hexHash = /^[0-9a-fA-F]{64}$/;
@@ -36,6 +37,9 @@ export function normalizeHash(value: string): string | null {
 
 const addressTarget = (value: string): LinkTarget => ({ tool: "address-inspector", event: "gramix:inspect-address",
   detail: value, value, label: "Проверить адрес", kind: "address", path: `/address/${value}` });
+// Домен .ton или юзернейм Telegram: «Проверка адреса» сама найдёт кошелёк владельца.
+const domainTarget = (domain: string): LinkTarget => ({ tool: "address-inspector", event: "gramix:inspect-address",
+  detail: domain, value: domain, label: `Найти владельца ${domain}`, kind: "domain", path: `/address/${domain}` });
 const contractTarget = (value: string, testnet = false): LinkTarget => ({ tool: "contract-inspector",
   event: "gramix:contract-address", detail: { address: value, testnet }, value, label: "Открыть контракт",
   kind: "contract", path: `/contract/${value}` });
@@ -52,6 +56,8 @@ function fromUrl(value: string): LinkTarget | null {
   const kindHint = segments[0]?.toLowerCase() ?? "";
   for (const token of [...segments.slice().reverse(), ...params]) {
     const clean = token.split(/[?#]/)[0];
+    const domain = domainFromInput(clean);
+    if (domain && clean.includes(".")) return domainTarget(domain);
     if (isAddress(clean)) return /contract|jetton|nft|collection/.test(kindHint)
       ? contractTarget(clean, url.hostname.startsWith("testnet")) : addressTarget(clean);
     // tonscan показывает транзакцию как «lt:hash:account»; берём часть с хэшем.
@@ -70,6 +76,8 @@ export function parseValue(raw: string): LinkTarget | null {
   if (isAddress(value)) return addressTarget(value);
   const hash = normalizeHash(value);
   if (hash) return transactionTarget(hash);
+  const domain = domainFromInput(value);
+  if (domain) return domainTarget(domain);
   if (/^te6cc[A-Za-z0-9+/=]+$/.test(value)) return { tool: "boc-explorer", event: "gramix:open-boc", detail: value,
     value, label: "Открыть BOC", kind: "boc", path: "/boc-explorer" };
   if (/^(https?:\/\/)?[a-z0-9.-]+\.[a-z]{2,}\//i.test(value)) return fromUrl(value);
@@ -82,6 +90,7 @@ export function parsePath(pathname: string): { workspace: string; target: LinkTa
   if (!segments.length) return { workspace: "overview", target: null };
   const [head, value = ""] = segments;
   if (["address", "account", "wallet"].includes(head) && isAddress(value)) return { workspace: "address-inspector", target: addressTarget(value) };
+  if (["address", "account", "wallet", "dns"].includes(head) && domainFromInput(value)) return { workspace: "address-inspector", target: domainTarget(domainFromInput(value)!) };
   if (head === "contract" && isAddress(value)) return { workspace: "contract-inspector", target: contractTarget(value) };
   if (["tx", "transaction", "transactions"].includes(head)) {
     const hash = normalizeHash(value);

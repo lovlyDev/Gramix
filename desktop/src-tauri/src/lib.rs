@@ -14,6 +14,7 @@ mod sandbox_api;
 mod builder_api;
 mod export_api;
 mod market_api;
+mod tray;
 
 #[tauri::command]
 fn supports_self_update(app: tauri::AppHandle) -> bool {
@@ -50,7 +51,11 @@ fn copy_dir(from: &std::path::Path, to: &std::path::Path) -> std::io::Result<()>
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .setup(|app| { migrate_legacy_data(app.handle()); Ok(()) })
+        .setup(|app| { migrate_legacy_data(app.handle()); tray::setup(app)?; Ok(()) })
+        .manage(tray::TrayState::default())
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event { tray::on_close(window, api); }
+        })
         .manage(sandbox_api::SandboxControl::default())
         .manage(export_api::ExportState::default())
         .plugin(tauri_plugin_shell::init())
@@ -78,6 +83,11 @@ pub fn run() {
             market_api::fetch_account_events,
             market_api::fetch_accounts_bulk,
             market_api::fetch_nft,
+            market_api::fetch_jettons,
+            market_api::fetch_account_nfts,
+            market_api::resolve_domain,
+            tray::configure_tray,
+            tray::quit_app,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Gramix");

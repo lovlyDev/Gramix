@@ -76,6 +76,10 @@ export type Platform = {
   fetchAccountEventsRaw(raw: string, testnet: boolean, beforeLt?: string, limit?: number): Promise<unknown>;
   fetchAccountsBulkRaw(raws: string[], testnet: boolean): Promise<unknown>;
   fetchNftRaw(raw: string, testnet: boolean): Promise<unknown>;
+  fetchJettonsRaw(raw: string, testnet: boolean): Promise<unknown>;
+  fetchAccountNftsRaw(raw: string, testnet: boolean, offset: number, limit: number): Promise<unknown>;
+  /** {resolve, info}: DNS-запись wallet и сведения о NFT домена; любая часть может быть null. */
+  resolveDomainRaw(name: string, testnet: boolean): Promise<unknown>;
   /** Только сайт: генерация и поиск выполняются в Web Worker браузера. */
   generateWallet?(scheme: Scheme, version: WalletVersion): Promise<GeneratedWallet>;
   startVanity?(options: VanityOptions, events: VanityEvents): VanityHandle;

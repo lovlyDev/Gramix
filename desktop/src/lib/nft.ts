@@ -19,6 +19,10 @@ export type NftInfo = {
   attributes: { trait: string; value: string }[]; index: string;
   /** Юзернейм или номер Telegram с Fragment: своя картинка с именем, без голографии. */
   telegram: boolean;
+  /** Домен TON DNS: картинки нет, карточка рисуется самим Gramix. */
+  dns: boolean;
+  /** Ни названия, ни коллекции: почти всегда рассылка мусора, прячется вместе со спамом. */
+  junk: boolean;
 };
 
 // Коллекции Fragment: Telegram Usernames и Anonymous Telegram Numbers.
@@ -26,6 +30,7 @@ const TELEGRAM_COLLECTIONS = new Set([
   "0:80d78a35f955a14b679faa887ff4cd5bfc0f43b4a4eea2a7e6927f3701b273c2",
   "0:0e41dc1dc3c9067ed24248580e12b3359818d83dee0304fabcf80845eafafdb2",
 ]);
+const DNS_COLLECTION = "0:b774d95eb20543f186c06b371ab88ad704f7e256130caf96189368a7d0cb6ccf";
 
 const obj = (value: unknown): Record<string, unknown> =>
   value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
@@ -47,6 +52,8 @@ export function normalizeNft(value: unknown, raw: string): NftInfo {
     trust: ["whitelist", "graylist", "blacklist"].includes(trust) ? trust : "none",
     verified: data.verified === true,
     telegram: TELEGRAM_COLLECTIONS.has(str(collection.address).toLowerCase()),
+    dns: str(collection.address).toLowerCase() === DNS_COLLECTION,
+    junk: !str(meta.name) && !str(collection.name),
     attributes: (Array.isArray(meta.attributes) ? meta.attributes : []).slice(0, 24).map(obj)
       .map((item) => ({ trait: str(item.trait_type, 60), value: str(typeof item.value === "number" ? String(item.value) : item.value, 80) }))
       .filter((item) => item.trait || item.value),
@@ -66,4 +73,15 @@ export function getNft(raw: string, testnet: boolean): Promise<NftInfo> {
     cache.set(key, pending);
   }
   return pending;
+}
+
+export type NftPage = { items: NftInfo[]; next: number | null };
+/** NFT, которыми владеет адрес, страницами по 48. Заодно заполняет кеш карточек. */
+export async function getAccountNfts(raw: string, testnet: boolean, offset = 0): Promise<NftPage> {
+  const limit = 48;
+  const data = obj(await platform.fetchAccountNftsRaw(raw, testnet, offset, limit));
+  const list = Array.isArray(data.nft_items) ? data.nft_items : [];
+  const items = list.map((item) => normalizeNft(item, String(obj(item).address ?? ""))).filter((item) => item.raw);
+  for (const item of items) cache.set(`${testnet}:${item.raw.toLowerCase()}`, Promise.resolve(item));
+  return { items, next: list.length === limit ? offset + limit : null };
 }

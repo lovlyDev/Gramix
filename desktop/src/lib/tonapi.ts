@@ -149,3 +149,22 @@ export function fetchNftRaw(raw: string, testnet: boolean) {
   if (!rawPattern.test(raw)) throw new Error("Некорректный raw-адрес");
   return getJson(`${host(testnet)}/v2/nfts/${raw}`);
 }
+export function fetchJettonsRaw(raw: string, testnet: boolean) {
+  if (!rawPattern.test(raw)) throw new Error("Некорректный raw-адрес");
+  return getJson(`${host(testnet)}/v2/accounts/${raw}/jettons?currencies=usd,rub`, 1024 * 1024);
+}
+export function fetchAccountNftsRaw(raw: string, testnet: boolean, offset: number, limit: number) {
+  if (!rawPattern.test(raw)) throw new Error("Некорректный raw-адрес");
+  const query = `limit=${Math.min(100, Math.max(1, limit))}&offset=${Math.min(10_000, Math.max(0, offset))}&indirect_ownership=false`;
+  return getJson(`${host(testnet)}/v2/accounts/${raw}/nfts?${query}`, 1024 * 1024);
+}
+export const domainPattern = /^(?:[a-z0-9_-]+\.)*[a-z0-9_-]+\.(?:ton|t\.me)$/;
+export async function resolveDomainRaw(name: string, testnet: boolean) {
+  const domain = name.toLowerCase();
+  if (!domainPattern.test(domain) || domain.length > 127) throw new Error("Некорректное имя домена");
+  const [resolve, info] = await Promise.all([
+    getJson(`${host(testnet)}/v2/dns/${domain}/resolve`).catch(() => null),
+    getJson(`${host(testnet)}/v2/dns/${domain}`).catch(() => null)]);
+  if (!resolve && !info) throw new Error("Домен не найден");
+  return { resolve, info };
+}

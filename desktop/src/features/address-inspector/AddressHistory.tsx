@@ -9,7 +9,7 @@
 
 // История адреса: события OpenTonAPI (переводы, вызовы контрактов) страницами по 20.
 import { useEffect, useState } from "react";
-import { ArrowDownLeft, ArrowUpRight, History, Repeat, ShieldAlert } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Repeat, ShieldAlert } from "lucide-react";
 import { errorText } from "../../lib/errors";
 import { formatGram } from "../../lib/format";
 import { fiatOf, getHistory, shortAddress, useRates, type HistoryEvent } from "../../lib/market";
@@ -48,7 +48,7 @@ export default function AddressHistory({ raw, testnet }: { raw: string; testnet:
   }
 
   return <div className="address-history">
-    <div className="address-history-head"><h3><History size={17} /> История транзакций</h3>
+    <div className="address-history-head"><h3 className="sr-only">История транзакций</h3>
       <button type="button" onClick={() => void load()} disabled={busy}>
         {busy && !events.length ? "Загружаю…" : loaded ? "Обновить" : "Показать историю"}</button></div>
     {!loaded && !error && <p className="address-history-note">Последние операции адреса: переводы, вызовы контрактов, токены. Адрес будет отправлен в OpenTonAPI.</p>}

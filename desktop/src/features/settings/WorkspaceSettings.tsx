@@ -17,6 +17,7 @@ import { exportFolder } from "../../lib/save";
 import { notify } from "../../lib/notify";
 import { errorText } from "../../lib/errors";
 import { language, setLanguage, type Language } from "../../lib/i18n";
+import { closeToTrayEnabled, setCloseToTray } from "../../lib/tray";
 import { SYSTEM_NOTIFY_KEY, ensureSystemNotifyPermission, systemNotify, systemNotifyEnabled } from "../../lib/system-notify";
 import { platform } from "@platform";
 import { telemetry } from "@telemetry";
@@ -55,6 +56,7 @@ export default function WorkspaceSettings({ devices, backends, version, updateSt
   const [historyStatus, setHistoryStatus] = useState("");
   const [clearHistoryOpen, setClearHistoryOpen] = useState(false);
   const [systemNotices, setSystemNotices] = useState(systemNotifyEnabled);
+  const [tray, setTray] = useState(closeToTrayEnabled);
   async function toggleSystemNotices(value: boolean) {
     if (value && !await ensureSystemNotifyPermission()) {
       notify({ kind: "error", text: "Система не разрешила уведомления Gramix. Включите их в параметрах уведомлений." });
@@ -135,6 +137,10 @@ export default function WorkspaceSettings({ devices, backends, version, updateSt
               onClick={() => void systemNotify("Gramix", "Так выглядят уведомления о готовых задачах.", { force: true })}>Проверить</button>
               <Switch.Root className="settings-switch" checked={systemNotices} onCheckedChange={(value) => void toggleSystemNotices(value)}
                 aria-label="Уведомления системы"><Switch.Thumb /></Switch.Root></div></div>}
+          {!web && <div className="settings-control"><div><strong>Сворачивать в трей при закрытии</strong>
+            <span>Крестик окна прячет Gramix в область уведомлений: поиск адреса и наблюдение за балансами продолжаются. Выход — через меню значка.</span></div>
+            <Switch.Root className="settings-switch" checked={tray} onCheckedChange={(value) => { setTray(value); setCloseToTray(value); }}
+              aria-label="Сворачивать в трей при закрытии"><Switch.Thumb /></Switch.Root></div>}
         </Tabs.Content>
         <Tabs.Content value="compute"><div className="settings-panel-heading"><h2>Вычисления</h2>
           <p>Готовность движка определяется самопроверкой ядра.</p></div>

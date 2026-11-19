@@ -15,8 +15,9 @@ import { platform } from "@platform";
 import { addressBook, useAddressBook, type BookEntry } from "../../lib/addressBook";
 import { errorText } from "../../lib/errors";
 import { formatGram } from "../../lib/format";
-import { fiatOf, useRates } from "../../lib/market";
+import { fiatOf, formatFiatValue, useRates } from "../../lib/market";
 import { notify } from "../../lib/notify";
+import { domainFromInput, resolveDomain } from "../../lib/domain";
 
 const short = (value: string) => value.length > 16 ? `${value.slice(0, 6)}…${value.slice(-6)}` : value;
 
@@ -36,7 +37,9 @@ function Row({ entry }: { entry: BookEntry }) {
             () => notify({ kind: "error", text: "Не удалось скопировать адрес." }))}><Copy size={12} /></button></span>
     </div>
     <div className="book-balance">{entry.balance === null ? <small className="muted">баланс не загружен</small> : <>
-      <b>{formatGram(entry.balance)}</b>{rates && <small>{fiatOf(entry.balance, rates, fiat)}</small>}</>}</div>
+      <b>{formatGram(entry.balance)}</b>{rates && <small>{fiatOf(entry.balance, rates, fiat)}</small>}
+      {rates && entry.tokens && entry.tokens[fiat] >= 0.01 && <small className="book-portfolio" title="GRAM и токены без спама">портфель ≈ {formatFiatValue(
+        Number(BigInt(entry.balance) / 1_000_000n) / 1000 * rates[fiat] + entry.tokens[fiat], fiat)}</small>}</>}</div>
     <div className="book-actions">
       <button type="button" className={entry.watch ? "on" : ""} aria-pressed={entry.watch}
         title={entry.watch ? "Не следить за балансом" : "Следить за балансом"}
@@ -65,9 +68,12 @@ export default function AddressBookCard() {
     event.preventDefault();
     try {
       const value = address.trim();
-      const result = await platform.inspectAddress(value);
+      const domain = domainFromInput(value);
+      const found = domain ? await resolveDomain(domain) : null;
+      const result = await platform.inspectAddress(found ? found.raw : value);
       const testnet = result.input_testnet === true;
-      addressBook.add({ raw: result.raw, address: result.input_format === "friendly" ? value : result.bounceable, label, testnet });
+      addressBook.add({ raw: result.raw, address: result.input_format === "friendly" ? value : result.non_bounceable,
+        label: label || (found ? found.domain : ""), testnet });
       setAddress(""); setLabel("");
     } catch (error) { notify({ kind: "error", title: "Адрес не добавлен", text: errorText(error) }); }
   }
@@ -87,8 +93,8 @@ export default function AddressBookCard() {
         <RefreshCw size={14} className={busy ? "spin" : ""} /> Балансы</button>}</div>
     <div className="card-body">
       <form className="book-add" onSubmit={(event) => void add(event)}>
-        <input value={address} onChange={(event) => setAddress(event.target.value)} placeholder="Адрес EQ…, UQ… или 0:…"
-          aria-label="Адрес для книги" spellCheck={false} autoComplete="off" maxLength={80} />
+        <input value={address} onChange={(event) => setAddress(event.target.value)} placeholder="Адрес, name.ton или @username"
+          aria-label="Адрес для книги" spellCheck={false} autoComplete="off" maxLength={130} />
         <input value={label} onChange={(event) => setLabel(event.target.value)} placeholder="Подпись" aria-label="Подпись" maxLength={80} />
         <button type="submit" className="btn" disabled={!address.trim()}><Plus size={15} /> Добавить</button>
       </form>

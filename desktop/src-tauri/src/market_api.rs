@@ -116,3 +116,35 @@ pub async fn fetch_nft(raw: String, testnet: bool) -> Result<Value, String> {
     let url = format!("{}/v2/nfts/{raw}", host(testnet));
     read_json(client()?.get(url), SMALL_RESPONSE).await
 }
+
+#[tauri::command]
+pub async fn fetch_jettons(raw: String, testnet: bool) -> Result<Value, String> {
+    if !valid_raw_address(&raw) { return Err("Некорректный raw-адрес".into()); }
+    let url = format!("{}/v2/accounts/{raw}/jettons?currencies=usd,rub", host(testnet));
+    read_json(client()?.get(url), LARGE_RESPONSE).await
+}
+
+#[tauri::command]
+pub async fn fetch_account_nfts(raw: String, testnet: bool, offset: u32, limit: u32) -> Result<Value, String> {
+    if !valid_raw_address(&raw) { return Err("Некорректный raw-адрес".into()); }
+    let url = format!("{}/v2/accounts/{raw}/nfts?limit={}&offset={}&indirect_ownership=false",
+        host(testnet), limit.clamp(1, 100), offset.min(10_000));
+    read_json(client()?.get(url), LARGE_RESPONSE).await
+}
+
+fn valid_domain(name: &str) -> bool {
+    let Some(stem) = name.strip_suffix(".ton").or_else(|| name.strip_suffix(".t.me")) else { return false };
+    !stem.is_empty() && name.len() <= 127 && stem.split('.').all(|part|
+        !part.is_empty() && part.bytes().all(|ch| ch.is_ascii_lowercase() || ch.is_ascii_digit() || ch == b'-' || ch == b'_'))
+}
+
+// Домен: сначала привязанный кошелёк (DNS-запись wallet), затем сведения о NFT домена с владельцем.
+#[tauri::command]
+pub async fn resolve_domain(name: String, testnet: bool) -> Result<Value, String> {
+    let name = name.to_ascii_lowercase();
+    if !valid_domain(&name) { return Err("Некорректное имя домена".into()); }
+    let resolved = read_json(client()?.get(format!("{}/v2/dns/{name}/resolve", host(testnet))), SMALL_RESPONSE).await.ok();
+    let info = read_json(client()?.get(format!("{}/v2/dns/{name}", host(testnet))), SMALL_RESPONSE).await.ok();
+    if resolved.is_none() && info.is_none() { return Err("Домен не найден".into()); }
+    Ok(json!({ "resolve": resolved, "info": info }))
+}

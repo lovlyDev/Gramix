@@ -46,6 +46,7 @@ import AppSidebar from "./components/AppSidebar";
 import Notices from "./components/Notices";
 import { systemNotify } from "./lib/system-notify";
 import { addressBook } from "./lib/addressBook";
+import { configureTray, watchTrayHide } from "./lib/tray";
 import { formatGram } from "./lib/format";
 import { notify } from "./lib/notify";
 import { locale } from "./lib/i18n";
@@ -233,6 +234,13 @@ export default function App() {
   }
 
   useEffect(() => { void refreshDevices(); }, []);
+  useEffect(() => {
+    if (web) return;
+    void configureTray();
+    let unlisten: (() => void) | undefined;
+    void watchTrayHide().then((stop) => { unlisten = stop; });
+    return () => unlisten?.();
+  }, []);
   // Наблюдение за адресами из книги: раз в 5 минут, только если хоть один адрес отмечен глазом.
   useEffect(() => {
     let stopped = false;

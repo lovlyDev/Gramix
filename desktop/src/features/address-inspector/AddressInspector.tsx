@@ -18,8 +18,10 @@ import PublicAddressQr from "../../components/PublicAddressQr";
 import Select from "../../components/ui/Select";
 import CopyButton from "../../components/ui/CopyButton";
 import BookButton from "../../components/BookButton";
-import AddressHistory from "./AddressHistory";
+import AddressTabs from "./AddressTabs";
 import { fiatOf, useRates } from "../../lib/market";
+import { domainFromInput, resolveDomain, type ResolvedDomain } from "../../lib/domain";
+import { AtSign } from "lucide-react";
 import { locale } from "../../lib/i18n";
 
 export default function AddressInspector() {
@@ -47,6 +49,7 @@ export default function AddressInspector() {
     return () => window.removeEventListener("gramix:default-network", receive);
   }, []);
   const [result, setResult] = useState<AddressResult | null>(null);
+  const [resolved, setResolved] = useState<ResolvedDomain | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [account, setAccount] = useState<AccountResult | null>(null);
@@ -61,10 +64,15 @@ export default function AddressInspector() {
     event.preventDefault();
     setResult(null);
     setAccount(null);
+    setResolved(null);
     setError("");
     setBusy(true);
     try {
-      const inspected = await platform.inspectAddress(input.trim());
+      // Домен .ton или @юзернейм: сначала находим кошелёк, затем проверяем его как обычный адрес.
+      const domain = domainFromInput(input);
+      const found = domain ? await resolveDomain(domain, network === "testnet") : null;
+      setResolved(found);
+      const inspected = await platform.inspectAddress(found ? found.raw : input.trim());
       setResult(inspected);
       telemetry.track({ name: "address_checked", address: inspected.raw, network: inspected.input_testnet ? "testnet" : "mainnet" });
       if (inspected.input_testnet !== null)
@@ -117,9 +125,9 @@ export default function AddressInspector() {
           setAccount(null);
           setError("");
           setNetworkError("");
-        }} maxLength={80}
+        }} maxLength={130}
         autoComplete="off" spellCheck={false}
-        placeholder="EQ… или 0:…" />
+        placeholder="EQ…, 0:…, name.ton или @username" />
       <div className="address-input-actions"><button className="primary-button" disabled={busy || input.trim().length === 0}>
         {busy ? "Проверяю…" : "Проверить адрес"}</button>
         <button type="button" onClick={() => void pasteAddress()} disabled={busy}>Вставить</button>
@@ -130,6 +138,7 @@ export default function AddressInspector() {
       <div><h3>Локальный анализ</h3><p>Проверяет raw или friendly адрес, флаги и контрольную сумму без подключения к сети.</p></div>
       <div><h3>Публичные данные сети</h3><p>После локальной проверки можно отдельно запросить состояние аккаунта.</p></div>
     </div>}
+    {resolved && result && <div className="domain-resolved"><AtSign size={16} /><span><b>{resolved.domain}</b> → {resolved.via === "wallet" ? "кошелёк из DNS-записи домена" : "владелец NFT домена (кошелёк в DNS не привязан)"}{resolved.name && ` · ${resolved.name}`}</span></div>}
     {result && <div className="address-result" aria-live="polite">
       <div className="address-properties"><div className="address-result-heading"><h3>Локальная проверка</h3>
         <span className="address-valid-badge">Адрес корректен</span>
@@ -185,6 +194,6 @@ export default function AddressInspector() {
       }}>Открыть в «Контрактах»</button>
       </div>
     </div>}
-    {result && <AddressHistory raw={result.raw} testnet={network === "testnet"} />}
+    {result && <AddressTabs raw={result.raw} testnet={network === "testnet"} />}
   </section>;
 }

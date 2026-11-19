@@ -48,4 +48,7 @@ export const platform = {
   },
   async fetchAccountsBulkRaw(raws, testnet) { requireApp(); return await invoke("fetch_accounts_bulk", { raws, testnet }); },
   async fetchNftRaw(raw, testnet) { requireApp(); return await invoke("fetch_nft", { raw, testnet }); },
+  async fetchJettonsRaw(raw, testnet) { requireApp(); return await invoke("fetch_jettons", { raw, testnet }); },
+  async fetchAccountNftsRaw(raw, testnet, offset, limit) { requireApp(); return await invoke("fetch_account_nfts", { raw, testnet, offset, limit }); },
+  async resolveDomainRaw(name, testnet) { requireApp(); return await invoke("resolve_domain", { name, testnet }); },
 } satisfies Platform as Platform;
