@@ -14,6 +14,7 @@ import { errorText } from "../../lib/errors";
 import { formatGram } from "../../lib/format";
 import { fiatOf, getHistory, shortAddress, useRates, type HistoryEvent } from "../../lib/market";
 import { locale } from "../../lib/i18n";
+import { NftCaption, NftThumb } from "../../components/NftCard";
 
 function Counterparty({ raw, name, testnet }: { raw: string; name: string; testnet: boolean }) {
   const [label, setLabel] = useState(name);
@@ -59,10 +60,11 @@ export default function AddressHistory({ raw, testnet }: { raw: string; testnet:
       {visible.map((event) => event.actions.map((action, index) => {
         const Icon = action.direction === "in" ? ArrowDownLeft : action.direction === "out" ? ArrowUpRight : Repeat;
         const sign = action.direction === "in" ? "+" : action.direction === "out" ? "−" : "";
-        return <li key={`${event.id}-${index}`} className={`history-item ${action.direction} ${action.ok ? "" : "failed"}`}>
-          <span className="history-icon"><Icon size={16} /></span>
+        return <li key={`${event.id}-${index}`} className={`history-item ${action.direction} ${action.ok ? "" : "failed"} ${action.nft ? "nft" : ""}`}>
+          {action.nft ? <NftThumb raw={action.nft} testnet={testnet} /> : <span className="history-icon"><Icon size={16} /></span>}
           <div className="history-main">
             <div className="history-line"><b>{action.title}</b>
+              {action.nft && <NftCaption raw={action.nft} testnet={testnet} />}
               {event.scam && <span className="badge fail"><ShieldAlert size={12} /> спам</span>}
               {!action.ok && <span className="badge fail">ошибка</span>}
               {event.pending && <span className="badge">в обработке</span>}</div>

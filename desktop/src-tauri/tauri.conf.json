@@ -18,7 +18,7 @@
       "minHeight": 680,
       "backgroundColor": "#000000"
     }],
-    "security": { "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:" }
+    "security": { "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://cache.tonapi.io" }
   },
   "bundle": {
     "active": true,

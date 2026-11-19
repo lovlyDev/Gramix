@@ -105,6 +105,8 @@ export type Party = { raw: string; name: string };
 export type HistoryAction = {
   type: string; ok: boolean; title: string; value: string;
   direction: "in" | "out" | "self" | "other"; amountNano: string | null; counterparty: Party | null; comment: string;
+  /** raw-адрес NFT для переводов и покупок NFT. */
+  nft: string | null;
 };
 export type HistoryEvent = { id: string; time: number; lt: string; pending: boolean; scam: boolean; tx: string | null; actions: HistoryAction[] };
 export type HistoryPage = { events: HistoryEvent[]; next: string | null };
@@ -133,6 +135,7 @@ export function normalizeEvents(value: unknown, account: string): HistoryPage {
           direction, amountNano: type === "TonTransfer" ? amount : null,
           counterparty: direction === "in" ? sender : direction === "out" ? recipient : sender ?? recipient,
           comment: str(body.comment).slice(0, 500),
+          nft: type.startsWith("Nft") ? (typeof body.nft === "string" ? body.nft : str(obj(body.nft).address)) || null : null,
         };
       });
       const firstAction = obj(Array.isArray(event.actions) ? event.actions[0] : null);

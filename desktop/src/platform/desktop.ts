@@ -47,4 +47,5 @@ export const platform = {
     requireApp(); return await invoke("fetch_account_events", { raw, testnet, beforeLt: beforeLt ?? null, limit: limit ?? null });
   },
   async fetchAccountsBulkRaw(raws, testnet) { requireApp(); return await invoke("fetch_accounts_bulk", { raws, testnet }); },
+  async fetchNftRaw(raw, testnet) { requireApp(); return await invoke("fetch_nft", { raw, testnet }); },
 } satisfies Platform as Platform;

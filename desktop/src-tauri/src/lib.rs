@@ -77,6 +77,7 @@ pub fn run() {
             market_api::fetch_rates_chart,
             market_api::fetch_account_events,
             market_api::fetch_accounts_bulk,
+            market_api::fetch_nft,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Gramix");

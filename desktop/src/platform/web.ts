@@ -43,6 +43,7 @@ export const platform = {
   fetchRatesChartRaw: tonapi.fetchRatesChartRaw,
   async fetchAccountEventsRaw(raw, testnet, beforeLt, limit) { return await tonapi.fetchAccountEventsRaw(raw, testnet, beforeLt, limit); },
   async fetchAccountsBulkRaw(raws, testnet) { return await tonapi.fetchAccountsBulkRaw(raws, testnet); },
+  async fetchNftRaw(raw, testnet) { return await tonapi.fetchNftRaw(raw, testnet); },
   async compileTolk(project) {
     const worker = new Worker(new URL("../workers/tolk.worker.ts", import.meta.url), { type: "module" });
     return await runOnce<BuildSuccess | BuildFailure>(worker, project);

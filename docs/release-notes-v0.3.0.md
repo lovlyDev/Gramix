@@ -17,6 +17,7 @@ English interface, GRAM price, address book with balance watching, address histo
 - Exports: Settings → Files lets you choose a folder. Files are saved there without a dialog and never overwrite an existing file. The save notification has a "Show in folder" button that opens Explorer with the file selected.
 - Notifications: they now appear at the top center, have a close button, stay while the pointer is over them, and disappear after 5 seconds, or 9 seconds for errors.
 - Windows notifications when an address is found, a Contract Vanity search finishes or a Benchmark run completes, if the Gramix window is minimized or inactive. They can be turned off in Settings → Interface.
+- NFT transfers in the address history get a thumbnail in an animated rainbow frame with the NFT and collection name. A click opens a collectible card that tilts in 3D and catches a holographic glare under the pointer, with attributes and a collection trust badge. Links from NFT metadata are never shown, and NFTs from spam collections are blurred.
 - Transactions → By BOC: a BOC that is not a transaction now explains what it is and offers "Open in BOC Explorer". For a message BOC it can find the transaction the message caused.
 - Benchmark: import a history from a JSON file saved earlier.
 

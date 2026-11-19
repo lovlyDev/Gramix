@@ -109,3 +109,10 @@ pub async fn fetch_accounts_bulk(raws: Vec<String>, testnet: bool) -> Result<Val
     let url = format!("{}/v2/accounts/_bulk", host(testnet));
     read_json(client()?.post(url).header("content-type", "application/json").body(json!({ "account_ids": raws }).to_string()), LARGE_RESPONSE).await
 }
+
+#[tauri::command]
+pub async fn fetch_nft(raw: String, testnet: bool) -> Result<Value, String> {
+    if !valid_raw_address(&raw) { return Err("Некорректный raw-адрес".into()); }
+    let url = format!("{}/v2/nfts/{raw}", host(testnet));
+    read_json(client()?.get(url), SMALL_RESPONSE).await
+}

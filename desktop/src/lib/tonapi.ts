@@ -145,3 +145,7 @@ export function fetchAccountsBulkRaw(raws: string[], testnet: boolean) {
   return getJson(`${host(testnet)}/v2/accounts/_bulk`, 1024 * 1024, { method: "POST",
     headers: { "content-type": "application/json" }, body: JSON.stringify({ account_ids: raws }) });
 }
+export function fetchNftRaw(raw: string, testnet: boolean) {
+  if (!rawPattern.test(raw)) throw new Error("Некорректный raw-адрес");
+  return getJson(`${host(testnet)}/v2/nfts/${raw}`);
+}
