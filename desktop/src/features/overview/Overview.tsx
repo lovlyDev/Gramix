@@ -15,9 +15,12 @@ import { ToolIcon, allTools, detectQuery, matchesTool, openSmart, toolAvailable,
 import type { Device, ValidatedBackend } from "../../store";
 import { readBenchmarkHistory } from "../gpu-benchmark/benchmarkHistory";
 import SmoothChart from "../../components/SmoothChart";
+import PriceCard from "./PriceCard";
+import AddressBookCard from "./AddressBookCard";
+import { locale } from "../../lib/i18n";
 
-const whole = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 });
-const compact = new Intl.NumberFormat("ru-RU", { notation: "compact", maximumFractionDigits: 1 });
+const whole = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 });
+const compact = new Intl.NumberFormat(locale, { notation: "compact", maximumFractionDigits: 1 });
 const number = (value: number) => value >= 10_000_000 ? compact.format(value) : whole.format(value);
 
 function StatTile({ icon: Icon, color, value, label, onClick }: {
@@ -127,11 +130,16 @@ export default function Overview({ devices, backends, recent, searchStatus, chec
         <button type="button" className="card-link" onClick={() => onOpen("gpu-benchmark")}>Новый замер <ChevronRight size={14} /></button></div>
       <div className="card-body">{bestPerRun.length >= 2
         ? <SmoothChart height={200} unit="адр/с" ariaLabel="Лучшая скорость по проходам Benchmark"
-            labels={bestPerRun.map((item) => item.at.toLocaleDateString("ru-RU", { day: "numeric", month: "short" }))}
+            labels={bestPerRun.map((item) => item.at.toLocaleDateString(locale, { day: "numeric", month: "short" }))}
             series={[{ key: "best", label: "Лучший результат", color: "var(--accent)", values: bestPerRun.map((item) => item.rate) }]} />
         : <div className="activity-empty"><Gauge size={22} /><span>После двух замеров Benchmark здесь появится график скорости вашего компьютера.</span>
             <button type="button" className="btn" onClick={() => onOpen("gpu-benchmark")}>Запустить Benchmark</button></div>}</div>
     </section>
+
+    <div className="overview-split">
+      <PriceCard />
+      <AddressBookCard />
+    </div>
 
     <div className="grid-3">
       {toolGroups.map((group) => <section className="card" key={group.title} aria-label={group.title}>
@@ -177,7 +185,7 @@ export default function Overview({ devices, backends, recent, searchStatus, chec
         {lastResult && lastBenchmark && <div className="kv overview-kv">
           <div className="k">Последний Benchmark</div>
           <div className="v"><b>{lastResult.addresses_per_second.toFixed(1)}</b> адресов/с · {lastResult.name} · {lastResult.api}
-            <small className="muted"> · {new Date(lastBenchmark.measuredAt).toLocaleString("ru-RU")}</small></div>
+            <small className="muted"> · {new Date(lastBenchmark.measuredAt).toLocaleString(locale)}</small></div>
         </div>}
       </section>
     </div>

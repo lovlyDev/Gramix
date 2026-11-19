@@ -70,6 +70,11 @@ export type Platform = {
   compileTolk(project: string): Promise<BuildSuccess | BuildFailure>;
   runSandbox(scenario: Scenario): Promise<Simulation>;
   cancelSandbox(): Promise<void>;
+  /** Сырой JSON OpenTonAPI; разбор — в lib/market.ts. */
+  fetchRatesRaw(): Promise<unknown>;
+  fetchRatesChartRaw(currency: "usd" | "rub", days: number): Promise<unknown>;
+  fetchAccountEventsRaw(raw: string, testnet: boolean, beforeLt?: string, limit?: number): Promise<unknown>;
+  fetchAccountsBulkRaw(raws: string[], testnet: boolean): Promise<unknown>;
   /** Только сайт: генерация и поиск выполняются в Web Worker браузера. */
   generateWallet?(scheme: Scheme, version: WalletVersion): Promise<GeneratedWallet>;
   startVanity?(options: VanityOptions, events: VanityEvents): VanityHandle;

@@ -20,6 +20,7 @@ import noticeRu from "../../../../NOTICE.ru.md?raw";
 import noticeEn from "../../../../NOTICE.md?raw";
 import Select from "../../components/ui/Select";
 import { openExternal } from "../../lib/external";
+import { language as uiLanguage } from "../../lib/i18n";
 
 const repository = "https://github.com/lovlyDev/Gramix";
 const sourceRevision = import.meta.env.VITE_SOURCE_REVISION || "";
@@ -56,7 +57,8 @@ function externalDocumentUrl(value: string) {
 export default function AboutWorkspace({ version }: { version: string }) {
   const [selected, setSelected] = useState<DocumentId>("readme");
   const [language, setLanguage] = useState<Language>(() => {
-    try { return localStorage.getItem("gramix.ui.docsLanguage") === "en" ? "en" : "ru"; } catch { return "ru"; }
+    try { const stored = localStorage.getItem("gramix.ui.docsLanguage"); return stored === "en" || stored === "ru" ? stored : uiLanguage; }
+    catch { return uiLanguage; }
   });
   function changeLanguage(value: Language) {
     setLanguage(value);

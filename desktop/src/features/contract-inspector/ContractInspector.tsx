@@ -19,6 +19,7 @@ import { decodeBocText, parseBocBytes } from "../boc-explorer/bocService";
 import Checkbox from "../../components/ui/Checkbox";
 import CopyButton from "../../components/ui/CopyButton";
 import { saveFile } from "../../lib/save";
+import { locale } from "../../lib/i18n";
 
 type ContractAccount = {
   source: "OpenTonAPI";
@@ -212,7 +213,7 @@ export default function ContractInspector() {
       <div><span>БАЛАНС</span><strong title={exactGram(account.balance_nanoton)}>{formatGram(account.balance_nanoton)}</strong></div>
       <div><span>ХЕШ КОДА</span><code>{codeHash || "код не опубликован"}</code></div>
       <div><span>ХЕШ ДАННЫХ</span><code>{dataHash || "данные не опубликованы"}</code></div>
-    </div><div className="contract-source-line"><span>OpenTonAPI · {account.network} · {new Date(account.received_at * 1000).toLocaleString("ru-RU")}</span>
+    </div><div className="contract-source-line"><span>OpenTonAPI · {account.network} · {new Date(account.received_at * 1000).toLocaleString(locale)}</span>
       <button onClick={downloadPublic}><Download size={15}/> Экспорт состояния</button></div></>}
     <Tabs.Root defaultValue="state" className="contract-tabs">
       <Tabs.List className="security-tabs" aria-label="Разделы контракта">
@@ -261,7 +262,7 @@ export default function ContractInspector() {
           </form>
           {result && <div className="contract-method-result" aria-live="polite"><strong>
             {result.method}: {result.success ? "успех" : "ошибка"} · exit code {result.exit_code}</strong>
-            <span>OpenTonAPI · {new Date(result.received_at * 1000).toLocaleString("ru-RU")}</span>
+            <span>OpenTonAPI · {new Date(result.received_at * 1000).toLocaleString(locale)}</span>
             <pre>{JSON.stringify({ stack: result.stack, decoded: result.decoded }, null, 2)}</pre></div>}
         </> : <div className="contract-empty"><SearchCheck size={31}/><strong>Для методов нужен загруженный контракт</strong></div>}
       </Tabs.Content>

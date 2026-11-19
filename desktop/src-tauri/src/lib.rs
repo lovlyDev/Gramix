@@ -13,6 +13,7 @@ mod contract_api;
 mod sandbox_api;
 mod builder_api;
 mod export_api;
+mod market_api;
 
 #[tauri::command]
 fn supports_self_update(app: tauri::AppHandle) -> bool {
@@ -51,8 +52,10 @@ pub fn run() {
     tauri::Builder::default()
         .setup(|app| { migrate_legacy_data(app.handle()); Ok(()) })
         .manage(sandbox_api::SandboxControl::default())
+        .manage(export_api::ExportState::default())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
@@ -66,6 +69,14 @@ pub fn run() {
             sandbox_api::cancel_sandbox,
             builder_api::compile_tolk,
             export_api::save_export,
+            export_api::get_export_dir,
+            export_api::choose_export_dir,
+            export_api::clear_export_dir,
+            export_api::reveal_export,
+            market_api::fetch_rates,
+            market_api::fetch_rates_chart,
+            market_api::fetch_account_events,
+            market_api::fetch_accounts_bulk,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Gramix");

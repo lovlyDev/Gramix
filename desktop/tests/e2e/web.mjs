@@ -26,7 +26,7 @@ const server = await preview({ mode: "web", preview: { host: "127.0.0.1", port: 
 let browser;
 try {
   browser = await chromium.launch({ executablePath, headless: true });
-  const page = await browser.newPage({ viewport: { width: 1360, height: 850 } });
+  const page = await browser.newPage({ viewport: { width: 1360, height: 850 }, locale: "ru-RU" });
   const pageErrors = [];
   const external = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
@@ -73,6 +73,22 @@ try {
   await page.keyboard.press("Enter");
   await page.waitForURL(/\/address\/EQBvW8Z5/);
   assert.equal(await heading(), "Проверка адреса");
+
+  // Английский интерфейс: браузер с английским языком получает перевод без русских строк.
+  const english = await browser.newPage({ viewport: { width: 1360, height: 850 }, locale: "en-US" });
+  english.on("pageerror", (error) => pageErrors.push(error.message));
+  await english.goto(`${base}/wallet-generator`, { waitUntil: "networkidle" });
+  assert.equal(await english.evaluate(() => document.documentElement.lang), "en");
+  await english.getByRole("button", { name: "Generate", exact: true }).waitFor();
+  const russian = await english.evaluate(() => {
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    const found = [];
+    for (let node = walker.nextNode(); node; node = walker.nextNode())
+      if (/[А-Яа-яЁё]/.test(node.nodeValue) && !node.parentElement.closest("[hidden],code,pre")) found.push(node.nodeValue.trim());
+    return found;
+  });
+  assert.deepEqual(russian, [], "Русский текст в английском интерфейсе");
+  await english.close();
 
   assert.deepEqual(pageErrors, [], "Ошибки JavaScript на сайте");
   console.log("Site smoke: ссылки, поиск адреса, кошелёк, ограничения сайта — OK");

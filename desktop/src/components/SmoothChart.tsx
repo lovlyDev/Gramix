@@ -10,12 +10,13 @@
 // Плавный SVG-график без сторонних библиотек: monotone cubic-кривая,
 // градиентная заливка, подсказка по наведению и анимация появления.
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { locale } from "../lib/i18n";
 
 export type ChartSeries = { key: string; label: string; color: string; values: (number | null)[] };
 
 type Point = { x: number; y: number };
 const PAD = { top: 14, right: 64, bottom: 28, left: 6 };
-const compact = new Intl.NumberFormat("ru-RU", { notation: "compact", maximumFractionDigits: 1 });
+const compact = new Intl.NumberFormat(locale, { notation: "compact", maximumFractionDigits: 1 });
 
 // Кривая Фритча — Карлсона: сглаживает, но не выходит за значения точек.
 function monotonePath(points: Point[]) {
@@ -50,9 +51,9 @@ function niceMax(value: number) {
   return step * power;
 }
 
-export default function SmoothChart({ series, labels, height = 220, unit = "", area = true,
+export default function SmoothChart({ series, labels, height = 220, unit = "", area = true, zeroBase = true,
   formatValue = (value: number) => compact.format(value), ariaLabel }: {
-  series: ChartSeries[]; labels: string[]; height?: number; unit?: string; area?: boolean;
+  series: ChartSeries[]; labels: string[]; height?: number; unit?: string; area?: boolean; zeroBase?: boolean;
   formatValue?: (value: number) => string; ariaLabel: string;
 }) {
   const host = useRef<HTMLDivElement>(null);
@@ -67,10 +68,14 @@ export default function SmoothChart({ series, labels, height = 220, unit = "", a
   }, []);
 
   const count = Math.max(...series.map((item) => item.values.length), 1);
-  const max = niceMax(Math.max(0, ...series.flatMap((item) => item.values.filter((v): v is number => v !== null))) * 1.08);
+  const known = series.flatMap((item) => item.values.filter((v): v is number => v !== null));
+  const dataMax = Math.max(0, ...known); const dataMin = known.length ? Math.min(...known) : 0;
+  const spread = Math.max(dataMax - dataMin, dataMax * 0.02, 1e-9);
+  const min = zeroBase ? 0 : Math.max(0, dataMin - spread * 0.15);
+  const max = zeroBase ? niceMax(dataMax * 1.08) : dataMax + spread * 0.15;
   const innerW = width - PAD.left - PAD.right, innerH = height - PAD.top - PAD.bottom;
   const xAt = (index: number) => PAD.left + (count <= 1 ? innerW / 2 : (index / (count - 1)) * innerW);
-  const yAt = (value: number) => PAD.top + innerH - (value / max) * innerH;
+  const yAt = (value: number) => PAD.top + innerH - ((value - min) / (max - min || 1)) * innerH;
   const paths = useMemo(() => series.map((item) => {
     const points = item.values.map((value, index) => value === null ? null : { x: xAt(index), y: yAt(value) })
       .filter((point): point is Point => point !== null);
@@ -78,8 +83,8 @@ export default function SmoothChart({ series, labels, height = 220, unit = "", a
     const fill = points.length > 1
       ? `${line}L${points[points.length - 1].x},${PAD.top + innerH}L${points[0].x},${PAD.top + innerH}Z` : "";
     return { ...item, line, fill, last: points[points.length - 1] };
-  }), [series, width, height, max, count]);
-  const ticks = [0, 0.25, 0.5, 0.75, 1].map((ratio) => max * ratio);
+  }), [series, width, height, min, max, count]);
+  const ticks = [0, 0.25, 0.5, 0.75, 1].map((ratio) => min + (max - min) * ratio);
   const labelStep = Math.max(1, Math.ceil(count / Math.max(2, Math.floor(innerW / 90))));
 
   function move(clientX: number) {

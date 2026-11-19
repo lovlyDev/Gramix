@@ -21,6 +21,8 @@ jobs:
         with:
           python-version: '3.12'
       - run: python tools/check-version.py
+      - name: English interface covers every Russian string
+        run: python scripts/i18n_strings.py
       - run: npm ci
         working-directory: desktop
       - run: npm test

@@ -7,27 +7,58 @@
  * See LICENSE for details.
  */
 
-// Короткие уведомления внизу окна: «файл сохранён», ошибки экспорта.
-import { useEffect, useState } from "react";
-import { CheckCircle2, XCircle } from "lucide-react";
-import { NOTICE_EVENT, type Notice } from "../lib/save";
+// Стек уведомлений сверху по центру. Таймер останавливается, пока курсор или фокус на уведомлении.
+import { useEffect, useRef, useState } from "react";
+import { CheckCircle2, Info, X, XCircle } from "lucide-react";
+import { NOTICE_EVENT, noticeDuration, type Notice } from "../lib/notify";
+
+type Item = Notice & { id: number };
+const MAX_VISIBLE = 4;
+
+function NoticeCard({ item, onClose }: { item: Item; onClose: (id: number) => void }) {
+  const total = noticeDuration(item);
+  const left = useRef(total);
+  const started = useRef(Date.now());
+  const timer = useRef(0);
+  const [paused, setPaused] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  const close = () => { setLeaving(true); window.setTimeout(() => onClose(item.id), 160); };
+  useEffect(() => {
+    if (paused) return;
+    started.current = Date.now();
+    timer.current = window.setTimeout(close, left.current);
+    return () => { window.clearTimeout(timer.current); left.current -= Date.now() - started.current; };
+  }, [paused]);
+  const Icon = item.kind === "ok" ? CheckCircle2 : item.kind === "error" ? XCircle : Info;
+  return <div className={`notice ${item.kind} ${leaving ? "leaving" : ""} ${paused ? "paused" : ""}`}
+    role={item.kind === "error" ? "alert" : "status"}
+    onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}
+    onFocus={() => setPaused(true)} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setPaused(false); }}>
+    <Icon size={18} className="notice-icon" aria-hidden="true" />
+    <div className="notice-body">
+      {item.title && <b>{item.title}</b>}
+      <span title={item.text}>{item.text}</span>
+      {item.actions?.length ? <div className="notice-actions">{item.actions.map((action) =>
+        <button type="button" key={action.label} onClick={() => { action.run(); close(); }}>{action.label}</button>)}</div> : null}
+    </div>
+    <button type="button" className="notice-close" aria-label="Закрыть уведомление" onClick={close}><X size={14} /></button>
+    <span className="notice-timer" style={{ animationDuration: `${total}ms` }} aria-hidden="true" />
+  </div>;
+}
 
 export default function Notices() {
-  const [notice, setNotice] = useState<(Notice & { id: number }) | null>(null);
+  const [items, setItems] = useState<Item[]>([]);
   useEffect(() => {
-    let timer = 0;
+    let next = 1;
     function show(event: Event) {
       const detail = (event as CustomEvent<Notice>).detail;
-      window.clearTimeout(timer);
-      setNotice({ ...detail, id: Date.now() });
-      timer = window.setTimeout(() => setNotice(null), detail.kind === "error" ? 7000 : 4000);
+      setItems((current) => [...current.filter((item) => item.text !== detail.text), { ...detail, id: next++ }].slice(-MAX_VISIBLE));
     }
     window.addEventListener(NOTICE_EVENT, show);
-    return () => { window.removeEventListener(NOTICE_EVENT, show); window.clearTimeout(timer); };
+    return () => window.removeEventListener(NOTICE_EVENT, show);
   }, []);
-  if (!notice) return null;
-  return <div className={`app-notice ${notice.kind}`} role={notice.kind === "error" ? "alert" : "status"} key={notice.id}
-    onClick={() => setNotice(null)}>
-    {notice.kind === "ok" ? <CheckCircle2 size={17} /> : <XCircle size={17} />}<span>{notice.text}</span>
+  const remove = (id: number) => setItems((current) => current.filter((item) => item.id !== id));
+  return <div className="notice-stack" aria-live="polite">
+    {items.map((item) => <NoticeCard key={item.id} item={item} onClose={remove} />)}
   </div>;
 }

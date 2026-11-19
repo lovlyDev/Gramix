@@ -25,7 +25,7 @@ const server = await preview({ preview: { host: "127.0.0.1", port: 1428, strictP
 let browser;
 try {
   browser = await chromium.launch({ executablePath, headless: true });
-  const page = await browser.newPage({ viewport: { width: 1024, height: 768 } });
+  const page = await browser.newPage({ viewport: { width: 1024, height: 768 }, locale: "ru-RU" });
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
   const pageErrors = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));

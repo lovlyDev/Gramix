@@ -11,9 +11,11 @@ import "./lib/buffer-shim";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import { startTranslation } from "./lib/i18n";
 import "@fontsource-variable/jetbrains-mono/wght.css";
 import "./style.css";
 
+startTranslation();
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode><App /></React.StrictMode>
 );

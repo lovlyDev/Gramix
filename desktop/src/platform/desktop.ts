@@ -41,4 +41,10 @@ export const platform = {
   },
   async runSandbox(scenario) { requireApp(); return await invoke<Simulation>("run_sandbox_demo", { scenario }); },
   async cancelSandbox() { requireApp(); await invoke("cancel_sandbox"); },
+  async fetchRatesRaw() { requireApp(); return await invoke("fetch_rates"); },
+  async fetchRatesChartRaw(currency, days) { requireApp(); return await invoke("fetch_rates_chart", { currency, days }); },
+  async fetchAccountEventsRaw(raw, testnet, beforeLt, limit) {
+    requireApp(); return await invoke("fetch_account_events", { raw, testnet, beforeLt: beforeLt ?? null, limit: limit ?? null });
+  },
+  async fetchAccountsBulkRaw(raws, testnet) { requireApp(); return await invoke("fetch_accounts_bulk", { raws, testnet }); },
 } satisfies Platform as Platform;

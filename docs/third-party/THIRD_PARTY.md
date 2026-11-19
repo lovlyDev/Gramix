@@ -140,6 +140,7 @@ vcpkg baseline: `ee6a47dac031930715bea2e6dfb9ad60caaa5d83`. The versions below c
 | npm | `@tauri-apps/cli-win32-ia32-msvc` | `2.12.0` | `Apache-2.0 OR MIT` | [npm](https://www.npmjs.com/package/%40tauri-apps%2Fcli-win32-ia32-msvc/v/2.12.0) |
 | npm | `@tauri-apps/cli-win32-x64-msvc` | `2.12.0` | `Apache-2.0 OR MIT` | [npm](https://www.npmjs.com/package/%40tauri-apps%2Fcli-win32-x64-msvc/v/2.12.0) |
 | npm | `@tauri-apps/plugin-dialog` | `2.8.0` | `MIT OR Apache-2.0` | [npm](https://www.npmjs.com/package/%40tauri-apps%2Fplugin-dialog/v/2.8.0) |
+| npm | `@tauri-apps/plugin-notification` | `2.8.1` | `MIT OR Apache-2.0` | [npm](https://www.npmjs.com/package/%40tauri-apps%2Fplugin-notification/v/2.8.1) |
 | npm | `@tauri-apps/plugin-process` | `2.4.0` | `MIT OR Apache-2.0` | [npm](https://www.npmjs.com/package/%40tauri-apps%2Fplugin-process/v/2.4.0) |
 | npm | `@tauri-apps/plugin-shell` | `2.3.6` | `MIT OR Apache-2.0` | [npm](https://www.npmjs.com/package/%40tauri-apps%2Fplugin-shell/v/2.3.6) |
 | npm | `@tauri-apps/plugin-updater` | `2.13.0` | `MIT OR Apache-2.0` | [npm](https://www.npmjs.com/package/%40tauri-apps%2Fplugin-updater/v/2.13.0) |
@@ -429,6 +430,7 @@ vcpkg baseline: `ee6a47dac031930715bea2e6dfb9ad60caaa5d83`. The versions below c
 | Cargo | `android_system_properties` | `0.1.6` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/android_system_properties/0.1.6) |
 | Cargo | `anyhow` | `1.0.104` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/anyhow/1.0.104) |
 | Cargo | `arbitrary` | `1.4.2` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/arbitrary/1.4.2) |
+| Cargo | `async-trait` | `0.1.92` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/async-trait/0.1.92) |
 | Cargo | `atk` | `0.18.2` | `MIT` | [crates.io](https://crates.io/crates/atk/0.18.2) |
 | Cargo | `atk-sys` | `0.18.2` | `MIT` | [crates.io](https://crates.io/crates/atk-sys/0.18.2) |
 | Cargo | `atomic-waker` | `1.1.2` | `Apache-2.0 OR MIT` | [crates.io](https://crates.io/crates/atomic-waker/1.1.2) |
@@ -512,6 +514,7 @@ vcpkg baseline: `ee6a47dac031930715bea2e6dfb9ad60caaa5d83`. The versions below c
 | Cargo | `embed-resource` | `3.0.11` | `MIT` | [crates.io](https://crates.io/crates/embed-resource/3.0.11) |
 | Cargo | `embed_plist` | `1.2.2` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/embed_plist/1.2.2) |
 | Cargo | `encoding_rs` | `0.8.42` | `(Apache-2.0 OR MIT) AND BSD-3-Clause` | [crates.io](https://crates.io/crates/encoding_rs/0.8.42) |
+| Cargo | `endi` | `1.1.1` | `MIT` | [crates.io](https://crates.io/crates/endi/1.1.1) |
 | Cargo | `equivalent` | `1.0.2` | `Apache-2.0 OR MIT` | [crates.io](https://crates.io/crates/equivalent/1.0.2) |
 | Cargo | `erased-serde` | `0.4.10` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/erased-serde/0.4.10) |
 | Cargo | `errno` | `0.3.14` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/errno/0.3.14) |
@@ -532,6 +535,7 @@ vcpkg baseline: `ee6a47dac031930715bea2e6dfb9ad60caaa5d83`. The versions below c
 | Cargo | `futures-core` | `0.3.34` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/futures-core/0.3.34) |
 | Cargo | `futures-executor` | `0.3.34` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/futures-executor/0.3.34) |
 | Cargo | `futures-io` | `0.3.34` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/futures-io/0.3.34) |
+| Cargo | `futures-lite` | `2.6.1` | `Apache-2.0 OR MIT` | [crates.io](https://crates.io/crates/futures-lite/2.6.1) |
 | Cargo | `futures-macro` | `0.3.34` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/futures-macro/0.3.34) |
 | Cargo | `futures-sink` | `0.3.34` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/futures-sink/0.3.34) |
 | Cargo | `futures-task` | `0.3.34` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/futures-task/0.3.34) |
@@ -620,6 +624,7 @@ vcpkg baseline: `ee6a47dac031930715bea2e6dfb9ad60caaa5d83`. The versions below c
 | Cargo | `lock_api` | `0.4.14` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/lock_api/0.4.14) |
 | Cargo | `log` | `0.4.34` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/log/0.4.34) |
 | Cargo | `lru-slab` | `0.1.2` | `MIT OR Apache-2.0 OR Zlib` | [crates.io](https://crates.io/crates/lru-slab/0.1.2) |
+| Cargo | `mac-notification-sys` | `0.6.15` | `MIT/Apache-2.0` | [crates.io](https://crates.io/crates/mac-notification-sys/0.6.15) |
 | Cargo | `markup5ever` | `0.39.0` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/markup5ever/0.39.0) |
 | Cargo | `memchr` | `2.8.3` | `Unlicense OR MIT` | [crates.io](https://crates.io/crates/memchr/2.8.3) |
 | Cargo | `memoffset` | `0.9.1` | `MIT` | [crates.io](https://crates.io/crates/memoffset/0.9.1) |
@@ -634,6 +639,7 @@ vcpkg baseline: `ee6a47dac031930715bea2e6dfb9ad60caaa5d83`. The versions below c
 | Cargo | `ndk-context` | `0.1.1` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/ndk-context/0.1.1) |
 | Cargo | `ndk-sys` | `0.6.0+11769913` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/ndk-sys/0.6.0+11769913) |
 | Cargo | `new_debug_unreachable` | `1.0.6` | `MIT` | [crates.io](https://crates.io/crates/new_debug_unreachable/1.0.6) |
+| Cargo | `notify-rust` | `4.19.0` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/notify-rust/4.19.0) |
 | Cargo | `num-conv` | `0.2.2` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/num-conv/0.2.2) |
 | Cargo | `num-traits` | `0.2.19` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/num-traits/0.2.19) |
 | Cargo | `num_enum` | `0.7.6` | `BSD-3-Clause OR MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/num_enum/0.7.6) |
@@ -660,10 +666,12 @@ vcpkg baseline: `ee6a47dac031930715bea2e6dfb9ad60caaa5d83`. The versions below c
 | Cargo | `open` | `5.4.4` | `MIT` | [crates.io](https://crates.io/crates/open/5.4.4) |
 | Cargo | `openssl-probe` | `0.2.1` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/openssl-probe/0.2.1) |
 | Cargo | `option-ext` | `0.2.0` | `MPL-2.0` | [crates.io](https://crates.io/crates/option-ext/0.2.0) |
+| Cargo | `ordered-stream` | `0.2.0` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/ordered-stream/0.2.0) |
 | Cargo | `os_pipe` | `1.2.3` | `MIT` | [crates.io](https://crates.io/crates/os_pipe/1.2.3) |
 | Cargo | `osakit` | `0.3.1` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/osakit/0.3.1) |
 | Cargo | `pango` | `0.18.3` | `MIT` | [crates.io](https://crates.io/crates/pango/0.18.3) |
 | Cargo | `pango-sys` | `0.18.0` | `MIT` | [crates.io](https://crates.io/crates/pango-sys/0.18.0) |
+| Cargo | `parking` | `2.2.1` | `Apache-2.0 OR MIT` | [crates.io](https://crates.io/crates/parking/2.2.1) |
 | Cargo | `parking_lot` | `0.12.5` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/parking_lot/0.12.5) |
 | Cargo | `parking_lot_core` | `0.9.12` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/parking_lot_core/0.9.12) |
 | Cargo | `percent-encoding` | `2.3.2` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/percent-encoding/2.3.2) |
@@ -681,6 +689,7 @@ vcpkg baseline: `ee6a47dac031930715bea2e6dfb9ad60caaa5d83`. The versions below c
 | Cargo | `portable-atomic-util` | `0.2.8` | `Apache-2.0 OR MIT` | [crates.io](https://crates.io/crates/portable-atomic-util/0.2.8) |
 | Cargo | `potential_utf` | `0.1.6` | `Unicode-3.0` | [crates.io](https://crates.io/crates/potential_utf/0.1.6) |
 | Cargo | `powerfmt` | `0.2.0` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/powerfmt/0.2.0) |
+| Cargo | `ppv-lite86` | `0.2.21` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/ppv-lite86/0.2.21) |
 | Cargo | `precomputed-hash` | `0.1.1` | `MIT` | [crates.io](https://crates.io/crates/precomputed-hash/0.1.1) |
 | Cargo | `proc-macro-crate` | `1.3.1` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/proc-macro-crate/1.3.1) |
 | Cargo | `proc-macro-crate` | `2.0.2` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/proc-macro-crate/2.0.2) |
@@ -696,7 +705,10 @@ vcpkg baseline: `ee6a47dac031930715bea2e6dfb9ad60caaa5d83`. The versions below c
 | Cargo | `r-efi` | `5.3.0` | `MIT OR Apache-2.0 OR LGPL-2.1-or-later` | [crates.io](https://crates.io/crates/r-efi/5.3.0) |
 | Cargo | `r-efi` | `6.0.0` | `MIT OR Apache-2.0 OR LGPL-2.1-or-later` | [crates.io](https://crates.io/crates/r-efi/6.0.0) |
 | Cargo | `rand` | `0.10.2` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/rand/0.10.2) |
+| Cargo | `rand` | `0.9.5` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/rand/0.9.5) |
+| Cargo | `rand_chacha` | `0.9.0` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/rand_chacha/0.9.0) |
 | Cargo | `rand_core` | `0.10.1` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/rand_core/0.10.1) |
+| Cargo | `rand_core` | `0.9.5` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/rand_core/0.9.5) |
 | Cargo | `rand_pcg` | `0.10.2` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/rand_pcg/0.10.2) |
 | Cargo | `raw-window-handle` | `0.6.2` | `MIT OR Apache-2.0 OR Zlib` | [crates.io](https://crates.io/crates/raw-window-handle/0.6.2) |
 | Cargo | `redox_syscall` | `0.5.18` | `MIT` | [crates.io](https://crates.io/crates/redox_syscall/0.5.18) |
@@ -785,6 +797,7 @@ vcpkg baseline: `ee6a47dac031930715bea2e6dfb9ad60caaa5d83`. The versions below c
 | Cargo | `tauri-plugin` | `2.7.0` | `Apache-2.0 OR MIT` | [crates.io](https://crates.io/crates/tauri-plugin/2.7.0) |
 | Cargo | `tauri-plugin-dialog` | `2.8.0` | `Apache-2.0 OR MIT` | [crates.io](https://crates.io/crates/tauri-plugin-dialog/2.8.0) |
 | Cargo | `tauri-plugin-fs` | `2.6.0` | `Apache-2.0 OR MIT` | [crates.io](https://crates.io/crates/tauri-plugin-fs/2.6.0) |
+| Cargo | `tauri-plugin-notification` | `2.5.0` | `Apache-2.0 OR MIT` | [crates.io](https://crates.io/crates/tauri-plugin-notification/2.5.0) |
 | Cargo | `tauri-plugin-process` | `2.4.0` | `Apache-2.0 OR MIT` | [crates.io](https://crates.io/crates/tauri-plugin-process/2.4.0) |
 | Cargo | `tauri-plugin-shell` | `2.3.6` | `Apache-2.0 OR MIT` | [crates.io](https://crates.io/crates/tauri-plugin-shell/2.3.6) |
 | Cargo | `tauri-plugin-updater` | `2.13.0` | `Apache-2.0 OR MIT` | [crates.io](https://crates.io/crates/tauri-plugin-updater/2.13.0) |
@@ -792,6 +805,7 @@ vcpkg baseline: `ee6a47dac031930715bea2e6dfb9ad60caaa5d83`. The versions below c
 | Cargo | `tauri-runtime-wry` | `2.12.0` | `Apache-2.0 OR MIT` | [crates.io](https://crates.io/crates/tauri-runtime-wry/2.12.0) |
 | Cargo | `tauri-utils` | `2.10.0` | `Apache-2.0 OR MIT` | [crates.io](https://crates.io/crates/tauri-utils/2.10.0) |
 | Cargo | `tauri-winres` | `0.3.6` | `MIT` | [crates.io](https://crates.io/crates/tauri-winres/0.3.6) |
+| Cargo | `tauri-winrt-notification` | `0.8.1` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/tauri-winrt-notification/0.8.1) |
 | Cargo | `tempfile` | `3.27.0` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/tempfile/3.27.0) |
 | Cargo | `tendril` | `0.5.1` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/tendril/0.5.1) |
 | Cargo | `thiserror` | `1.0.69` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/thiserror/1.0.69) |
@@ -825,6 +839,7 @@ vcpkg baseline: `ee6a47dac031930715bea2e6dfb9ad60caaa5d83`. The versions below c
 | Cargo | `try-lock` | `0.2.5` | `MIT` | [crates.io](https://crates.io/crates/try-lock/0.2.5) |
 | Cargo | `typeid` | `1.0.3` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/typeid/1.0.3) |
 | Cargo | `typenum` | `1.20.1` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/typenum/1.20.1) |
+| Cargo | `uds_windows` | `1.2.1` | `MIT` | [crates.io](https://crates.io/crates/uds_windows/1.2.1) |
 | Cargo | `unicode-ident` | `1.0.26` | `(MIT OR Apache-2.0) AND Unicode-3.0` | [crates.io](https://crates.io/crates/unicode-ident/1.0.26) |
 | Cargo | `unicode-segmentation` | `1.13.3` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/unicode-segmentation/1.13.3) |
 | Cargo | `untrusted` | `0.9.0` | `ISC` | [crates.io](https://crates.io/crates/untrusted/0.9.0) |
@@ -915,6 +930,12 @@ vcpkg baseline: `ee6a47dac031930715bea2e6dfb9ad60caaa5d83`. The versions below c
 | Cargo | `xattr` | `1.6.1` | `MIT OR Apache-2.0` | [crates.io](https://crates.io/crates/xattr/1.6.1) |
 | Cargo | `yoke` | `0.8.3` | `Unicode-3.0` | [crates.io](https://crates.io/crates/yoke/0.8.3) |
 | Cargo | `yoke-derive` | `0.8.3` | `Unicode-3.0` | [crates.io](https://crates.io/crates/yoke-derive/0.8.3) |
+| Cargo | `zbus` | `6.3.0` | `MIT` | [crates.io](https://crates.io/crates/zbus/6.3.0) |
+| Cargo | `zbus_macros` | `6.3.0` | `MIT` | [crates.io](https://crates.io/crates/zbus_macros/6.3.0) |
+| Cargo | `zbus_utils` | `6.1.0` | `MIT` | [crates.io](https://crates.io/crates/zbus_utils/6.1.0) |
+| Cargo | `zcheapstr` | `1.2.0` | `MIT` | [crates.io](https://crates.io/crates/zcheapstr/1.2.0) |
+| Cargo | `zerocopy` | `0.8.63` | `BSD-2-Clause OR Apache-2.0 OR MIT` | [crates.io](https://crates.io/crates/zerocopy/0.8.63) |
+| Cargo | `zerocopy-derive` | `0.8.63` | `BSD-2-Clause OR Apache-2.0 OR MIT` | [crates.io](https://crates.io/crates/zerocopy-derive/0.8.63) |
 | Cargo | `zerofrom` | `0.1.8` | `Unicode-3.0` | [crates.io](https://crates.io/crates/zerofrom/0.1.8) |
 | Cargo | `zerofrom-derive` | `0.1.8` | `Unicode-3.0` | [crates.io](https://crates.io/crates/zerofrom-derive/0.1.8) |
 | Cargo | `zeroize` | `1.9.0` | `Apache-2.0 OR MIT` | [crates.io](https://crates.io/crates/zeroize/1.9.0) |
@@ -924,6 +945,7 @@ vcpkg baseline: `ee6a47dac031930715bea2e6dfb9ad60caaa5d83`. The versions below c
 | Cargo | `zip` | `4.6.1` | `MIT` | [crates.io](https://crates.io/crates/zip/4.6.1) |
 | Cargo | `zlib-rs` | `0.6.8` | `Zlib` | [crates.io](https://crates.io/crates/zlib-rs/0.6.8) |
 | Cargo | `zmij` | `1.0.23` | `MIT` | [crates.io](https://crates.io/crates/zmij/1.0.23) |
+| Cargo | `zruntime` | `0.2.3` | `MIT` | [crates.io](https://crates.io/crates/zruntime/0.2.3) |
 
 ## Other assets and bundled runtimes
 

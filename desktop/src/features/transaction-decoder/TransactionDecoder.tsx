@@ -18,12 +18,13 @@ import { Group, Panel, Separator } from "react-resizable-panels";
 import { ArrowDownLeft, ArrowUpRight, Download, ExternalLink,
   FileCode2, Network, Trash2 } from "lucide-react";
 import { decodeBocText, MAX_BOC_BYTES } from "../boc-explorer/bocService";
-import { decodeTransactionBoc, type DecodedMessage,
+import { NotTransactionError, decodeTransactionBoc, type DecodedMessage,
   type DecodedTransaction } from "./transactionService";
 import Checkbox from "../../components/ui/Checkbox";
 import Select from "../../components/ui/Select";
 import CopyButton from "../../components/ui/CopyButton";
 import { saveFile } from "../../lib/save";
+import { locale } from "../../lib/i18n";
 
 type RemoteTransaction = {
   source: "OpenTonAPI";
@@ -49,6 +50,7 @@ export default function TransactionDecoder() {
   const [transaction, setTransaction] = useState<DecodedTransaction | null>(null);
   const [remote, setRemote] = useState<RemoteTransaction | null>(null);
   const [error, setError] = useState("");
+  const [foreign, setForeign] = useState<NotTransactionError | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -71,6 +73,7 @@ export default function TransactionDecoder() {
 
   async function load(bytes: Uint8Array, source: RemoteTransaction | null = null) {
     setError("");
+    setForeign(null);
     setTransaction(null);
     setRemote(null);
     setBusy(true);
@@ -83,10 +86,23 @@ export default function TransactionDecoder() {
       setSelected("transaction");
       setDetailTab("overview");
     } catch (cause) {
+      if (cause instanceof NotTransactionError) setForeign(cause);
       setError(errorText(cause));
     } finally {
       setBusy(false);
     }
+  }
+
+  function openInExplorer() {
+    if (!foreign) return;
+    const value = foreign.base64;
+    window.location.hash = "boc-explorer";
+    window.setTimeout(() => window.dispatchEvent(new CustomEvent("gramix:open-boc", { detail: value })), 0);
+  }
+  function findByMessage() {
+    if (!foreign?.messageHash) return;
+    const value = foreign.messageHash;
+    setForeign(null); setError(""); setInputMode("id"); setHash(value); setAutoRun(value);
   }
 
   async function chooseFile(event: ChangeEvent<HTMLInputElement>) {
@@ -182,11 +198,15 @@ export default function TransactionDecoder() {
           <button type="button" onClick={clearInput}><Trash2 size={16}/> Очистить</button>
         </div></Tabs.Content>
     </Tabs.Root>
-    {error && <p className="error-box" role="alert">{error}</p>}
+    {error && (foreign ? <div className="error-box foreign-boc" role="alert"><p>{error}</p>
+      <div className="foreign-boc-actions">
+        <button type="button" onClick={openInExplorer}><FileCode2 size={15}/> Открыть в BOC Explorer</button>
+        {foreign.messageHash && <button type="button" onClick={findByMessage}>Найти транзакцию по сообщению</button>}
+      </div></div> : <p className="error-box" role="alert">{error}</p>)}
     {transaction ? <div className="tx-workspace">
       <div className="tx-summary"><div><span>ТРАНЗАКЦИЯ</span>
         <strong>{transaction.aborted === true || transaction.computeSuccess === false ? "Ошибка исполнения" : "Транзакция декодирована"}</strong>
-        <small>{remote ? `OpenTonAPI · ${remote.network} · ${new Date(remote.received_at * 1000).toLocaleString("ru-RU")}`
+        <small>{remote ? `OpenTonAPI · ${remote.network} · ${new Date(remote.received_at * 1000).toLocaleString(locale)}`
           : "Локальный BOC · без запроса к сети"}</small></div>
         <div><span>КОМИССИЯ</span><strong>{formatTon(transaction.totalFeesNanoton)} GRAM</strong>
           <small>{transaction.totalFeesNanoton} nano</small></div>
@@ -241,7 +261,7 @@ export default function TransactionDecoder() {
                 <dt>Hash</dt><dd><code>{transaction.hash}</code></dd>
                 <dt>Account hash</dt><dd><code>{transaction.accountHash}</code></dd>
                 <dt>Logical time</dt><dd>{transaction.logicalTime}</dd>
-                <dt>Время</dt><dd>{new Date(transaction.unixTime * 1000).toLocaleString("ru-RU")}</dd>
+                <dt>Время</dt><dd>{new Date(transaction.unixTime * 1000).toLocaleString(locale)}</dd>
                 <dt>Статус аккаунта</dt><dd>{transaction.oldStatus} → {transaction.endStatus}</dd>
                 <dt>Прервана</dt><dd>{transaction.aborted === null ? "нет данных" : transaction.aborted ? "да" : "нет"}</dd>
                 <dt>Compute</dt><dd>{transaction.computeSuccess === null ? "нет данных" : transaction.computeSuccess ? "успех" : "ошибка"}</dd>

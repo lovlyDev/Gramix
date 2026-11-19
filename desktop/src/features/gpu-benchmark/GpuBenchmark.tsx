@@ -13,15 +13,18 @@ import { Command, type Child } from "@tauri-apps/plugin-shell";
 import { isTauri } from "@tauri-apps/api/core";
 import { getVersion } from "@tauri-apps/api/app";
 import * as RadixCheckbox from "@radix-ui/react-checkbox";
-import { Check, Download, Play, Square, Trash2 } from "lucide-react";
+import { Check, Download, Play, Square, Trash2, Upload } from "lucide-react";
+import { notify } from "../../lib/notify";
 import BenchmarkChart, { type BenchmarkSample, type BenchmarkSeries } from "./BenchmarkChart";
 import { useApp } from "../../store";
 import Select from "../../components/ui/Select";
 import CopyButton from "../../components/ui/CopyButton";
 import { platform } from "@platform";
-import { readBenchmarkHistory, saveBenchmarkHistory,
+import { normalizeBenchmarkHistory, readBenchmarkHistory, saveBenchmarkHistory,
   type BenchmarkReport, type BenchmarkResult } from "./benchmarkHistory";
 import { saveFile } from "../../lib/save";
+import { systemNotify } from "../../lib/system-notify";
+import { locale } from "../../lib/i18n";
 
 type Report = BenchmarkReport;
 
@@ -146,6 +149,8 @@ export default function GpuBenchmark() {
           throw new Error("Некорректный результат бенчмарка.");
         const seconds = Math.round((performance.now() - started) / 100) / 10;
         setElapsed(seconds);
+        void systemNotify("Gramix: замер завершён", parsed.results.map((item: BenchmarkResult) =>
+          `${item.name}: ${Math.round(item.addresses_per_second).toLocaleString(locale)} адр/с`).join(" · "));
         setReports((previous) => [...previous.slice(-79), { ...parsed,
           results: parsed.results.map((item: BenchmarkResult) => ({ ...item,
             driver: devices.find((device) => device.id === item.device_id)?.driver })),
@@ -163,6 +168,22 @@ export default function GpuBenchmark() {
     cancelled.current.value = true;
     try { await child.current.child?.kill(); }
     catch (cause) { setError("Не удалось остановить измерение: " + errorText(cause)); }
+  }
+
+  async function importFile(file: File | undefined) {
+    if (!file) return;
+    try {
+      if (file.size > 4 * 1024 * 1024) throw new Error("Файл больше 4 МиБ.");
+      const imported = normalizeBenchmarkHistory(JSON.parse(await file.text()));
+      if (!imported.length) throw new Error("В файле нет замеров Benchmark. Подходит JSON, сохранённый кнопкой «JSON».");
+      const known = new Set(reports.map((report) => report.measuredAt));
+      const fresh = imported.filter((report) => !known.has(report.measuredAt));
+      setReports([...reports, ...fresh].sort((a, b) => a.measuredAt.localeCompare(b.measuredAt)).slice(-80));
+      notify({ kind: fresh.length ? "ok" : "info",
+        text: fresh.length ? `Добавлено замеров: ${fresh.length}.` : "Все замеры из файла уже есть в истории." });
+    } catch (cause) {
+      notify({ kind: "error", title: "Импорт не выполнен", text: cause instanceof SyntaxError ? "Файл не является JSON." : errorText(cause) });
+    }
   }
 
   function exportFile(format: "json" | "csv") {
@@ -203,6 +224,9 @@ export default function GpuBenchmark() {
         : <div className="benchmark-chart-empty">График нового измерения появится после завершённого прохода. Предыдущие результаты — в таблице.</div>}
       <button type="button" className="benchmark-clear" disabled={busy || samples.length === 0}
         onClick={() => setSamples([])}><Trash2 size={15} /> Очистить график</button>
+      <label className="benchmark-clear benchmark-import"><Upload size={15} /> Импорт JSON
+        <input type="file" accept=".json,application/json" disabled={busy}
+          onChange={(event) => { void importFile(event.target.files?.[0]); event.target.value = ""; }} /></label>
     </div>
     {rows.length > 0 && <div className="benchmark-results"><div className="benchmark-results-heading"><h3>Результаты измерений</h3>
       <div><button type="button" onClick={() => exportFile("json")}><Download size={15} /> JSON</button>
@@ -221,7 +245,7 @@ export default function GpuBenchmark() {
             : current.filter((id) => id !== rowId(row)))}>
           <RadixCheckbox.Indicator className="ui-checkbox-indicator"><Check size={14} /></RadixCheckbox.Indicator>
         </RadixCheckbox.Root></td>
-        <td>{new Date(row.measuredAt).toLocaleTimeString("ru-RU")}</td>
+        <td>{new Date(row.measuredAt).toLocaleTimeString(locale)}</td>
         <td>{row.name}</td><td>{row.api}</td><td>{row.addresses_per_second.toFixed(1)}</td>
       </tr>)}</tbody></table></div>
       {compareRows.length === 2 && <div className="benchmark-comparison" role="status">

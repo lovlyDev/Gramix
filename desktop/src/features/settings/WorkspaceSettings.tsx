@@ -12,7 +12,12 @@ import { copyText } from "../../lib/clipboard";
 import * as Tabs from "@radix-ui/react-tabs";
 import * as Switch from "@radix-ui/react-switch";
 import * as Dialog from "@radix-ui/react-dialog";
-import { Activity, BarChart3, Cpu, Info, Minus, Monitor, Network, Plus, RefreshCw, ShieldCheck } from "lucide-react";
+import { Activity, BarChart3, Cpu, FolderOpen, Info, Minus, Monitor, Network, Plus, RefreshCw, ShieldCheck } from "lucide-react";
+import { exportFolder } from "../../lib/save";
+import { notify } from "../../lib/notify";
+import { errorText } from "../../lib/errors";
+import { language, setLanguage, type Language } from "../../lib/i18n";
+import { SYSTEM_NOTIFY_KEY, ensureSystemNotifyPermission, systemNotify, systemNotifyEnabled } from "../../lib/system-notify";
 import { platform } from "@platform";
 import { telemetry } from "@telemetry";
 import type { Device, ValidatedBackend } from "../../store";
@@ -22,6 +27,7 @@ import { BENCHMARK_HISTORY_KEY } from "../gpu-benchmark/benchmarkHistory";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import AboutWorkspace from "./AboutWorkspace";
+import { locale } from "../../lib/i18n";
 
 type Theme = "oled" | "dark" | "light";
 type Density = "comfortable" | "compact";
@@ -48,13 +54,25 @@ export default function WorkspaceSettings({ devices, backends, version, updateSt
     localStorage.getItem("gramix.network.default") === "testnet" ? "testnet" : "mainnet");
   const [historyStatus, setHistoryStatus] = useState("");
   const [clearHistoryOpen, setClearHistoryOpen] = useState(false);
-  const [diagnosticsStatus, setDiagnosticsStatus] = useState("");
-
-  useEffect(() => {
-    if (!diagnosticsStatus) return;
-    const timeout = window.setTimeout(() => setDiagnosticsStatus(""), 4000);
-    return () => window.clearTimeout(timeout);
-  }, [diagnosticsStatus]);
+  const [systemNotices, setSystemNotices] = useState(systemNotifyEnabled);
+  async function toggleSystemNotices(value: boolean) {
+    if (value && !await ensureSystemNotifyPermission()) {
+      notify({ kind: "error", text: "Система не разрешила уведомления Gramix. Включите их в параметрах уведомлений." });
+      return;
+    }
+    setSystemNotices(value);
+    try { localStorage.setItem(SYSTEM_NOTIFY_KEY, String(value)); } catch { /* приватный режим */ }
+  }
+  const [folder, setFolder] = useState<string | null>(null);
+  useEffect(() => { if (!web) void exportFolder.get().then(setFolder).catch(() => setFolder(null)); }, []);
+  async function chooseFolder() {
+    try { const value = await exportFolder.choose(); if (value) { setFolder(value); notify({ kind: "ok", text: `Файлы будут сохраняться в ${value}` }); } }
+    catch (error) { notify({ kind: "error", text: errorText(error) }); }
+  }
+  async function askEveryTime() {
+    try { await exportFolder.clear(); setFolder(null); notify({ kind: "info", text: "Путь будет спрашиваться при каждом сохранении." }); }
+    catch (error) { notify({ kind: "error", text: errorText(error) }); }
+  }
   const app = useApp();
   const running = ["running", "paused", "initializing", "stopping"].includes(app.status);
   const supported = new Set(backends.map((backend) => backend.api.toLowerCase()));
@@ -86,6 +104,7 @@ export default function WorkspaceSettings({ devices, backends, version, updateSt
         <Tabs.Trigger value="network"><Network size={18} /> Сеть</Tabs.Trigger>
         <Tabs.Trigger value="security"><ShieldCheck size={18} /> Безопасность</Tabs.Trigger>
         {web && telemetry.enabled && <Tabs.Trigger value="privacy"><BarChart3 size={18} /> Статистика</Tabs.Trigger>}
+        {!web && <Tabs.Trigger value="files"><FolderOpen size={18} /> Файлы</Tabs.Trigger>}
         {!web && <Tabs.Trigger value="updates"><RefreshCw size={18} /> Обновления</Tabs.Trigger>}
         {!web && <Tabs.Trigger value="diagnostics"><Activity size={18} /> Диагностика</Tabs.Trigger>}
         {!web && <Tabs.Trigger value="about"><Info size={18} /> О программе</Tabs.Trigger>}
@@ -93,6 +112,10 @@ export default function WorkspaceSettings({ devices, backends, version, updateSt
       <div className="settings-content">
         <Tabs.Content value="interface"><div className="settings-panel-heading"><h2>Интерфейс</h2>
           <p>Параметры сохраняются только на этом компьютере.</p></div>
+          <div className="settings-control"><div><strong>Язык · Language</strong>
+            <span>Интерфейс перезагрузится на выбранном языке.</span></div>
+            <Select label="Язык интерфейса" value={language} onValueChange={(value) => setLanguage(value as Language)}
+              options={[{ value: "ru", label: "Русский" }, { value: "en", label: "English" }]} /></div>
           <div className="settings-control"><div><strong>Тема</strong><span>Тёмная используется по умолчанию, OLED — для экранов с чистым чёрным.</span></div>
             <div className="settings-theme-options" role="group" aria-label="Тема интерфейса">
               {([["oled", "OLED"], ["dark", "Тёмная"], ["light", "Светлая"]] as const).map(([value, label]) =>
@@ -106,6 +129,12 @@ export default function WorkspaceSettings({ devices, backends, version, updateSt
           <div className="settings-control"><div><strong>Меньше движения</strong><span>Отключить необязательные анимации.</span></div>
             <Switch.Root className="settings-switch" checked={lowMotion} onCheckedChange={setLowMotion}
               aria-label="Меньше движения"><Switch.Thumb /></Switch.Root></div>
+          {!web && <div className="settings-control"><div><strong>Уведомления системы</strong>
+            <span>Сообщить в Windows, когда найден адрес или закончился замер, если окно Gramix свёрнуто или неактивно.</span></div>
+            <div className="workspace-actions"><button type="button" className="settings-secondary" disabled={!systemNotices}
+              onClick={() => void systemNotify("Gramix", "Так выглядят уведомления о готовых задачах.", { force: true })}>Проверить</button>
+              <Switch.Root className="settings-switch" checked={systemNotices} onCheckedChange={(value) => void toggleSystemNotices(value)}
+                aria-label="Уведомления системы"><Switch.Thumb /></Switch.Root></div></div>}
         </Tabs.Content>
         <Tabs.Content value="compute"><div className="settings-panel-heading"><h2>Вычисления</h2>
           <p>Готовность движка определяется самопроверкой ядра.</p></div>
@@ -188,7 +217,7 @@ export default function WorkspaceSettings({ devices, backends, version, updateSt
         <Tabs.Content value="updates"><div className="settings-panel-heading"><h2>Обновления</h2>
           <p>Установленная версия: {version || "определяется"}</p></div>
           <p className="settings-status" role="status">{updateState || "Состояние обновлений пока неизвестно."}
-            {updateCheckedAt && <small> · проверено в {new Date(updateCheckedAt).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}</small>}</p>
+            {updateCheckedAt && <small> · проверено в {new Date(updateCheckedAt).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}</small>}</p>
           {updateVersion && updateNotes && <div className="update-notes"><b>Что нового в {updateVersion}</b>
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{updateNotes}</ReactMarkdown></div>}
           <div className="workspace-actions"><button type="button" className="update-button" disabled={updateBusy}
@@ -197,6 +226,15 @@ export default function WorkspaceSettings({ devices, backends, version, updateSt
           <p className="update-hint">Gramix проверяет GitHub Releases при запуске и каждые 6 часов. Перед установкой
             приложение проверяет подпись обновления, затем перезапускается само.</p>
         </Tabs.Content>
+        <Tabs.Content value="files"><div className="settings-panel-heading"><h2>Файлы</h2>
+          <p>Куда сохранять экспорт: JSON, CSV, BOC, QR-коды и отчёты.</p></div>
+          <div className="settings-control"><div><strong>Папка для сохранения</strong>
+            <span>{folder ? "Файлы сохраняются сюда без вопросов; одноимённые файлы не перезаписываются." : "Сейчас путь спрашивается при каждом сохранении."}</span>
+            {folder && <code className="settings-path" title={folder}>{folder}</code>}</div>
+            <div className="workspace-actions"><button type="button" className="settings-secondary" onClick={() => void chooseFolder()}>
+              <FolderOpen size={16} /> {folder ? "Изменить" : "Выбрать папку"}</button>
+              {folder && <button type="button" className="settings-secondary" onClick={() => void askEveryTime()}>Спрашивать каждый раз</button>}</div></div>
+        </Tabs.Content>
         <Tabs.Content value="diagnostics"><div className="settings-panel-heading"><h2>Диагностика</h2>
           <p>Публичные сведения без кошельков, фраз и паролей.</p></div>
           <button type="button" className="settings-secondary" onClick={() => {
@@ -204,10 +242,9 @@ export default function WorkspaceSettings({ devices, backends, version, updateSt
               devices: devices.map((device) => ({ name: device.name, vendor: device.vendor,
                 driver: device.driver, apis: device.apis })) };
             void copyText(JSON.stringify(publicInfo, null, 2))
-              .then(() => setDiagnosticsStatus("Публичные сведения скопированы."))
-              .catch(() => setDiagnosticsStatus("Не удалось скопировать сведения."));
+              .then(() => notify({ kind: "ok", text: "Публичные сведения скопированы." }))
+              .catch(() => notify({ kind: "error", text: "Не удалось скопировать сведения." }));
           }}>Копировать сведения о системе</button>
-              {diagnosticsStatus && <div className="settings-toast" role="status">{diagnosticsStatus}</div>}
         </Tabs.Content>
         <Tabs.Content value="about"><div className="settings-panel-heading"><h2>О программе</h2>
           <p>Gramix {version || "Preview"} · GRAM Workspace</p></div>

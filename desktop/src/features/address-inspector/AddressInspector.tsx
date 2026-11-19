@@ -17,6 +17,10 @@ import type { AccountResult, AddressResult } from "../../platform/types";
 import PublicAddressQr from "../../components/PublicAddressQr";
 import Select from "../../components/ui/Select";
 import CopyButton from "../../components/ui/CopyButton";
+import BookButton from "../../components/BookButton";
+import AddressHistory from "./AddressHistory";
+import { fiatOf, useRates } from "../../lib/market";
+import { locale } from "../../lib/i18n";
 
 export default function AddressInspector() {
   const [input, setInput] = useState("");
@@ -50,6 +54,8 @@ export default function AddressInspector() {
   const [networkBusy, setNetworkBusy] = useState(false);
   const [network, setNetwork] = useState<"mainnet" | "testnet">(() =>
     localStorage.getItem("gramix.network.default") === "testnet" ? "testnet" : "mainnet");
+
+  const { rates, fiat } = useRates(Boolean(account));
 
   async function inspect(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -126,7 +132,8 @@ export default function AddressInspector() {
     </div>}
     {result && <div className="address-result" aria-live="polite">
       <div className="address-properties"><div className="address-result-heading"><h3>Локальная проверка</h3>
-        <span className="address-valid-badge">Адрес корректен</span></div>
+        <span className="address-valid-badge">Адрес корректен</span>
+        <BookButton raw={result.raw} address={network === "testnet" ? result.non_bounceable : result.bounceable} testnet={network === "testnet"} /></div>
       <p>Формат и контрольная сумма проверены на этом компьютере.</p>
       <div className="address-meta">
         <span>Workchain: {result.workchain}</span>
@@ -160,13 +167,14 @@ export default function AddressInspector() {
         <div className="account-balance">
           <span>Баланс</span>
           <strong title={exactGram(account.balance_nanoton)}>{formatGram(account.balance_nanoton)}</strong>
+          {rates && <small className="account-fiat">{fiatOf(account.balance_nanoton, rates, fiat)} · 1 GRAM = {fiat === "rub" ? `${rates.rub.toFixed(2)} ₽` : `$${rates.usd.toFixed(3)}`}</small>}
         </div>
         <dl className="account-kv">
           <dt>Статус</dt><dd><span className={`badge ${account.status === "active" ? "ok" : account.status === "frozen" ? "fail" : ""}`}>{account.status}</span></dd>
           <dt>Тип</dt><dd>{account.is_wallet === null ? "нет данных" : account.is_wallet ? "Кошелёк" : "Контракт"}</dd>
           <dt>Последняя активность</dt><dd>{account.last_activity
-            ? new Date(account.last_activity * 1000).toLocaleString("ru-RU") : "нет данных"}</dd>
-          <dt>Источник</dt><dd>OpenTonAPI · {account.network} · {new Date(account.received_at * 1000).toLocaleTimeString("ru-RU")}</dd>
+            ? new Date(account.last_activity * 1000).toLocaleString(locale) : "нет данных"}</dd>
+          <dt>Источник</dt><dd>OpenTonAPI · {account.network} · {new Date(account.received_at * 1000).toLocaleTimeString(locale)}</dd>
         </dl>
       </div>}
       <button className="address-open-contract" type="button" onClick={() => {
@@ -177,5 +185,6 @@ export default function AddressInspector() {
       }}>Открыть в «Контрактах»</button>
       </div>
     </div>}
+    {result && <AddressHistory raw={result.raw} testnet={network === "testnet"} />}
   </section>;
 }

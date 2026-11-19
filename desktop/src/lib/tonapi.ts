@@ -26,11 +26,11 @@ class NotFound extends Error {
   constructor() { super("Не найдено в OpenTonAPI"); }
 }
 
-async function getJson(url: string): Promise<Record<string, unknown>> {
+async function getJson(url: string, limit = MAX_BYTES, init: RequestInit = {}): Promise<Record<string, unknown>> {
   let response: Response;
   try {
-    response = await fetch(url, { signal: AbortSignal.timeout(10_000), redirect: "error",
-      credentials: "omit", referrerPolicy: "no-referrer" });
+    response = await fetch(url, { signal: AbortSignal.timeout(12_000), redirect: "error",
+      credentials: "omit", referrerPolicy: "no-referrer", ...init });
   } catch (cause) {
     throw new Error(cause instanceof DOMException && cause.name === "TimeoutError"
       ? "Время ожидания OpenTonAPI истекло" : "OpenTonAPI недоступен: проверьте подключение");
@@ -39,7 +39,7 @@ async function getJson(url: string): Promise<Record<string, unknown>> {
   if (response.status === 404) throw new NotFound();
   if (!response.ok) throw new Error(`OpenTonAPI вернул HTTP ${response.status}`);
   const text = await response.text();
-  if (text.length > MAX_BYTES) throw new Error("Ответ OpenTonAPI слишком велик");
+  if (text.length > limit) throw new Error("Ответ OpenTonAPI слишком велик");
   try { return JSON.parse(text) as Record<string, unknown>; }
   catch { throw new Error("OpenTonAPI вернул некорректный JSON"); }
 }
@@ -125,4 +125,23 @@ export async function runGetMethod(raw: string, testnet: boolean, method: string
   if (!Array.isArray(data.stack)) throw new Error("В ответе нет стека");
   return { method, args, success: data.success, exit_code: data.exit_code, stack: data.stack,
     decoded: data.decoded ?? null, received_at: now() };
+}
+
+// Курс, история и балансы: сырой JSON, разбор общий для сайта и приложения (lib/market.ts).
+export const fetchRatesRaw = () => getJson(`${host(false)}/v2/rates?tokens=ton&currencies=usd,rub`);
+export function fetchRatesChartRaw(currency: "usd" | "rub", days: number) {
+  const end = now(); const start = end - Math.min(365, Math.max(1, days)) * 86_400;
+  return getJson(`${host(false)}/v2/rates/chart?token=ton&currency=${currency}&start_date=${start}&end_date=${end}&points_count=120`);
+}
+export function fetchAccountEventsRaw(raw: string, testnet: boolean, beforeLt?: string, limit = 20) {
+  if (!rawPattern.test(raw)) throw new Error("Некорректный raw-адрес");
+  if (beforeLt && !/^\d{1,20}$/.test(beforeLt)) throw new Error("Некорректный LT");
+  const query = `limit=${Math.min(50, Math.max(1, limit))}${beforeLt ? `&before_lt=${beforeLt}` : ""}`;
+  return getJson(`${host(testnet)}/v2/accounts/${raw}/events?${query}`, 1024 * 1024);
+}
+export function fetchAccountsBulkRaw(raws: string[], testnet: boolean) {
+  if (!raws.length) return Promise.resolve({ accounts: [] });
+  if (raws.length > 100 || raws.some((raw) => !rawPattern.test(raw))) throw new Error("Некорректный список адресов");
+  return getJson(`${host(testnet)}/v2/accounts/_bulk`, 1024 * 1024, { method: "POST",
+    headers: { "content-type": "application/json" }, body: JSON.stringify({ account_ids: raws }) });
 }

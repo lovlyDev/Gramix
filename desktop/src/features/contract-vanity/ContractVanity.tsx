@@ -16,6 +16,8 @@ import Checkbox from "../../components/ui/Checkbox";
 import Select from "../../components/ui/Select";
 import CopyButton from "../../components/ui/CopyButton";
 import { saveFile } from "../../lib/save";
+import { systemNotify } from "../../lib/system-notify";
+import { locale } from "../../lib/i18n";
 
 type Progress = { attempts: number; elapsedMs: number };
 type WorkerMessage = Progress & { type: "progress" | "found" | "stopped" | "exhausted" | "error";
@@ -88,6 +90,7 @@ export default function ContractVanity() {
               if (!await verifyContractCandidate(input, data.candidate!))
                 throw new Error("Независимая проверка результата не прошла.");
               setCandidate(data.candidate!);
+              void systemNotify("Gramix: адрес контракта найден", `Найден адрес ${data.candidate!.raw.slice(-8)}.`);
               setProgress(data);
             } catch (cause) { setError(errorText(cause)); }
             finally { setRunning(false); setPaused(false); next.terminate(); }
@@ -190,8 +193,8 @@ export default function ContractVanity() {
       <div className="contract-vanity-monitor">
         <div className="contract-monitor-heading"><h3>Поиск StateInit</h3>
           <span className={running ? "active" : ""}>{paused ? "Пауза" : running ? "Идёт поиск" : candidate ? "Найдено" : "Ожидание"}</span></div>
-        <div className="contract-stats"><div><span>ПОПЫТОК</span><strong>{progress.attempts.toLocaleString("ru-RU")}</strong></div>
-          <div><span>СКОРОСТЬ</span><strong>{progress.elapsedMs > 0 ? Math.round(progress.attempts * 1000 / progress.elapsedMs).toLocaleString("ru-RU") : "0"}<small> /с</small></strong></div>
+        <div className="contract-stats"><div><span>ПОПЫТОК</span><strong>{progress.attempts.toLocaleString(locale)}</strong></div>
+          <div><span>СКОРОСТЬ</span><strong>{progress.elapsedMs > 0 ? Math.round(progress.attempts * 1000 / progress.elapsedMs).toLocaleString(locale) : "0"}<small> /с</small></strong></div>
           <div><span>ВРЕМЯ</span><strong>{(progress.elapsedMs / 1000).toFixed(1)}<small> с</small></strong></div></div>
         <div className="contract-progress"><div style={{ width: `${Math.min(100, Number(maxAttempts) > 0 ? progress.attempts / Number(maxAttempts) * 100 : 0)}%` }}/></div>
         <p className="contract-progress-caption">Nonce: {/^\d+$/.test(startNonce) ? (BigInt(startNonce) + BigInt(progress.attempts)).toString() : "—"}

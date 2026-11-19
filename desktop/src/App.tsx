@@ -44,6 +44,11 @@ import SiteFooter from "./components/SiteFooter";
 import ToolBoundary from "./components/ToolBoundary";
 import AppSidebar from "./components/AppSidebar";
 import Notices from "./components/Notices";
+import { systemNotify } from "./lib/system-notify";
+import { addressBook } from "./lib/addressBook";
+import { formatGram } from "./lib/format";
+import { notify } from "./lib/notify";
+import { locale } from "./lib/i18n";
 
 const sidecar = "binaries/gramix";
 const web = __WEB__;
@@ -52,7 +57,7 @@ const ContractBuilder = lazy(() => import("./features/contract-builder/BuilderWo
 const DeveloperCli = lazy(() => import("./features/developer-cli/CliWorkspace"));
 const ContractSandbox = lazy(() => import("./features/contract-sandbox/SandboxWorkspace"));
 const isLinux = typeof navigator !== "undefined" && /Linux/i.test(navigator.userAgent);
-const fmt = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 });
+const fmt = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 });
 const apiLabel: Record<string, string> = {
   CPU: "CPU", Vulkan: "Vulkan Compute", CUDA: "CUDA", HIP: "HIP / ROCm"
 };
@@ -228,6 +233,26 @@ export default function App() {
   }
 
   useEffect(() => { void refreshDevices(); }, []);
+  // Наблюдение за адресами из книги: раз в 5 минут, только если хоть один адрес отмечен глазом.
+  useEffect(() => {
+    let stopped = false;
+    async function check() {
+      try {
+        const changed = await addressBook.refresh(true);
+        if (stopped) return;
+        for (const { entry, previous } of changed) {
+          const name = entry.label || `${entry.address.slice(0, 6)}…${entry.address.slice(-6)}`;
+          const delta = BigInt(entry.balance ?? "0") - BigInt(previous);
+          const text = `${name}: ${delta > 0n ? "+" : "−"}${formatGram(delta > 0n ? delta : -delta)} · баланс ${formatGram(entry.balance)}`;
+          notify({ kind: "info", title: "Баланс изменился", text, duration: 10000 });
+          void systemNotify("Gramix: баланс изменился", text);
+        }
+      } catch { /* сеть недоступна — попробуем в следующий раз */ }
+    }
+    const timer = window.setInterval(() => { if (addressBook.hasWatched()) void check(); }, 5 * 60_000);
+    if (addressBook.hasWatched()) void check();
+    return () => { stopped = true; window.clearInterval(timer); };
+  }, []);
   useEffect(() => {
     if (!isTauri()) return;
     void getVersion().then(setInstalledVersion);
@@ -309,6 +334,7 @@ export default function App() {
       }
     } else if (value.startsWith("Saved wallet: ")) {
       app.set({ resultPath: value.slice("Saved wallet: ".length) });
+      void systemNotify("Gramix: адрес найден", "Кошелёк с нужным словом найден и сохранён. Откройте Gramix, чтобы посмотреть.");
     } else if (value.startsWith("Checked ")) {
       const match = value.match(/^Checked (\d+) addresses at ([\d.]+)/);
       if (match) {
@@ -343,6 +369,7 @@ export default function App() {
         const total = Math.max(checked, useApp.getState().checked);
         if (useApp.getState().samples.length === 0) app.addSample(total / seconds);
         app.set({ status: "finished", rate: 0, checked: total, resultPath: wallet.address });
+        void systemNotify("Gramix: адрес найден", `Найден адрес ${wallet.address.slice(0, 6)}…${wallet.address.slice(-6)}.`);
         telemetry.track({ name: "vanity_stopped", found: true, checked: useApp.getState().checked,
           seconds: Math.round((performance.now() - vanityStarted.current) / 1000) });
       },

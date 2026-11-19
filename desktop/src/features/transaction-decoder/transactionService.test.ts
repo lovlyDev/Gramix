@@ -8,9 +8,13 @@
  */
 
 import { describe, expect, it } from "vitest";
-import fixture from "./fixtures/reference-transaction.b64?raw";
+import { beginCell, internal, storeMessageRelaxed, toNano, Address } from "@ton/core";
+import { NotTransactionError, decodeTransactionBoc } from "./transactionService";
 import { decodeBocText } from "../boc-explorer/bocService";
-import { decodeTransactionBoc } from "./transactionService";
+import fixture from "./fixtures/reference-transaction.b64?raw";
+
+// Файл gramix.boc, сохранённый на сайте из BOC Explorer: корректный BOC, но не транзакция.
+const exportedBoc = "b5ee9c720101030100ba00015eb508e342c591f4e3caddf325dfbe3940abd0139ca011e78f4821d6bb95cadd5e00000001400000001abf4fb840012c010105b64f100200ff04" + "00".repeat(127) + "01";
 
 describe("Transaction Decoder", () => {
   it("decodes a public reference transaction from ton-core", async () => {
@@ -27,8 +31,26 @@ describe("Transaction Decoder", () => {
   });
 
   it("rejects a valid BOC that is not a transaction", async () => {
-    const { beginCell } = await import("@ton/core");
-    await expect(decodeTransactionBoc(beginCell().endCell().toBoc())).rejects.toThrow(
-      "корректную GRAM-транзакцию");
+    await expect(decodeTransactionBoc(beginCell().endCell().toBoc())).rejects.toThrow("не транзакция");
+  });
+});
+
+describe("BOC в разборе транзакций", () => {
+  it("BOC не транзакции даёт подсказку и сохраняет байты для BOC Explorer", async () => {
+    const bytes = decodeBocText(exportedBoc, "hex");
+    const error = await decodeTransactionBoc(bytes).catch((cause) => cause);
+    expect(error).toBeInstanceOf(NotTransactionError);
+    expect(error.message).toMatch(/не транзакция/);
+    expect(Buffer.from(error.base64, "base64").toString("hex")).toBe(exportedBoc);
+  });
+
+  it("для сообщения предлагает поиск транзакции по хешу сообщения", async () => {
+    const message = beginCell().store(storeMessageRelaxed(internal({
+      to: Address.parse("EQBvW8Z5huBkMJYdnfAEM5JqTNkuWX3diqYENkWsIL0XggGG"), value: toNano("1"), bounce: false,
+    }))).endCell();
+    const error = await decodeTransactionBoc(new Uint8Array(message.toBoc())).catch((cause) => cause);
+    expect(error).toBeInstanceOf(NotTransactionError);
+    expect(error.message).toMatch(/сообщение/);
+    expect(error.messageHash).toBe(message.hash().toString("hex"));
   });
 });

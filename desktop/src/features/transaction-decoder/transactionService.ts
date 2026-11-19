@@ -97,6 +97,32 @@ function decodeMessage(message: Message): DecodedMessage {
   return output;
 }
 
+// BOC корректный, но в корне не транзакция: подсказываем, что это и куда его открыть.
+export class NotTransactionError extends Error {
+  constructor(message: string, readonly base64: string, readonly messageHash: string | null) { super(message); }
+}
+
+async function describeForeignBoc(bytes: Uint8Array): Promise<NotTransactionError> {
+  const { Cell, loadMessage, loadMessageRelaxed } = await import("@ton/core");
+  const base64 = Buffer.from(bytes).toString("base64");
+  try {
+    const roots = Cell.fromBoc(Buffer.from(bytes));
+    if (roots.length !== 1)
+      return new NotTransactionError(`В BOC ${roots.length} корневых ячейки, а транзакция — это одна ячейка. Откройте файл в BOC Explorer.`, base64, null);
+    const root = roots[0];
+    try {
+      let info: { type: string };
+      try { info = loadMessage(root.beginParse()).info; } catch { info = loadMessageRelaxed(root.beginParse()).info; }
+      const kind = info.type === "internal" ? "внутреннее сообщение" : info.type === "external-in" ? "внешнее входящее сообщение" : "внешнее исходящее сообщение";
+      return new NotTransactionError(`Это не транзакция, а ${kind}. Можно найти транзакцию, которую оно вызвало, по хешу сообщения.`,
+        base64, root.hash().toString("hex"));
+    } catch { /* не сообщение */ }
+    return new NotTransactionError(`Это корректный BOC, но не транзакция: корень ${root.bits.length} бит и ${root.refs.length} ссылок. Его содержимое покажет BOC Explorer.`, base64, null);
+  } catch {
+    return new NotTransactionError("Это корректный BOC, но не транзакция. Его содержимое покажет BOC Explorer.", base64, null);
+  }
+}
+
 export async function decodeTransactionBoc(bytes: Uint8Array): Promise<DecodedTransaction> {
   await parseBocBytes(bytes);
   const { Cell, loadTransaction } = await import("@ton/core");
@@ -128,6 +154,6 @@ export async function decodeTransactionBoc(bytes: Uint8Array): Promise<DecodedTr
       rawBocBase64: Buffer.from(bytes).toString("base64"),
     };
   } catch {
-    throw new Error("BOC не содержит корректную GRAM-транзакцию.");
+    throw await describeForeignBoc(bytes);
   }
 }
