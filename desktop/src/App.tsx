@@ -56,6 +56,7 @@ const web = __WEB__;
 const initialLocation = web ? parsePath(window.location.pathname) : null;
 const ContractBuilder = lazy(() => import("./features/contract-builder/BuilderWorkspace"));
 const DeveloperCli = lazy(() => import("./features/developer-cli/CliWorkspace"));
+const Sentinel = lazy(() => import("./features/sentinel/Sentinel"));
 const ContractSandbox = lazy(() => import("./features/contract-sandbox/SandboxWorkspace"));
 const isLinux = typeof navigator !== "undefined" && /Linux/i.test(navigator.userAgent);
 const fmt = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 });
@@ -508,7 +509,7 @@ export default function App() {
     : activeTool === "privacy" ? "Конфиденциальность" : toolTitles[activeTool as ToolId];
   const pageMeta = <div className="page-meta">
     <span className="badge"><ShieldCheck size={13}/>
-      {["address-inspector", "transaction-decoder", "contract-inspector"].includes(activeTool)
+      {activeTool.startsWith("sentinel-") ? "Mainnet" : ["address-inspector", "transaction-decoder", "contract-inspector"].includes(activeTool)
         ? "Сеть: по запросу" : "Локально"}</span>
     {activeTool === "generator" &&
       <span className={"badge status-badge " + (app.status === "running" ? "ok live" : "")}><span className="status-light"/>{statusLabel}</span>}
@@ -517,6 +518,7 @@ export default function App() {
     <strong>{screenTitle}</strong></div>;
   const liveChip = running && activeTool !== "generator" ? { label: statusLabel, value: fmt.format(app.rate) + " адр/с" } : null;
   const screens = <>
+        {activeTool.startsWith("sentinel-") && <div className="tool-screen"><ToolBoundary name="Gramix Sentinel"><Suspense fallback={<p>Загружаю Sentinel…</p>}><Sentinel page={activeTool} open={openTool}/></Suspense></ToolBoundary></div>}
         <div className="tool-screen workspace-screen" hidden={activeTool !== "overview"}>
           <Overview devices={app.devices} backends={app.validatedBackends} recent={recentTools}
             searchStatus={app.status} checked={app.checked} rate={app.rate} version={installedVersion}

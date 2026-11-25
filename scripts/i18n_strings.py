@@ -119,7 +119,7 @@ def collect() -> set[str]:
         if path.suffix not in {".ts", ".tsx"} or path.name.endswith(SKIP_SUFFIX): continue
         if SKIP_PARTS & set(path.relative_to(SRC).parts): continue
         keys |= keys_from_ts(path.read_text(encoding="utf-8"))
-    for path in sorted(RUST.glob("*.rs")):
+    for path in sorted(RUST.rglob("*.rs")):
         keys |= keys_from_rust(path.read_text(encoding="utf-8"))
     return {key for key in keys if key}
 

@@ -14,7 +14,7 @@ import { errorText } from "../../lib/errors";
 import { getAccountNfts, type NftInfo } from "../../lib/nft";
 import { DnsArt, NftDialog } from "../../components/NftCard";
 
-function Tile({ nft, testnet }: { nft: NftInfo; testnet: boolean }) {
+export function NftTile({ nft, testnet }: { nft: NftInfo; testnet: boolean }) {
   const [broken, setBroken] = useState(false);
   return <NftDialog raw={nft.raw} testnet={testnet} trigger={
     <button type="button" className={`nft-tile ${nft.trust === "blacklist" ? "spam" : ""} ${nft.telegram ? "telegram" : ""}`} title={nft.name}>
@@ -69,7 +69,7 @@ export default function AddressNfts({ raw, testnet }: { raw: string; testnet: bo
     </div>}
     {error && <p className="error-box" role="alert">{error}</p>}
     {!busy && !error && items.length === 0 && <p className="address-history-note"><Gem size={15} /> NFT на адресе нет.</p>}
-    {shown.length > 0 && <div className="nft-grid">{shown.map((nft) => <Tile key={nft.raw} nft={nft} testnet={testnet} />)}</div>}
+    {shown.length > 0 && <div className="nft-grid">{shown.map((nft) => <NftTile key={nft.raw} nft={nft} testnet={testnet} />)}</div>}
     {busy && <div className="nft-grid">{Array.from({ length: items.length ? 4 : 8 }, (_, index) =>
       <span key={index} className="nft-tile placeholder"><span className="nft-skeleton" /></span>)}</div>}
     <div className="nft-footer">

@@ -59,6 +59,17 @@ fn client() -> Result<reqwest::Client, String> {
         .build().map_err(|_| "Не удалось настроить сетевой клиент".into())
 }
 
+#[tauri::command]
+pub async fn sentinel_archive(block: Option<u32>, account: Option<String>) -> Result<Value,String> {
+    let path = match (block,account) {
+        (None,None) => "getMasterchainInfo".to_owned(),
+        (Some(n),None) if n > 0 => format!("getConfigAll?seqno={n}"),
+        (Some(n),Some(a)) if n > 0 && a.len()==48 && a.bytes().all(|b|b.is_ascii_alphanumeric() || b==b'_' || b==b'-') => format!("getAddressInformation?seqno={n}&address={a}"),
+        _ => return Err("Некорректный запрос архива".into())
+    };
+    get_json(&client()?,format!("https://toncenter.com/api/v2/{path}")).await
+}
+
 fn host(testnet: bool) -> &'static str {
     if testnet { "https://testnet.tonapi.io" } else { "https://tonapi.io" }
 }

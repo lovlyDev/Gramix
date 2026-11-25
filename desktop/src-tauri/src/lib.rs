@@ -15,6 +15,16 @@ mod builder_api;
 mod export_api;
 mod market_api;
 mod tray;
+#[cfg(windows)]
+pub mod sentinel;
+#[cfg(not(windows))]
+mod sentinel {
+    #[tauri::command]
+    pub fn sentinel_bot(action: String, value: Option<serde_json::Value>) -> Result<(), String> {
+        let _ = (action, value);
+        Err("Фоновый бот доступен в Windows.".into())
+    }
+}
 
 #[tauri::command]
 fn supports_self_update(app: tauri::AppHandle) -> bool {
@@ -64,6 +74,8 @@ pub fn run() {
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
+            sentinel::sentinel_bot,
+            contract_api::sentinel_archive,
             supports_self_update,
             account_api::fetch_account,
             transaction_api::fetch_transaction,

@@ -21,7 +21,7 @@ const amountFormat = new Intl.NumberFormat(locale, { maximumFractionDigits: 4 })
 const compactFormat = new Intl.NumberFormat(locale, { notation: "compact", maximumFractionDigits: 2 });
 const formatAmount = (value: number) => value >= 1e9 ? compactFormat.format(value) : amountFormat.format(value);
 
-function TokenIcon({ token }: { token: Token }) {
+export function TokenIcon({ token }: { token: Token }) {
   const [broken, setBroken] = useState(false);
   return token.image && !broken ? <img className="token-icon" src={token.image} alt="" onError={() => setBroken(true)} />
     : <span className="token-icon fallback">{token.symbol.slice(0, 2)}</span>;

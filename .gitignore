@@ -37,3 +37,4 @@ AGENTS.md
 research/
 *.prompt.md
 *.prompt.txt
+/concepts/

@@ -32,6 +32,14 @@ export const toolGroups = [
     { id: "contract-inspector", label: "Контракты", description: "Состояние, get-методы и код контракта", icon: FileCode, color: "#5e5ce6" },
     { id: "contract-vanity", label: "Contract Vanity", description: "Адрес контракта с нужным фрагментом", icon: Sparkles, color: "#ff2d55" },
   ] },
+  { title: "Sentinel", items: [
+    { id: "sentinel-watch", label: "Watchtower", description: "Мониторинг публичных адресов", icon: ScanSearch, color: "#30b0c7" },
+    { id: "sentinel-portfolio", label: "Wallet Portfolio", description: "Активы и история портфеля", icon: Wallet, color: "#007aff" },
+    { id: "sentinel-contract", label: "Contract Watch", description: "Состояние и сообщения контракта", icon: FileCode, color: "#5e5ce6" },
+    { id: "sentinel-diff", label: "Contract Diff", description: "Сравнение двух блоков", icon: Binary, color: "#af52de" },
+    { id: "sentinel-guardian", label: "Transaction Guardian", description: "Локальная симуляция на состоянии Mainnet", icon: ShieldCheck, color: "#34c759" },
+    { id: "sentinel-graph", label: "Граф сообщений", description: "Трасса исполнения Sandbox", icon: ArrowLeftRight, color: "#ff9500" },
+  ] },
   { title: "Разработка", items: [
     { id: "contract-sandbox", label: "Sandbox", description: "Сценарии транзакций в локальном блокчейне", icon: FlaskConical, color: "#32ade6" },
     { id: "contract-builder", label: "Builder", description: "Редактор и сборка контрактов Tolk", icon: Hammer, color: "#ff9f0a" },
@@ -71,6 +79,8 @@ export function ToolIcon({ tool, className = "", size = 36 }: { tool: ToolId; cl
 }
 
 const searchAliases: Record<ToolId, string> = {
+  "sentinel-watch": "watchtower наблюдение", "sentinel-portfolio": "portfolio портфель", "sentinel-contract": "contract watch контракт",
+  "sentinel-diff": "diff блоки", "sentinel-guardian": "guardian simulate", "sentinel-graph": "analyze graph",
   generator: "vanity generator search address поиск красивый",
   "wallet-generator": "new wallet создать мнемоника",
   "wallet-security": "wallet security фраза проверить",

@@ -12,7 +12,7 @@ import { copyText } from "../../lib/clipboard";
 import * as Tabs from "@radix-ui/react-tabs";
 import * as Switch from "@radix-ui/react-switch";
 import * as Dialog from "@radix-ui/react-dialog";
-import { Activity, BarChart3, Cpu, FolderOpen, Info, Minus, Monitor, Network, Plus, RefreshCw, ShieldCheck } from "lucide-react";
+import { Send, Activity, BarChart3, Cpu, FolderOpen, Info, Minus, Monitor, Network, Plus, RefreshCw, ShieldCheck } from "lucide-react";
 import { exportFolder } from "../../lib/save";
 import { notify } from "../../lib/notify";
 import { errorText } from "../../lib/errors";
@@ -41,6 +41,8 @@ function readOption<T extends string>(key: string, values: readonly T[], fallbac
 
 const web = platform.kind === "web";
 
+import TelegramSettings from "../sentinel/TelegramSettings";
+
 export default function WorkspaceSettings({ devices, backends, version, updateState,
   updateBusy, updateVersion, updateNotes, updateCheckedAt, onRefreshDevices, onUpdate }: {
   devices: Device[]; backends: ValidatedBackend[]; version: string; updateState: string;
@@ -51,6 +53,13 @@ export default function WorkspaceSettings({ devices, backends, version, updateSt
   const [theme, setTheme] = useState<Theme>(() => readOption("gramix.ui.theme", themes, "dark"));
   const [density, setDensity] = useState<Density>(() => readOption("gramix.ui.density", densities, "comfortable"));
   const [lowMotion, setLowMotion] = useState(() => localStorage.getItem("gramix.ui.lowMotion") === "true");
+  const [section, setSection] = useState("interface");
+  useEffect(() => {
+    if (__WEB__) return;
+    const show = () => setSection("telegram");
+    window.addEventListener("gramix:telegram-settings", show);
+    return () => window.removeEventListener("gramix:telegram-settings", show);
+  }, []);
   const [defaultNetwork, setDefaultNetwork] = useState<"mainnet" | "testnet">(() =>
     localStorage.getItem("gramix.network.default") === "testnet" ? "testnet" : "mainnet");
   const [historyStatus, setHistoryStatus] = useState("");
@@ -99,10 +108,11 @@ export default function WorkspaceSettings({ devices, backends, version, updateSt
   }, [defaultNetwork]);
   return <div className="workspace-settings-page">
     <div className="settings-intro"><p>Внешний вид, устройства и сведения о приложении.</p></div>
-    <Tabs.Root defaultValue="interface" className="settings-layout">
+    <Tabs.Root value={section} onValueChange={setSection} className="settings-layout">
       <Tabs.List className="settings-tabs" aria-label="Разделы настроек">
         <Tabs.Trigger value="interface"><Monitor size={18} /> Интерфейс</Tabs.Trigger>
         {!web && <Tabs.Trigger value="compute"><Cpu size={18} /> Вычисления</Tabs.Trigger>}
+        {!__WEB__ && <Tabs.Trigger value="telegram"><Send size={18} /> Telegram</Tabs.Trigger>}
         <Tabs.Trigger value="network"><Network size={18} /> Сеть</Tabs.Trigger>
         <Tabs.Trigger value="security"><ShieldCheck size={18} /> Безопасность</Tabs.Trigger>
         {web && telemetry.enabled && <Tabs.Trigger value="privacy"><BarChart3 size={18} /> Статистика</Tabs.Trigger>}
@@ -112,6 +122,7 @@ export default function WorkspaceSettings({ devices, backends, version, updateSt
         {!web && <Tabs.Trigger value="about"><Info size={18} /> О программе</Tabs.Trigger>}
       </Tabs.List>
       <div className="settings-content">
+        {!__WEB__ && <Tabs.Content value="telegram"><TelegramSettings /></Tabs.Content>}
         <Tabs.Content value="interface"><div className="settings-panel-heading"><h2>Интерфейс</h2>
           <p>Параметры сохраняются только на этом компьютере.</p></div>
           <div className="settings-control"><div><strong>Язык · Language</strong>
