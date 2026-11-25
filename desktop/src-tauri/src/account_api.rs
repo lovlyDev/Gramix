@@ -43,7 +43,7 @@ pub async fn fetch_account(raw: String, testnet: bool) -> Result<Value, String> 
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(10))
         .redirect(reqwest::redirect::Policy::none())
-        .user_agent("Gramix/0.2.0")
+        .user_agent(concat!("Gramix/", env!("CARGO_PKG_VERSION")))
         .build()
         .map_err(|_| "Не удалось настроить сетевой клиент")?;
     let mut response = client.get(url).send().await.map_err(|error| {

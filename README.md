@@ -2,11 +2,11 @@
 
 English | [Русский](README.ru.md)
 
-Gramix (formerly VANTIX) is my toolkit for the GRAM network: a vanity address generator with a C++23 compute core and a Tauri/React desktop app for Windows and Linux. Release 0.1.0, published as VANTIX, includes CPU and Vulkan Compute modes. CUDA and HIP sources are present, but their modules are absent from the installers and have not been validated on supported GPUs.
+Gramix (formerly VANTIX) is my toolkit for the GRAM network: a vanity address generator with a C++23 compute core and a Tauri/React desktop app for Windows and Linux. The desktop app supports CPU and Vulkan Compute modes. CUDA and HIP sources are present, but their modules are absent from the installers and have not been validated on supported GPUs.
 
 ## Download
 
-[Release 0.1.0](https://github.com/lovlyDev/Gramix/releases/tag/v0.1.0) provides a Windows NSIS installer (`GRAMIX_0.1.0_x64-setup.exe`), Linux DEB (`GRAMIX_0.1.0_amd64.deb`), Linux AppImage (`GRAMIX_0.1.0_amd64.AppImage`), and `SHA256SUMS.txt`.
+Download the Windows installer (`.exe`), Linux package (`.deb`), or portable Linux build (`.AppImage`) from the [latest release](https://github.com/lovlyDev/Gramix/releases/latest). The release includes checksums in `SHA256SUMS.txt`.
 
 The app detects devices, tests available compute modes, and lets you choose automatic or manual mode selection. The 12-word search can use Vulkan Compute, with results rechecked on CPU. The 24-word search uses CPU. Multiple physical GPUs have not yet been hardware-validated together. The Windows installer is not publisher certificate signed.
 
