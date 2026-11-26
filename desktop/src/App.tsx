@@ -56,6 +56,7 @@ const web = __WEB__;
 const initialLocation = web ? parsePath(window.location.pathname) : null;
 const ContractBuilder = lazy(() => import("./features/contract-builder/BuilderWorkspace"));
 const DeveloperCli = lazy(() => import("./features/developer-cli/CliWorkspace"));
+const sentinelPages = ["sentinel-watch", "sentinel-portfolio", "sentinel-contract", "sentinel-diff", "sentinel-guardian"] as const;
 const Sentinel = lazy(() => import("./features/sentinel/Sentinel"));
 const ContractSandbox = lazy(() => import("./features/contract-sandbox/SandboxWorkspace"));
 const isLinux = typeof navigator !== "undefined" && /Linux/i.test(navigator.userAgent);
@@ -146,10 +147,12 @@ export default function App() {
     window.addEventListener("gramix:clear-recent-tools", clearRecent);
     return () => window.removeEventListener("gramix:clear-recent-tools", clearRecent);
   }, []);
+  const [diffRequest, setDiffRequest] = useState({ address: "", revision: 0 });
   const [visitedWorkspaces, setVisitedWorkspaces] = useState<WorkspaceId[]>([]);
   useEffect(() => {
-    if (!["contract-sandbox", "contract-builder", "developer-cli"].includes(activeTool)) return;
-    setVisitedWorkspaces((current) => current.includes(activeTool) ? current : [...current, activeTool]);
+    const page = activeTool === "sentinel-graph" ? "sentinel-guardian" : activeTool;
+    if (![...sentinelPages, "contract-sandbox", "contract-builder", "developer-cli"].includes(page)) return;
+    setVisitedWorkspaces(current => current.includes(page) ? current : [...current, page]);
   }, [activeTool]);
   useEffect(() => {
     const followHash = () => {
@@ -518,7 +521,19 @@ export default function App() {
     <strong>{screenTitle}</strong></div>;
   const liveChip = running && activeTool !== "generator" ? { label: statusLabel, value: fmt.format(app.rate) + " адр/с" } : null;
   const screens = <>
-        {activeTool.startsWith("sentinel-") && <div className="tool-screen"><ToolBoundary name="Gramix Sentinel"><Suspense fallback={<p>Загружаю Sentinel…</p>}><Sentinel page={activeTool} open={openTool}/></Suspense></ToolBoundary></div>}
+        {sentinelPages.map(page => {
+          const graph = page === "sentinel-guardian" && activeTool === "sentinel-graph";
+          const visible = activeTool === page || graph;
+          if (!visible && !visitedWorkspaces.includes(page)) return null;
+          return <div key={page} className="tool-screen" hidden={!visible}>
+            <ToolBoundary name="Gramix Sentinel"><Suspense fallback={<p className="muted">Загружаю Sentinel…</p>}>
+              <Sentinel page={graph ? "sentinel-graph" : page} open={openTool} visible={visible}
+                key={page === "sentinel-diff" ? diffRequest.revision : page}
+                initialAddress={page === "sentinel-diff" ? diffRequest.address : ""}
+                compareAddress={address => setDiffRequest(current => ({ address, revision: current.revision + 1 }))}/>
+            </Suspense></ToolBoundary>
+          </div>;
+        })}
         <div className="tool-screen workspace-screen" hidden={activeTool !== "overview"}>
           <Overview devices={app.devices} backends={app.validatedBackends} recent={recentTools}
             searchStatus={app.status} checked={app.checked} rate={app.rate} version={installedVersion}

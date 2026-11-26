@@ -7,7 +7,7 @@
  * See LICENSE for details.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getBalances, getRates, type HistoryEvent } from "../../lib/market";
 import { getTokens, tokenValue, type Token } from "../../lib/portfolio";
 import { getAccountNfts, type NftInfo } from "../../lib/nft";
@@ -41,7 +41,10 @@ export function useWalletMonitor(
   enabled: boolean,
   days: string,
   refresh: number,
+  visible: boolean,
 ) {
+  const visibleRef = useRef(visible);
+  useEffect(() => { visibleRef.current = visible; }, [visible]);
   const [error, fail] = useState("");
   const [busy, setBusy] = useState(false),
     [hold, setHold] = useState<Holding[]>([]),
@@ -60,6 +63,10 @@ export function useWalletMonitor(
     const historyByAddress = new Map<string, HistoryEvent[]>();
     const active = () => live;
     async function update() {
+      if (!visibleRef.current) {
+        timer = setTimeout(update, 60000);
+        return;
+      }
       setBusy(true);
       fail("");
       try {
@@ -89,6 +96,7 @@ export function useWalletMonitor(
             tokens: tokens.filter((t) => t.verification !== "blacklist"),
             nfts,
           });
+          if (isPortfolio) continue;
           const previous = historyByAddress.get(raw) ?? [];
           const history = await readActivity(raw, start, previous, active);
           if (!live) return;

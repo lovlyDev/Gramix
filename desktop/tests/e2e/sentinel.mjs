@@ -25,17 +25,31 @@ try{
     return route.fulfill({json:{ok:true,result:data}})
   });
   await page.route("https://tonapi.io/**",route=>{
-    const url=route.request().url();return route.fulfill({json:url.includes("_bulk")?{accounts:[{address:raw,balance:3100000000,status:"active"}]}:url.includes("/events")?{events:[{event_id:"c".repeat(64),timestamp:Math.floor(Date.now()/1000),lt:3,actions:[{type:"TonTransfer",status:"ok",TonTransfer:{amount:1000000000,recipient:{address:raw}},simple_preview:{description:"Sentinel transfer"}}]}]}:url.includes("/rates")?{rates:{TON:{prices:{USD:2,RUB:160}}}}:url.includes("/nfts")?{nft_items:[{address:"0:"+"3".repeat(64),metadata:{name:"@sentinel"},collection:{name:"Telegram Usernames"}}]}:{balances:[]}})
+    const url=route.request().url();return route.fulfill({json:url.includes("_bulk")?{accounts:["1","2","3"].map(digit=>({address:"0:"+digit.repeat(64),balance:3100000000,status:"active"}))}:url.includes("/events")?{events:[{event_id:"c".repeat(64),timestamp:Math.floor(Date.now()/1000),lt:3,actions:[{type:"TonTransfer",status:"ok",TonTransfer:{amount:1000000000,recipient:{address:raw}},simple_preview:{description:"Sentinel transfer"}}]}]}:url.includes("/rates")?{rates:{TON:{prices:{USD:2,RUB:160}}}}:url.includes("/nfts")?{nft_items:[{address:"0:"+"3".repeat(64),metadata:{name:"@sentinel"},collection:{name:"Telegram Usernames"}}]}:{balances:[]}})
   });
   await page.goto(root+"/sentinel-watch");await page.getByLabel("Публичный адрес",{exact:true}).fill(raw);
   await page.getByRole("button",{name:"Добавить адрес",exact:true}).click();
   await page.getByRole("combobox",{name:"Кошельки"}).waitFor();
-  await page.goto(root+"/sentinel-portfolio");await page.getByText("Распределение активов",{exact:true}).waitFor();
-  await page.locator(".nft-grid .nft-tile").getByText("@sentinel").click();
+  for (const digit of ["2","3"]) {
+    await page.getByLabel("Публичный адрес",{exact:true}).fill("0:"+digit.repeat(64));
+    await page.getByLabel("Название",{exact:true}).fill("Wallet "+digit);
+    await page.getByRole("button",{name:"Добавить адрес",exact:true}).click();
+    await page.getByRole("combobox",{name:"Кошельки"}).filter({hasText:"Wallet "+digit}).waitFor();
+  }
+  const portfolio = () => page.evaluate(() => {
+    history.pushState({}, "", "/sentinel-portfolio");
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  });
+  await portfolio();
+  await page.getByRole("button",{name:"Управлять кошельками"}).click();
+  await page.getByRole("combobox",{name:"Кошельки"}).filter({hasText:"Wallet 3"}).waitFor();
+  await portfolio();
+  await page.getByText("Распределение активов",{exact:true}).waitFor();
+  await page.locator(".nft-grid .nft-tile").getByText("@sentinel").first().click();
   await page.getByRole("dialog").waitFor();
   await page.keyboard.press("Escape");
   assert(await page.locator("main .token-row:visible").count()>=2);
-  const download=page.waitForEvent("download");await page.getByRole("button",{name:"Скачать CSV"}).click();assert.equal((await download).suggestedFilename(),"gramix-sentinel.csv");
+  const download=page.waitForEvent("download");await page.getByRole("button",{name:"Скачать CSV"}).click();assert.equal((await download).suggestedFilename(),"gramix-portfolio.csv");
   await page.goto(root+"/sentinel-contract");await page.getByLabel("Публичный адрес контракта").fill(raw);await page.getByRole("button",{name:"Получить состояние"}).click();await page.getByRole("button",{name:"Наблюдать в Watchtower"}).waitFor();
   const checkbox=page.getByRole("checkbox",{name:/Проверять изменения/});
   const tick=await checkbox.boundingBox();

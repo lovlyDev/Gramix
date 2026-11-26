@@ -56,7 +56,7 @@ export function WalletActivity({
       </div>
       <div className="card-body">
         {!feed.length && (
-          <p>
+          <p className="muted">
             {busy
               ? "Загружаю историю…"
               : error

@@ -10,6 +10,7 @@
 import { lazy, useEffect, useState } from "react";
 import { platform } from "@platform";
 import { addressBook, useAddressBook, bookEntry } from "../../lib/addressBook";
+import { saveFile } from "../../lib/save";
 import { errorText } from "../../lib/errors";
 import type { WorkspaceId } from "../../components/ToolNavigation";
 import Select from "../../components/ui/Select";
@@ -19,10 +20,9 @@ import { useWalletMonitor } from "./useWalletMonitor";
 const Guardian = lazy(() => import("./Guardian").then((m) => ({ default: m.Guardian })));
 const Contract = lazy(() => import("./Contract").then((m) => ({ default: m.Contract })));
 
-export default function Sentinel({ page, open }: { page: WorkspaceId; open: (id: WorkspaceId) => void }) {
+export default function Sentinel({ page, open, visible, initialAddress, compareAddress }: { visible: boolean; initialAddress: string; compareAddress: (address: string) => void; page: WorkspaceId; open: (id: WorkspaceId) => void }) {
   const book = useAddressBook(),
     watched = book.filter((e) => e.watch && !e.testnet);
-  const [contractAddress, setContractAddress] = useState("");
   const [filter, setFilter] = useState("*"),
     [input, setInput] = useState(""),
     [name, rename] = useState("");
@@ -45,6 +45,7 @@ export default function Sentinel({ page, open }: { page: WorkspaceId; open: (id:
     isWatch || isPortfolio,
     days,
     refresh,
+    visible,
   );
   async function add() {
     try {
@@ -66,9 +67,9 @@ export default function Sentinel({ page, open }: { page: WorkspaceId; open: (id:
       <Contract
         key={page}
         diff={page === "sentinel-diff"}
-        initial={contractAddress || (filter === "*" ? (watched[0]?.raw ?? "") : filter)}
+        initial={initialAddress || (filter === "*" ? (watched[0]?.raw ?? "") : filter)}
         open={(id, addr) => {
-          setContractAddress(addr);
+          if (id === "sentinel-diff") compareAddress(addr);
           open(id);
         }}
       />
@@ -89,7 +90,7 @@ export default function Sentinel({ page, open }: { page: WorkspaceId; open: (id:
           <span className="badge">Mainnet</span>
         </div>
         <div className="card-body wallet-form">
-          <form
+          {isWatch && <form
             className="wallet-form"
             onSubmit={(e) => {
               e.preventDefault();
@@ -107,12 +108,20 @@ export default function Sentinel({ page, open }: { page: WorkspaceId; open: (id:
             <div className="workspace-actions">
               <button className="btn solid">Добавить адрес</button>
             </div>
-          </form>
+          </form>}
           {formError && (
             <p role="alert" className="error-box">
               {formError}
             </p>
           )}
+          {isPortfolio && <div className="workspace-actions">
+            <button className="btn" onClick={() => open("sentinel-watch")}>Управлять кошельками</button>
+            <button className="btn" disabled={!points.length} onClick={() => {
+              const rows = points.filter(p => p.time >= Date.now() - Number(days) * 86400000)
+                .map(p => [new Date(p.time).toISOString(), p.usd].join(","));
+              void saveFile("gramix-portfolio.csv", ["UTC,USD", ...rows].join("\r\n"), "text/csv;charset=utf-8");
+            }}>Скачать CSV</button>
+          </div>}
           {watched.length > 0 && (
             <>
               <Select
@@ -138,7 +147,7 @@ export default function Sentinel({ page, open }: { page: WorkspaceId; open: (id:
                 <button className="btn" disabled={busy} onClick={() => tick((n) => n + 1)}>
                   {busy ? "Обновляю…" : "Обновить"}
                 </button>
-                {filter !== "*" && (
+                {isWatch && filter !== "*" && (
                   <button className="btn" onClick={() => addressBook.update(filter, false, { watch: false })}>
                     Убрать из наблюдения
                   </button>
@@ -154,13 +163,15 @@ export default function Sentinel({ page, open }: { page: WorkspaceId; open: (id:
         </p>
       )}
       <WalletAssets {...{ hold, points, price, watched, days, isPortfolio }} />
-      <WalletActivity {...{ feed, busy, error, open }} hasWallets={watched.length > 0} />
+      {isPortfolio && !hold.length && <section className="card"><div className="card-head"><h2>Оценка активов</h2></div>
+        <div className="card-body"><p className="muted">{!watched.length ? "Добавьте кошелёк в Watchtower для оценки портфеля." : error ? "Оценка недоступна." : "Загружаю активы…"}</p></div></section>}
+      {isWatch && <><WalletActivity {...{ feed, busy, error, open }} hasWallets={watched.length > 0} />
       <section className="card">
         <div className="card-head">
           <h2>Уведомления Telegram</h2>
         </div>
         <div className="card-body wallet-form">
-          <p>
+          <p className="muted">
             {__WEB__
               ? "Настройка уведомлений доступна в приложении Gramix для Windows."
               : "Откройте раздел Telegram в настройках, чтобы подключить собственного бота."}
@@ -179,7 +190,7 @@ export default function Sentinel({ page, open }: { page: WorkspaceId; open: (id:
             </div>
           )}
         </div>
-      </section>
+      </section></>}
     </div>
   );
 }
