@@ -8,7 +8,7 @@
  */
 
 import { execSync } from "node:child_process";
-import { copyFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
@@ -23,6 +23,8 @@ function pagesFiles(): Plugin {
     apply: "build",
     closeBundle() {
       copyFileSync(file("./dist-web/index.html"), file("./dist-web/404.html"));
+      mkdirSync(file("./dist-web/transfer-graph"), { recursive: true });
+      copyFileSync(file("./dist-web/index.html"), file("./dist-web/transfer-graph/index.html"));
       writeFileSync(file("./dist-web/CNAME"), "gram.lovlydev.ru\n");
     },
   };

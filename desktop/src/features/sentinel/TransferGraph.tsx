@@ -27,7 +27,7 @@ import { positionNetwork, type LayoutRequest } from "./graphLayout";
 
 const emptyRows: Transfer[]=[];
 const params = new URLSearchParams(location.search);
-const shared = __WEB__ && location.pathname === "/transfer-graph";
+const shared = __WEB__ && ["/transfer-graph", "/transfer-graph/"].includes(location.pathname);
 const initial = shared ? params.get("address") ?? "" : "";
 function graphColors(){
   const css=getComputedStyle(document.documentElement);
