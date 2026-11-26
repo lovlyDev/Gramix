@@ -3,6 +3,7 @@
   "text.replace(/^\\[?English\\]?(?:\\([^)]*\\))? \\| \\[?Русский\\]?(?:\\([^)]*\\))?[ \\t]*\\r?\\n/m,"
  ],
  "strings": {
+    "Некорректный адрес кошелька": "Invalid wallet address",
     "Входящий перевод": "Incoming transfer",
     "Исходящий перевод": "Outgoing transfer",
     "Управлять кошельками": "Manage wallets",
@@ -25,7 +26,7 @@
     ". Сохранено в правилах:": "Saved in rules:",
     "<h2>Gramix Sentinel</h2><p>Проверочное уведомление. Доставка в привязанный чат работает.</p>": "<h2>Gramix Sentinel</h2><p>Test notification. Delivery to your linked chat is working.</p>",
     "<h2>Gramix Sentinel</h2><p>Чат подключён. Управление адресами и порогом перевода доступно в настройках Gramix.</p>": "<h2>Gramix Sentinel</h2><p>Chat linked. Manage addresses and the transfer threshold in Gramix settings.</p>",
-    "<h2>Gramix Watchtower</h2><p><b>{0}</b></p><p>Кошелёк <code>{1}</code></p><p>Mainnet · подтверждено · <tg-time unix=\"{2}\">UTC</tg-time></p><tg-button-row><tg-button type=\"url\" style=\"primary\" url=\"https://tonviewer.com/transaction/{3}\">Открыть транзакцию</tg-button><tg-button type=\"url\" url=\"https://gram.lovlydev.ru/address/{4}\">Посмотреть адрес</tg-button></tg-button-row>": "<h2>Gramix Watchtower</h2><p><b>{0}</b></p><p>Wallet <code>{1}</code></p><p>Mainnet · confirmed · <tg-time unix=\"{2}\">UTC</tg-time></p><tg-button-row><tg-button type=\"url\" style=\"primary\" url=\"https://tonviewer.com/transaction/{3}\">Open transaction</tg-button><tg-button type=\"url\" url=\"https://gram.lovlydev.ru/address/{4}\">View address</tg-button></tg-button-row>",
+    "<h2>Gramix Watchtower</h2><p><b>{0}</b></p><p>Кошелёк <code>{1}</code></p><p>Mainnet · подтверждено{2}</p><tg-button-row><tg-button type=\"url\" style=\"primary\" url=\"https://tonviewer.com/transaction/{3}\">Открыть транзакцию</tg-button><tg-button type=\"url\" url=\"https://gram.lovlydev.ru/address/{4}\">Посмотреть адрес</tg-button></tg-button-row>": "<h2>Gramix Watchtower</h2><p><b>{0}</b></p><p>Wallet <code>{1}</code></p><p>Mainnet · confirmed{2}</p><tg-button-row><tg-button type=\"url\" style=\"primary\" url=\"https://tonviewer.com/transaction/{3}\">Open transaction</tg-button><tg-button type=\"url\" url=\"https://gram.lovlydev.ru/address/{4}\">View address</tg-button></tg-button-row>",
     "BOC · Base64 или hex": "BOC · Base64 or hex",
     "BOC сообщения": "Message BOC",
     "Get-метод": "Get method",
