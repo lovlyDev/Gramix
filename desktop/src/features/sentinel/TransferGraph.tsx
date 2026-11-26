@@ -57,6 +57,7 @@ export default function TransferGraph() {
     return ()=>observer.disconnect();
   },[]);
   const [limit,setLimit] = useState(30), [items,setItems] = useState<Transfer[]>([]);
+  const [loadedCount,setLoadedCount]=useState(0);
   const [selected, select] = useState(""), [busy,setBusy] = useState(false), [message,note] = useState("");
   const [fullscreen,setFullscreen]=useState<HTMLElement|null>(null);
   useEffect(()=>{
@@ -74,9 +75,11 @@ export default function TransferGraph() {
     const visited = new Set<string>();
     const beforeCount=ids.current.size;
     let pending: Transfer[]=[];
-    let lastPaint=0;
+    let lastPaint=-Infinity, lastCount=-Infinity;
     function flush() {
-      if(!active() || !pending.length)return;
+      if(!active())return;
+      setLoadedCount(ids.current.size);
+      if(!pending.length)return;
       const batch=pending; pending=[]; lastPaint=performance.now();
       setItems(previous=>previous.concat(batch));
     }
@@ -93,7 +96,13 @@ export default function TransferGraph() {
           ids.current.add(t.id); connected.current.add(t.from); connected.current.add(t.to); return true;
         });
         pending.push(...added);
-        if(performance.now()-lastPaint>180) flush();
+        const now=performance.now();
+        // Keep progress responsive without rebuilding the SVG for every API page.
+        if(now-lastCount>=200){setLoadedCount(ids.current.size);lastCount=now;}
+        const largeHistory=ids.current.size>=1200;
+        const refreshDelay=largeHistory ? 1800 : 500;
+        const batchSize=largeHistory ? 1200 : 150;
+        if(now-lastPaint>=refreshDelay || pending.length>=batchSize && now-lastPaint>=350)flush();
         cursor = page.events.length ? page.next : null;
         if (cursor && visited.has(cursor)) throw Error("API повторил курсор истории.");
         if (cursor) visited.add(cursor);
@@ -109,7 +118,7 @@ export default function TransferGraph() {
       const raw = Address.parse(value).toRawString();
       if(root && root!==raw){options({focus:"",asset:"",min:"",from:"",until:""});setCollapsed([]);setSearch("");}
       shortLabels.current.clear();
-      setRoot(raw); setItems([]); connected.current.clear(); ids.current.clear(); cursors.current.clear(); select("");
+      setRoot(raw); setItems([]); setLoadedCount(0); connected.current.clear(); ids.current.clear(); cursors.current.clear(); select("");
       const expectedRoot = generation.current + 1;
       await load(raw);
       if (generation.current !== expectedRoot) return;
@@ -265,7 +274,7 @@ export default function TransferGraph() {
       <div className="workspace-actions"><button className="btn solid">Построить граф</button>
       {busy && <button className="btn" type="button" onClick={()=>{flushPending.current();generation.current++;setBusy(false);}}>Остановить</button>}</div>
     </form></section>
-    {root && <section ref={panel} className="card"><div className="card-head"><h2>Связи адреса</h2><span className="badge">{(analytic?rows.filter(t=>t.from===anchor || t.to===anchor):rows).length} / {items.length}</span></div>
+    {root && <section ref={panel} className="card"><div className="card-head"><h2>Связи адреса</h2><span className="badge">{(analytic?rows.filter(t=>t.from===anchor || t.to===anchor):rows).length} / {loadedCount}</span></div>
       <div className="card-body wallet-form">
         <div className="workspace-actions" style={{alignItems:"center",justifyContent:"space-between"}}>
         <div className="workspace-actions" style={{alignItems:"center"}}>
@@ -334,8 +343,8 @@ export default function TransferGraph() {
         {analytic ? <TransferCharts key={layout+root+opt("step")+asset+dir+anchor} rows={layout==="time"?filtered:rows} anchor={anchor} label={label} colors={colors} chart={chart}
           pair={(raw,direction)=>{setPairDirection(direction);select(raw);setLimit(30);}} range={(a,b)=>options({from:String(a),until:String(b)})}
           timeline={layout==="time"} step={opt("step")==="hour"?3600:86400} start={start} end={end}/> : <div style={{position:"relative",background:colors[0]}}>
-          <svg ref={graphElement} tabIndex={0} fontFamily="var(--font)" fontSize={12} aria-label="Граф переводов" style={{display:"block",width:"100%",height:fullscreen?"calc(100dvh - 160px)":"clamp(320px, 65vh, 1100px)",touchAction:"none",cursor:"grab",position:"relative",userSelect:"none"}}/></div>}
-        {(!analytic || busy) && <p className="muted">{busy ? "Загружаю историю…" : !items.length && cursors.current.get(root)===null ? "В выборке нет событий." : "Нажмите на адрес, чтобы посмотреть переводы и раскрыть связи."}</p>}
+          <svg ref={graphElement} className="transfer-graph-viewport" tabIndex={0} fontFamily="var(--font)" fontSize={12} aria-label="Граф переводов" style={{display:"block",width:"100%",height:fullscreen?"calc(100dvh - 160px)":"clamp(320px, 65vh, 1100px)",touchAction:"none",cursor:"grab",position:"relative",userSelect:"none"}}/></div>}
+        {(!analytic || busy) && <p className="muted">{busy ? "Загружаю историю…" : !items.length && cursors.current.get(root)===null ? "В выборке нет событий." : graph.points.length>=1200 || graph.edges.length>=1800 ? "Нажмите на группу с числом, чтобы приблизить адреса." : "Нажмите на адрес, чтобы посмотреть переводы и раскрыть связи."}</p>}
       </div></section>}
     {message && <p className="field-help" role="status">{message}</p>}
     <Dialog.Root open={!!selected} onOpenChange={v=>{if(!v)select("");}}><Dialog.Portal container={document.fullscreenElement as HTMLElement | null}><Dialog.Overlay className="dialog-overlay"/>

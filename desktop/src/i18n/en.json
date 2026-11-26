@@ -3,6 +3,7 @@
   "text.replace(/^\\[?English\\]?(?:\\([^)]*\\))? \\| \\[?Русский\\]?(?:\\([^)]*\\))?[ \\t]*\\r?\\n/m,"
  ],
  "strings": {
+    "Нажмите на группу с числом, чтобы приблизить адреса.": "Select a numbered group to zoom in on its addresses.",
     "Фильтры": "Filters",
     "Сбросить фильтры": "Reset filters",
     "История проверена. Все найденные переводы уже есть на графе.": "History checked. All transfers found are already on the graph.",
