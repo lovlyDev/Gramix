@@ -56,6 +56,7 @@ const web = __WEB__;
 const initialLocation = web ? parsePath(window.location.pathname) : null;
 const ContractBuilder = lazy(() => import("./features/contract-builder/BuilderWorkspace"));
 const DeveloperCli = lazy(() => import("./features/developer-cli/CliWorkspace"));
+const TransferGraph = lazy(() => import("./features/sentinel/TransferGraph"));
 const sentinelPages = ["sentinel-watch", "sentinel-portfolio", "sentinel-contract", "sentinel-diff", "sentinel-guardian"] as const;
 const Sentinel = lazy(() => import("./features/sentinel/Sentinel"));
 const ContractSandbox = lazy(() => import("./features/contract-sandbox/SandboxWorkspace"));
@@ -151,7 +152,7 @@ export default function App() {
   const [visitedWorkspaces, setVisitedWorkspaces] = useState<WorkspaceId[]>([]);
   useEffect(() => {
     const page = activeTool === "sentinel-graph" ? "sentinel-guardian" : activeTool;
-    if (![...sentinelPages, "contract-sandbox", "contract-builder", "developer-cli"].includes(page)) return;
+    if (!["transfer-graph", ...sentinelPages, "contract-sandbox", "contract-builder", "developer-cli"].includes(page)) return;
     setVisitedWorkspaces(current => current.includes(page) ? current : [...current, page]);
   }, [activeTool]);
   useEffect(() => {
@@ -505,7 +506,7 @@ export default function App() {
     }
   }
 
-  const wide = ["contract-sandbox", "contract-builder", "developer-cli"].includes(activeTool);
+  const wide = ["transfer-graph", "contract-sandbox", "contract-builder", "developer-cli"].includes(activeTool);
   const statusLabel = app.status === "paused" ? "Пауза" : app.status === "initializing" ? "Подготовка"
     : app.status === "stopping" ? "Остановка" : app.status === "running" ? "Поиск активен" : "Готово";
   const screenTitle = activeTool === "overview" ? "Обзор" : activeTool === "settings" ? "Настройки"
@@ -521,6 +522,10 @@ export default function App() {
     <strong>{screenTitle}</strong></div>;
   const liveChip = running && activeTool !== "generator" ? { label: statusLabel, value: fmt.format(app.rate) + " адр/с" } : null;
   const screens = <>
+        {(activeTool === "transfer-graph" || visitedWorkspaces.includes("transfer-graph")) &&
+          <div className="tool-screen" hidden={activeTool !== "transfer-graph"}><ToolBoundary name="Граф переводов">
+            <Suspense fallback={<p className="muted">Загружаю историю…</p>}><TransferGraph /></Suspense>
+          </ToolBoundary></div>}
         {sentinelPages.map(page => {
           const graph = page === "sentinel-guardian" && activeTool === "sentinel-graph";
           const visible = activeTool === page || graph;

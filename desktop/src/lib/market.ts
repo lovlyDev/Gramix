@@ -106,6 +106,7 @@ export type HistoryAction = {
   type: string; ok: boolean; title: string; value: string;
   direction: "in" | "out" | "self" | "other"; amountNano: string | null; counterparty: Party | null; comment: string;
   /** raw-адрес NFT для переводов и покупок NFT. */
+  jetton?: { raw: string; symbol: string; decimals: number; amount: string };
   nft: string | null;
 };
 export type HistoryEvent = { id: string; time: number; lt: string; pending: boolean; scam: boolean; tx: string | null; actions: HistoryAction[] };
@@ -130,7 +131,11 @@ export function normalizeEvents(value: unknown, account: string): HistoryPage {
         const from = sender?.raw.toLowerCase(); const to = recipient?.raw.toLowerCase();
         const direction = from === self && to === self ? "self" : to === self ? "in" : from === self ? "out" : "other";
         const amount = typeof body.amount === "number" || typeof body.amount === "string" ? String(body.amount) : null;
+        const token = obj(body.jetton);
+        const decimals = Number(token.decimals ?? 9);
         return {
+          jetton: type === "JettonTransfer" && typeof token.address === "string" && amount && /^\d+$/.test(amount) && Number.isInteger(decimals) && decimals>=0 && decimals<=255
+            ? {raw:token.address.toLowerCase(), symbol:str(token.symbol), decimals, amount} : undefined,
           type, ok: str(action.status) !== "failed", title: str(preview.description) || type, value: str(preview.value),
           direction, amountNano: type === "TonTransfer" ? amount : null,
           counterparty: direction === "in" ? sender : direction === "out" ? recipient : sender ?? recipient,

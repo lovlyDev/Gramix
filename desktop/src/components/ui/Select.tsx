@@ -17,17 +17,18 @@ type SelectProps = {
   options: SelectOption[];
   label: string;
   disabled?: boolean;
+  portalContainer?: HTMLElement | null;
   className?: string;
 };
 
 export default function Select({ value, onValueChange, options, label, disabled,
-  className = "" }: SelectProps) {
+  portalContainer, className = "" }: SelectProps) {
   return <RadixSelect.Root value={value} onValueChange={onValueChange} disabled={disabled}>
     <RadixSelect.Trigger className={`ui-select ${className}`} aria-label={label}>
       <RadixSelect.Value />
       <RadixSelect.Icon className="ui-select-chevron"><ChevronDown size={17} /></RadixSelect.Icon>
     </RadixSelect.Trigger>
-    <RadixSelect.Portal>
+    <RadixSelect.Portal container={portalContainer}>
       <RadixSelect.Content className="ui-select-content" position="popper"
         sideOffset={5} collisionPadding={12}>
         <RadixSelect.ScrollUpButton className="ui-select-scroll"><ChevronUp size={16} /></RadixSelect.ScrollUpButton>

@@ -8,7 +8,7 @@
  */
 
 import { useEffect, useRef, useState, type ComponentType } from "react";
-import { ArrowLeftRight, Binary, Bookmark, ChevronDown, ChevronRight, FileCode,
+import { Network, ArrowLeftRight, Binary, Bookmark, ChevronDown, ChevronRight, FileCode,
   FlaskConical, Gauge, Hammer, ScanSearch, Search, Settings, ShieldCheck, Sparkles,
   SquareTerminal, Star, Wallet, WandSparkles, Zap, type LucideProps } from "lucide-react";
 import { SiGithub } from "react-icons/si";
@@ -38,6 +38,7 @@ export const toolGroups = [
     { id: "sentinel-contract", label: "Contract Watch", description: "Состояние и сообщения контракта", icon: FileCode, color: "#5e5ce6" },
     { id: "sentinel-diff", label: "Contract Diff", description: "Сравнение двух блоков", icon: Binary, color: "#af52de" },
     { id: "sentinel-guardian", label: "Transaction Guardian", description: "Локальная симуляция на состоянии Mainnet", icon: ShieldCheck, color: "#34c759" },
+    { id: "transfer-graph", label: "Граф переводов", description: "Связи публичного адреса", icon: Network, color: "#30b0c7" },
     { id: "sentinel-graph", label: "Граф сообщений", description: "Трасса исполнения Sandbox", icon: ArrowLeftRight, color: "#ff9500" },
   ] },
   { title: "Разработка", items: [
@@ -79,6 +80,7 @@ export function ToolIcon({ tool, className = "", size = 36 }: { tool: ToolId; cl
 }
 
 const searchAliases: Record<ToolId, string> = {
+  "transfer-graph": "переводы связи граф transfer graph",
   "sentinel-watch": "watchtower наблюдение", "sentinel-portfolio": "portfolio портфель", "sentinel-contract": "contract watch контракт",
   "sentinel-diff": "diff блоки", "sentinel-guardian": "guardian simulate", "sentinel-graph": "analyze graph",
   generator: "vanity generator search address поиск красивый",
