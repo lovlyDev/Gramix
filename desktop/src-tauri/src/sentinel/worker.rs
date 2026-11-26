@@ -12,6 +12,46 @@ use serde_json::{json, Value};
 use std::time::Duration;
 use windows_registry::Key;
 
+fn display_address(raw: &str) -> Result<String> {
+    use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
+    if !raw_ok(raw) {
+        return Err("Некорректный адрес кошелька".into());
+    }
+    let (chain, hash) = raw.split_once(':').unwrap();
+    let mut bytes = [0u8; 36];
+    bytes[0] = 0x11;
+    bytes[1] = chain.parse::<i8>().unwrap() as u8;
+    for (index, byte) in bytes[2..34].iter_mut().enumerate() {
+        *byte = u8::from_str_radix(&hash[index * 2..index * 2 + 2], 16).unwrap();
+    }
+    // TON friendly address checksum: CRC-16/XMODEM, big endian.
+    let mut crc = 0u16;
+    for byte in &bytes[..34] {
+        crc ^= u16::from(*byte) << 8;
+        for _ in 0..8 {
+            crc = if crc & 0x8000 != 0 {
+                (crc << 1) ^ 0x1021
+            } else {
+                crc << 1
+            };
+        }
+    }
+    bytes[34..].copy_from_slice(&crc.to_be_bytes());
+    Ok(URL_SAFE_NO_PAD.encode(bytes))
+}
+
+fn event_time(seconds: Option<i64>) -> String {
+    let Some(time) = seconds.and_then(|s| chrono::DateTime::from_timestamp(s, 0)) else {
+        return String::new();
+    };
+    let local = time.with_timezone(&chrono::Local);
+    format!(
+        r#" · <tg-time unix="{}">{}</tg-time>"#,
+        time.timestamp(),
+        local.format("%d.%m.%Y %H:%M:%S %:z")
+    )
+}
+
 async fn messages(c: &reqwest::Client, k: &Key, t: &str) -> Result<()> {
     let updates=api(c,t,"getUpdates",json!({"offset":field(k,"offset").parse::<i64>().unwrap_or(0),"limit":30,"allowed_updates":["message"]})).await?;
     for update in updates.as_array().ok_or("Некорректный список сообщений")?
@@ -139,8 +179,9 @@ async fn scan(c: &reqwest::Client, k: &Key, t: &str, raw: &str, rules: &Value) -
             if id.len() != 64 || !id.bytes().all(|b| b.is_ascii_hexdigit()) {
                 return Err("Некорректный ID события".into());
             }
-            let time = e["timestamp"].as_u64().unwrap_or(0);
-            let html=format!("<h2>Gramix Watchtower</h2><p><b>{}</b></p><p>Кошелёк <code>{raw}</code></p><p>Mainnet · подтверждено · <tg-time unix=\"{time}\">UTC</tg-time></p><tg-button-row><tg-button type=\"url\" style=\"primary\" url=\"https://tonviewer.com/transaction/{id}\">Открыть транзакцию</tg-button><tg-button type=\"url\" url=\"https://gram.lovlydev.ru/address/{raw}\">Посмотреть адрес</tg-button></tg-button-row>",lines.join(" · "));
+            let time = event_time(e["timestamp"].as_i64());
+            let address = display_address(raw)?;
+            let html=format!("<h2>Gramix Watchtower</h2><p><b>{}</b></p><p>Кошелёк <code>{address}</code></p><p>Mainnet · подтверждено{time}</p><tg-button-row><tg-button type=\"url\" style=\"primary\" url=\"https://tonviewer.com/transaction/{id}\">Открыть транзакцию</tg-button><tg-button type=\"url\" url=\"https://gram.lovlydev.ru/address/{raw}\">Посмотреть адрес</tg-button></tg-button-row>",lines.join(" · "));
             api(c,t,"sendRichMessage",json!({"chat_id":field(k,"chat"),"rich_message":{"html":html,"skip_entity_detection":true}})).await?;
         }
         cursors[raw] = e["event_id"].clone();
@@ -192,5 +233,22 @@ pub fn worker() -> Result<()> {
             }
             std::thread::sleep(Duration::from_secs(1))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn formats_telegram_address_and_clickable_time() {
+        assert_eq!(
+            display_address(&format!("0:{}", "00".repeat(32))).unwrap(),
+            "EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c"
+        );
+        let label = event_time(Some(1_700_000_000));
+        assert!(label.contains(r#"unix="1700000000">"#));
+        assert!(label.contains("2023"));
+        assert!(event_time(None).is_empty());
     }
 }

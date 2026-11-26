@@ -1,6 +1,6 @@
 [package]
 name = "gramix-desktop"
-version = "0.5.1"
+version = "0.5.2"
 description = "Gramix TON vanity generator desktop application"
 authors = ["Gramix"]
 edition = "2021"
@@ -23,6 +23,8 @@ tauri-plugin-updater = "2.13.0"
 tauri-plugin-notification = "2.8.1"
 
 [target.'cfg(windows)'.dependencies]
+base64 = "0.22.1"
+chrono = "0.4.45"
 windows-registry = "0.6.1"
 windows-sys = { version = "0.61.2", features = ["Win32_Security_Credentials", "Win32_Foundation"] }
 getrandom = "0.4.3"

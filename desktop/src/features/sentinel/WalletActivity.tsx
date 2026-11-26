@@ -7,6 +7,7 @@
  * See LICENSE for details.
  */
 
+import { ArrowDownLeft, ArrowUpRight, Repeat } from "lucide-react";
 import { formatGram } from "../../lib/format";
 import { saveFile } from "../../lib/save";
 import type { Entry } from "./useWalletMonitor";
@@ -66,23 +67,24 @@ export function WalletActivity({
                   : "Добавьте адрес для просмотра событий."}
           </p>
         )}
-        {feed.map(({ raw, event }) => (
-          <div key={raw + event.id} className="history-item">
+        {feed.map(({ raw, event }) => event.actions.map((action, index) => {
+          const incoming = action.direction === "in";
+          const outgoing = action.direction === "out";
+          const Icon = incoming ? ArrowDownLeft : outgoing ? ArrowUpRight : Repeat;
+          const title = action.amountNano && (incoming || outgoing)
+            ? (incoming ? "Входящий перевод" : "Исходящий перевод") : action.title;
+          return <div key={raw + event.id + index} className={`history-item ${action.direction}`}>
+            <span className="history-icon"><Icon size={16} /></span>
             <div className="history-main">
-              <b>{event.actions.map((a) => a.title).join(" · ")}</b>
-              <small>
+              <div className="history-line"><b>{title}</b></div>
+              <div className="history-sub">
                 {new Date(event.time * 1000).toLocaleString()} · {raw.slice(0, 6)}…{raw.slice(-5)} ·{" "}
                 {event.pending ? "В обработке" : "Подтверждено"}
-              </small>
+              </div>
             </div>
             <div className="history-amount">
-              {event.actions.map((a, i) => (
-                <small key={i}>
-                  {a.direction === "out" ? "−" : a.direction === "in" ? "+" : ""}
-                  {a.amountNano ? formatGram(a.amountNano) : a.value}
-                </small>
-              ))}
-              {event.tx && (
+              <b>{incoming ? "+" : outgoing ? "−" : ""}{action.amountNano ? formatGram(action.amountNano) : action.value}</b>
+              {event.tx && index === 0 && (
                 <button
                   className="card-link"
                   onClick={() => {
@@ -98,8 +100,8 @@ export function WalletActivity({
                 </button>
               )}
             </div>
-          </div>
-        ))}
+          </div>;
+        }))}
       </div>
     </section>
   );

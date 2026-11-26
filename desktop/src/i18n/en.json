@@ -3,6 +3,8 @@
   "text.replace(/^\\[?English\\]?(?:\\([^)]*\\))? \\| \\[?Русский\\]?(?:\\([^)]*\\))?[ \\t]*\\r?\\n/m,"
  ],
  "strings": {
+    "Входящий перевод": "Incoming transfer",
+    "Исходящий перевод": "Outgoing transfer",
     "Управлять кошельками": "Manage wallets",
     "Добавьте кошелёк в Watchtower для оценки портфеля.": "Add a wallet in Watchtower to value your portfolio.",
     "Оценка недоступна.": "Valuation unavailable.",
