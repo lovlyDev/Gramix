@@ -1,6 +1,6 @@
 [package]
 name = "gramix-desktop"
-version = "0.6.1"
+version = "0.7.0"
 description = "Gramix TON vanity generator desktop application"
 authors = ["Gramix"]
 edition = "2021"
