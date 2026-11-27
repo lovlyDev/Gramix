@@ -11,6 +11,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Address } from "@ton/core";
 import { Download, Link, Maximize, Minimize, SlidersHorizontal, X } from "lucide-react";
+import { GraphInvestigations, newConnections, readInvestigations, storeInvestigations, type Investigation } from "./GraphInvestigations";
+import { TransferComparison } from "./TransferComparison";
 import TransferCharts from "./TransferCharts";
 import Checkbox from "../../components/ui/Checkbox";
 import {useAddressBook} from "../../lib/addressBook";
@@ -18,7 +20,7 @@ import Select from "../../components/ui/Select";
 import { copyText } from "../../lib/clipboard";
 import { errorText } from "../../lib/errors";
 import { formatGram } from "../../lib/format";
-import { getHistory } from "../../lib/market";
+import { getHistory, type HistoryEvent } from "../../lib/market";
 import { saveFile } from "../../lib/save";
 import { graphSvg, viewport } from "./graphViewport";
 import { request } from "./activityService";
@@ -57,6 +59,11 @@ export default function TransferGraph() {
     return ()=>observer.disconnect();
   },[]);
   const [limit,setLimit] = useState(30), [items,setItems] = useState<Transfer[]>([]);
+  const [investigations,setInvestigations]=useState(readInvestigations), [activeInvestigation,setActiveInvestigation]=useState("");
+  const [comparison,setComparison]=useState(false), [comparisonRange,setComparisonRange]=useState<{from:number;to:number;address:string}|null>(null);
+  const [recentLimit,setRecentLimit]=useState(10);
+  const [linkedEvent,setLinkedEvent]=useState<HistoryEvent|null>(null);
+  const eventId=useRef("");
   const [loadedCount,setLoadedCount]=useState(0);
   const [selected, select] = useState(""), [busy,setBusy] = useState(false), [message,note] = useState("");
   const [fullscreen,setFullscreen]=useState<HTMLElement|null>(null);
@@ -91,6 +98,8 @@ export default function TransferGraph() {
         const before = cursor ?? undefined;
         const page = await request(() => getHistory(raw,false,before),active);
         if (!active()) return;
+        const match=eventId.current && page.events.find(event=>event.id.toLowerCase()===eventId.current);
+        if(match)setLinkedEvent(match);
         const added = transfers(raw,page.events).filter(t => {
           if (ids.current.has(t.id)) return false;
           ids.current.add(t.id); connected.current.add(t.from); connected.current.add(t.to); return true;
@@ -112,11 +121,19 @@ export default function TransferGraph() {
     } catch(e) { if(active()) note(errorText(e)); }
     finally { flush(); if(active()) setBusy(false); }
   }
-  async function build(value:string, expand: string[] = []) {
+  async function build(value:string, expand: string[] = [], restored?:URLSearchParams) {
     try {
       if (Address.isFriendly(value) && Address.parseFriendly(value).isTestOnly) throw Error("Выберите публичный адрес Mainnet.");
       const raw = Address.parse(value).toRawString();
-      if(root && root!==raw){options({focus:"",asset:"",min:"",from:"",until:""});setCollapsed([]);setSearch("");}
+      if(restored)setQuery(restored);
+      else if(root && root!==raw){options({focus:"",asset:"",min:"",from:"",until:""});setCollapsed([]);setSearch("");}
+      if(!restored){
+        setActiveInvestigation("");
+        options({event:""});
+      }
+      const requested=restored?.get("event")??"";
+      eventId.current=/^[a-f0-9]{64}$/i.test(requested)?requested.toLowerCase():"";
+      setLinkedEvent(null);setRecentLimit(10);setComparisonRange(null);
       shortLabels.current.clear();
       setRoot(raw); setItems([]); setLoadedCount(0); connected.current.clear(); ids.current.clear(); cursors.current.clear(); select("");
       const expectedRoot = generation.current + 1;
@@ -132,7 +149,7 @@ export default function TransferGraph() {
     } catch { note("Введите корректный адрес Mainnet."); }
   }
   useEffect(() => {
-    if (initial) void build(initial,params.getAll("expand"));
+    if (initial) void build(initial,params.getAll("expand"),params);
     return () => { generation.current++; };
   }, []);
   const analytic=layout==="flow" || layout==="time", focus=Address.isRaw(opt("focus"))?opt("focus"):"", anchor=focus||root;
@@ -231,7 +248,7 @@ export default function TransferGraph() {
     }
     return {...network,labels};
   },[network,names]);
-  function openNode(raw:string){setLimit(30);setPairDirection(null);select(raw);}
+  function openNode(raw:string){setLimit(30);setPairDirection(null);setComparisonRange(null);select(raw);}
   useEffect(() => {
     if (!graphElement.current) return;
     const controller=viewport(graphElement.current,openNode);
@@ -239,12 +256,14 @@ export default function TransferGraph() {
     return () => { controller.destroy();view.current=null; };
   },[root,analytic]);
   useEffect(()=>{view.current?.update(graph,colors,focus);},[graph,colors,focus,analytic]);
-  const detail = useMemo(()=>rows.filter(t=>{
+  const detail = useMemo(()=>(comparisonRange?items:rows).filter(t=>{
     if(!selected)return false;
+    if(comparisonRange)return t.ok && !t.pending && t.time>=comparisonRange.from && t.time<comparisonRange.to &&
+      t.from!==t.to && (t.from===comparisonRange.address && t.to===selected || t.to===comparisonRange.address && t.from===selected);
     if(!pairDirection)return t.from===selected || t.to===selected;
     if(!t.ok || t.pending || !/^\d+$/.test(t.units))return false;
     return pairDirection==="in" ? t.to===anchor && t.from===selected : t.from===anchor && t.to===selected;
-  }),[selected,rows,pairDirection,anchor]);
+  }),[selected,rows,pairDirection,anchor,comparisonRange,items]);
   const canCollapse=useMemo(()=>{
     if(!selected || pairDirection || selected===root || collapsed.includes(selected) || !cursors.current.has(selected))return false;
     const remaining=reachable(selected);
@@ -264,6 +283,37 @@ export default function TransferGraph() {
     for (const peer of cursors.current.keys()) if (peer !== root) url.searchParams.append("expand",peer);
     return url.href;
   }
+  const investigation=investigations.find(view=>view.id===activeInvestigation);
+  const recent=useMemo(()=>investigation && !busy ? newConnections(items,investigation.savedAt,root) : [],[investigation,items,busy,root]);
+
+  function persistViews(updated:Investigation[]) {
+    try { storeInvestigations(updated);setInvestigations(updated);return true; }
+    catch(e){note(errorText(e));return false;}
+  }
+  function saveInvestigation(name:string,update=false){
+    const previous=update?investigation:undefined;
+    const id=previous?.id??crypto.randomUUID();
+    const view={id,name,query:new URL(shareUrl()).search,savedAt:Date.now(),notes:previous?.notes??investigation?.notes??{}};
+    if(!persistViews(previous?investigations.map(item=>item.id===id?view:item):[...investigations,view]))return false;
+    setActiveInvestigation(id);setRecentLimit(10);return true;
+  }
+  function restore(view:Investigation){
+    const stored=new URLSearchParams(view.query), address=stored.get("address")??"";
+    if(!Address.isRaw(address)&&!Address.isFriendly(address)){note("Введите корректный адрес Mainnet.");return;}
+    const mode=stored.get("layout")??"tree";
+    setLayout(["tree","web","time","flow"].includes(mode)?mode:"tree");
+    setInput(address);setCollapsed(stored.getAll("collapse"));setActiveInvestigation(view.id);
+    void build(address,stored.getAll("expand"),stored);
+  }
+  const selectedNote=investigation?.notes[selected]??"";
+  const [noteDraft,setNoteDraft]=useState<string|null>(null);
+  useEffect(()=>setNoteDraft(null),[selected,activeInvestigation]);
+  function saveNote(){
+    if(!investigation || noteDraft===null)return;
+    const notes={...investigation.notes};
+    if(noteDraft.trim())notes[selected]=noteDraft.trim();else delete notes[selected];
+    if(persistViews(investigations.map(view=>view.id===investigation.id?{...view,notes}:view)))setNoteDraft(null);
+  }
   async function share(){
     try { await copyText(shareUrl()); note("Ссылка скопирована. Вставьте её в Notion как Embed."); }
     catch(e) { note(errorText(e)); }
@@ -274,12 +324,32 @@ export default function TransferGraph() {
       <div className="workspace-actions"><button className="btn solid">Построить граф</button>
       {busy && <button className="btn" type="button" onClick={()=>{flushPending.current();generation.current++;setBusy(false);}}>Остановить</button>}</div>
     </form></section>
+    {!__WEB__ && <GraphInvestigations views={investigations} active={investigation} canSave={!!root&&!busy}
+      restore={restore} save={saveInvestigation} remove={id=>{
+        if(persistViews(investigations.filter(view=>view.id!==id)) && activeInvestigation===id)setActiveInvestigation("");
+      }}/>}
+    {eventId.current && <section className="card"><div className="card-head"><h2>Событие Watchtower</h2>
+      <button className="card-link" onClick={()=>{eventId.current="";setLinkedEvent(null);options({event:"",from:"",until:""});}}>Показать всю историю</button></div>
+      <div className="card-body wallet-form">
+        <p className="muted">{linkedEvent?new Date(linkedEvent.time*1000).toLocaleString():busy?"Загружаю историю…":"Событие отсутствует в загруженной истории."}</p>
+        {linkedEvent?.actions.map((action,i)=><div className="settings-control" key={i}>
+          <div><strong>{action.title}</strong><span>{action.ok?"Подтверждено":"Ошибка"}</span></div>
+          <span>{action.amountNano?formatGram(action.amountNano,9):action.value}</span></div>)}
+      </div></section>}
+    {investigation && recent.length>0 && <section className="card"><div className="card-head">
+      <h2>Связи после сохранения</h2><span className="badge">{recent.length}</span></div><div className="card-body wallet-form">
+      <p className="field-help">{new Date(investigation.savedAt).toLocaleString()} · {investigation.name}</p>
+      <div className="workspace-actions">{recent.slice(0,recentLimit).map(raw=><button className="card-link" key={raw}
+        onClick={()=>{openNode(raw);setComparisonRange({from:Math.floor(investigation.savedAt/1000)+1,to:Infinity,address:root});}}>{label(raw)}</button>)}</div>
+      {recent.length>recentLimit && <button className="card-link" onClick={()=>setRecentLimit(n=>n+20)}>Показать ещё</button>}
+      </div></section>}
     {root && <section ref={panel} className="card"><div className="card-head"><h2>Связи адреса</h2><span className="badge">{(analytic?rows.filter(t=>t.from===anchor || t.to===anchor):rows).length} / {loadedCount}</span></div>
       <div className="card-body wallet-form">
         <div className="workspace-actions" style={{alignItems:"center",justifyContent:"space-between"}}>
         <div className="workspace-actions" style={{alignItems:"center"}}>
         <Select portalContainer={fullscreen} label="Раскладка" value={layout} onValueChange={setLayout} options={[{value:"tree",label:"Дерево"},{value:"web",label:"Паутина"},{value:"flow",label:"Поток средств"},{value:"time",label:"Активность по времени"}]}/>
         {layout==="time" && <Select portalContainer={fullscreen} label="Шаг времени" value={opt("step","day")} onValueChange={v=>options({step:v})} options={[{value:"hour",label:"По часам"},{value:"day",label:"По дням"}]}/>}
+        <button className="btn" aria-expanded={comparison} onClick={()=>setComparison(v=>!v)}>Сравнить периоды</button>
         <button className="btn" aria-expanded={filtersOpen} aria-controls="transfer-graph-filters" onClick={()=>setFiltersOpen(v=>!v)}>
           <SlidersHorizontal size={15}/> Фильтры {filterCount>0 && <span className="badge">{filterCount}</span>}
         </button></div>
@@ -340,8 +410,11 @@ export default function TransferGraph() {
         <button className="btn" aria-label="Увеличить масштаб" onClick={()=>view.current?.zoom(1.5)}>+</button>
         <button className="btn" onClick={()=>view.current?.fit()}>Вписать граф</button>
         </div>}
+        {comparison && <TransferComparison key={anchor} items={items} root={anchor} label={label} open={(raw,from,to)=>{
+          openNode(raw);setComparisonRange({from,to,address:anchor});
+        }}/>}
         {analytic ? <TransferCharts key={layout+root+opt("step")+asset+dir+anchor} rows={layout==="time"?filtered:rows} anchor={anchor} label={label} colors={colors} chart={chart}
-          pair={(raw,direction)=>{setPairDirection(direction);select(raw);setLimit(30);}} range={(a,b)=>options({from:String(a),until:String(b)})}
+          pair={(raw,direction)=>{setComparisonRange(null);setPairDirection(direction);select(raw);setLimit(30);}} range={(a,b)=>options({from:String(a),until:String(b)})}
           timeline={layout==="time"} step={opt("step")==="hour"?3600:86400} start={start} end={end}/> : <div style={{position:"relative",background:colors[0]}}>
           <svg ref={graphElement} className="transfer-graph-viewport" tabIndex={0} fontFamily="var(--font)" fontSize={12} aria-label="Граф переводов" style={{display:"block",width:"100%",height:fullscreen?"calc(100dvh - 160px)":"clamp(320px, 65vh, 1100px)",touchAction:"none",cursor:"grab",position:"relative",userSelect:"none"}}/></div>}
         {(!analytic || busy) && <p className="muted">{busy ? "Загружаю историю…" : !items.length && cursors.current.get(root)===null ? "В выборке нет событий." : graph.points.length>=1200 || graph.edges.length>=1800 ? "Нажмите на группу с числом, чтобы приблизить адреса." : "Нажмите на адрес, чтобы посмотреть переводы и раскрыть связи."}</p>}
@@ -351,7 +424,11 @@ export default function TransferGraph() {
       {selected && <Dialog.Content className="dialog-content wallet-form" aria-describedby={undefined}>
         <Dialog.Close className="nft-close" aria-label="Закрыть"><X size={16}/></Dialog.Close><Dialog.Title>{pairDirection==="in"?"Получено от адреса":pairDirection==="out"?"Отправлено на адрес":"Переводы адреса"}</Dialog.Title>
         <code style={{overflowWrap:"anywhere"}}>{friendly(selected)}</code>
-        {!analytic && <div className="workspace-actions">
+        {!__WEB__ && investigation && <div className="wallet-form">
+          <label className="sandbox-field">Заметка об адресе<textarea rows={2} maxLength={300} value={noteDraft??selectedNote} onChange={e=>setNoteDraft(e.target.value)} /></label>
+          {noteDraft!==null && <div className="workspace-actions"><button className="btn" onClick={saveNote}>Сохранить заметку</button></div>}
+        </div>}
+        {!analytic && !comparisonRange && <div className="workspace-actions">
         {focus!==selected && <button className="btn" onClick={()=>{options({focus:selected});view.current?.center(selected);select("");}}>Показать окружение</button>}
         {canCollapse && <button className="btn" onClick={()=>{setCollapsed(v=>[...v,selected]);select("");}}>Скрыть связи адреса</button>}
         {(collapsed.includes(selected) || cursors.current.get(selected)!==null) && <button className="btn" disabled={busy} onClick={()=>{setCollapsed(v=>v.filter(raw=>raw!==selected));if(cursors.current.get(selected)!==null)void load(selected);select("");}}>{collapsed.includes(selected)?"Вернуть связи на граф":cursors.current.has(selected)?"Продолжить загрузку":"Загрузить связи адреса"}</button>}</div>}

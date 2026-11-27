@@ -176,6 +176,27 @@ async fn bot_action(action: String, value: Option<Value>) -> Result<Value> {
             {
                 return Err("Проверьте адреса и порог".into());
             }
+            let is_address = |raw: &str| list.iter().any(|address| address == raw);
+            if let Some(wallets) = v.get("wallets") {
+                let wallets = wallets.as_object().ok_or("Некорректные правила адресов")?;
+                if wallets.iter().any(|(raw, rule)| {
+                    !is_address(raw)
+                        || !matches!(rule["direction"].as_str(), Some("all" | "in" | "out"))
+                        || !rule["minimum"].as_u64().is_some_and(|n| n <= 1_000_000_000)
+                        || !rule["kinds"].as_array().is_some_and(|kinds| {
+                            kinds.len() <= 4 && kinds.iter().all(|kind| matches!(kind.as_str(),
+                                Some("TonTransfer" | "JettonTransfer" | "NftItemTransfer" | "SmartContractExec")))
+                        })
+                }) {
+                    return Err("Некорректные правила адресов".into());
+                }
+            }
+            if let Some(labels) = v.get("labels") {
+                let labels = labels.as_object().ok_or("Некорректные имена адресов")?;
+                if labels.iter().any(|(raw, label)| !is_address(raw) || !label.as_str().is_some_and(|name| name.chars().count() <= 80)) {
+                    return Err("Некорректные имена адресов".into());
+                }
+            }
             save(&k, "rules", &v.to_string())?;
         }
         "autostart" => {

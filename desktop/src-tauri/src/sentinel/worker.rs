@@ -78,8 +78,88 @@ async fn messages(c: &reqwest::Client, k: &Key, t: &str) -> Result<()> {
     }
     Ok(())
 }
+fn escape_html(value: &str) -> String {
+    value
+        .replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+}
+
+fn event_graph_link(address: &str, id: &str, timestamp: Option<i64>) -> String {
+    let mut link =
+        format!("https://gram.lovlydev.ru/transfer-graph/?address={address}&amp;event={id}");
+    if let Some(time) = timestamp.filter(|time| *time > 0) {
+        link.push_str(&format!(
+            "&amp;from={}&amp;until={}",
+            time.saturating_sub(3600),
+            time.saturating_add(3601)
+        ));
+    }
+    link
+}
+
+fn matching_actions(event: &Value, raw: &str, policy: &Value) -> Vec<String> {
+    let minimum = policy["minimum"].as_u64().unwrap_or(0).min(1_000_000_000);
+    let direction = policy["direction"].as_str().unwrap_or("all");
+    let mut lines = Vec::new();
+    for action in event["actions"].as_array().into_iter().flatten() {
+        if action["status"] != "ok" {
+            continue;
+        }
+        let kind = action["type"].as_str().unwrap_or("");
+        if policy["kinds"]
+            .as_array()
+            .is_some_and(|kinds| !kinds.iter().any(|item| item == kind))
+        {
+            continue;
+        }
+        let body = &action[kind];
+        let incoming = body["recipient"]["address"] == raw;
+        let outgoing = body["sender"]["address"] == raw;
+        let side = match (incoming, outgoing) {
+            (true, true) => "Перевод себе",
+            (true, false) => "Входящий перевод",
+            (false, true) => "Исходящий перевод",
+            _ => "Перевод",
+        };
+        if (direction == "in" && (!incoming || outgoing))
+            || (direction == "out" && (!outgoing || incoming))
+        {
+            continue;
+        }
+        match kind {
+            "TonTransfer" if incoming || outgoing => {
+                let Some(nano) = body["amount"]
+                    .as_u64()
+                    .or_else(|| body["amount"].as_str()?.parse().ok())
+                else {
+                    continue;
+                };
+                if nano < minimum * 1_000_000_000 {
+                    continue;
+                }
+                lines.push(format!(
+                    "{side} · {}.{:09} GRAM",
+                    nano / 1_000_000_000,
+                    nano % 1_000_000_000
+                ));
+            }
+            "JettonTransfer" => lines.push(format!("{side} · Jetton")),
+            "NftItemTransfer" => lines.push(format!("{side} · NFT")),
+            "SmartContractExec" if direction == "all" => lines.push("Вызов контракта".into()),
+            _ => {}
+        }
+    }
+    lines
+}
+
 async fn scan(c: &reqwest::Client, k: &Key, t: &str, raw: &str, rules: &Value) -> Result<()> {
-    let minimum = rules["minimum"].as_u64().unwrap_or(0);
+    let wallet = &rules["wallets"][raw];
+    let policy = if wallet.is_object() { wallet } else { rules };
+    let name = rules["labels"][raw]
+        .as_str()
+        .filter(|name| !name.trim().is_empty())
+        .unwrap_or("Кошелёк");
     let mut cursors: Value = serde_json::from_str(&field(k, "cursors")).unwrap_or(json!({}));
     let stop = cursors[raw].as_str().unwrap_or("");
     let mut before = String::new();
@@ -137,51 +217,35 @@ async fn scan(c: &reqwest::Client, k: &Key, t: &str, raw: &str, rules: &Value) -
         if field(k, "stop") == "1" {
             break;
         }
-        let mut lines = Vec::new();
-        for a in e["actions"].as_array().into_iter().flatten() {
-            if a["status"] != "ok" {
-                continue;
-            }
-            let kind = a["type"].as_str().unwrap_or("");
-            if rules["kinds"]
-                .as_array()
-                .is_some_and(|v| !v.iter().any(|s| s == kind))
-            {
-                continue;
-            }
-            let body = &a[kind];
-            if kind == "TonTransfer" {
-                let nano = body["amount"].as_u64().unwrap_or(0);
-                if nano < minimum * 1_000_000_000 {
-                    continue;
-                }
-                let sign = if body["sender"]["address"] == raw {
-                    "−"
-                } else if body["recipient"]["address"] == raw {
-                    "+"
-                } else {
-                    continue;
-                };
-                lines.push(format!(
-                    "{sign}{}.{:09} GRAM",
-                    nano / 1_000_000_000,
-                    nano % 1_000_000_000
-                ));
-            } else if matches!(
-                kind,
-                "JettonTransfer" | "NftItemTransfer" | "SmartContractExec"
-            ) {
-                lines.push(kind.to_string())
-            }
-        }
+        let lines = matching_actions(e, raw, policy);
         if !lines.is_empty() {
             let id = e["event_id"].as_str().unwrap_or("");
             if id.len() != 64 || !id.bytes().all(|b| b.is_ascii_hexdigit()) {
                 return Err("Некорректный ID события".into());
             }
-            let time = event_time(e["timestamp"].as_i64());
+            let timestamp = e["timestamp"].as_i64();
+            let time = event_time(timestamp);
             let address = display_address(raw)?;
-            let html=format!("<h2>Gramix Watchtower</h2><p><b>{}</b></p><p>Кошелёк <code>{address}</code></p><p>Mainnet · подтверждено{time}</p><tg-button-row><tg-button type=\"url\" style=\"primary\" url=\"https://tonviewer.com/transaction/{id}\">Открыть транзакцию</tg-button><tg-button type=\"url\" url=\"https://gram.lovlydev.ru/address/{raw}\">Посмотреть адрес</tg-button></tg-button-row>",lines.join(" · "));
+            let name = escape_html(name);
+            let reason = if wallet.is_object() {
+                "Правило адреса"
+            } else {
+                "Общее правило"
+            };
+            let minimum = policy["minimum"].as_u64().unwrap_or(0);
+            let threshold = if minimum > 0 && lines.iter().any(|line| line.ends_with(" GRAM")) {
+                format!(" · от {minimum} GRAM")
+            } else {
+                String::new()
+            };
+            let graph = event_graph_link(&address, id, timestamp);
+            let transaction = e["actions"].as_array().into_iter().flatten()
+                .filter_map(|action| action["base_transactions"].as_array())
+                .flatten().filter_map(Value::as_str)
+                .find(|hash| hash.len() == 64 && hash.bytes().all(|byte| byte.is_ascii_hexdigit()))
+                .map(|hash| format!("<tg-button type=\"url\" url=\"https://tonviewer.com/transaction/{hash}\">Открыть транзакцию</tg-button>"))
+                .unwrap_or_default();
+            let html=format!("<h2>Gramix Watchtower</h2><p><b>{}</b></p><p>{name} · <code>{address}</code></p><p>{reason}{threshold} · Mainnet · подтверждено{time}</p><tg-button-row><tg-button type=\"url\" style=\"primary\" url=\"{graph}\">Открыть на графе</tg-button>{transaction}</tg-button-row>",lines.join(" · "));
             api(c,t,"sendRichMessage",json!({"chat_id":field(k,"chat"),"rich_message":{"html":html,"skip_entity_detection":true}})).await?;
         }
         cursors[raw] = e["event_id"].clone();
@@ -238,6 +302,32 @@ pub fn worker() -> Result<()> {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn address_rules_filter_direction_asset_threshold_and_status() {
+        let transfer = |sender: &str, recipient: &str, amount: &str, status: &str| {
+            json!({
+                "type": "TonTransfer", "status": status,
+                "TonTransfer": { "sender":{"address":sender}, "recipient":{"address":recipient},"amount": amount }
+            })
+        };
+        let event = json!({"actions":[transfer("other","wallet","1000000000000","ok"),
+            transfer("other","wallet","999999999999","ok"), transfer("wallet","other","2000000000000","ok"),
+            transfer("other","wallet","2000000000000","failed"),transfer("wallet","wallet","2000000000000","ok")]});
+        let inbound = json!({"direction":"in","minimum":1000,"kinds":["TonTransfer"]});
+        assert_eq!(
+            matching_actions(&event, "wallet", &inbound),
+            ["Входящий перевод · 1000.000000000 GRAM"]
+        );
+        assert!(matching_actions(&event, "wallet", &json!({"kinds":[]})).is_empty());
+    }
+
+    #[test]
+    fn graph_links_include_the_event_and_its_time_window() {
+        let url = event_graph_link("EQexample", "abc", Some(10_000));
+        assert!(url.ends_with("address=EQexample&amp;event=abc&amp;from=6400&amp;until=13601"));
+        assert_eq!(escape_html("<wallet>&"), "&lt;wallet&gt;&amp;");
+    }
+
     use super::*;
 
     #[test]

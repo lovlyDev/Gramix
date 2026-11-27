@@ -12,29 +12,39 @@ import * as Switch from "@radix-ui/react-switch";
 import { invoke } from "@tauri-apps/api/core";
 import { useAddressBook } from "../../lib/addressBook";
 import { openExternal } from "../../lib/external";
+import { alertKinds, validThreshold, WalletAlertRules, type WalletAlertRule, type WalletAlertDraft } from "./WalletAlertRules";
 import { errorText } from "../../lib/errors";
 
 type Bot = { username:string; pair:string; paired:boolean; running:boolean; autostart:boolean; message:string;
-  rules:{ addresses:string[]; minimum:number; kinds?:string[] } };
+  rules:{ addresses:string[]; minimum:number; kinds?:string[]; wallets?:Record<string,WalletAlertRule>; labels?:Record<string,string> } };
 const call=(action:string,value?:unknown)=>invoke<Bot>("sentinel_bot",{action,value});
 export default function TelegramSettings(){
   const [state,set]=useState<Bot|null>(null),[token,setToken]=useState(""),[busy,setBusy]=useState(false);
   const [error,setError]=useState(""),[threshold,edit]=useState<string|null>(null);
   const [kinds,setKinds]=useState<string[]|null>(null),[feedback,feedbackSet]=useState("");
+  const [draft,setDraft]=useState<Record<string,WalletAlertDraft|null>>({}),[selected,setSelected]=useState("");
   const activeKinds=kinds??state?.rules.kinds??["TonTransfer","JettonTransfer","NftItemTransfer","SmartContractExec"];
-  const addresses=useAddressBook().filter(a=>a.watch&&!a.testnet).map(a=>a.raw);
+  const watched=useAddressBook().filter(a=>a.watch&&!a.testnet);
+  const addresses=watched.map(w=>w.raw);
+  const active=addresses.includes(selected) ? selected : addresses[0] ?? "";
+  const rules:Record<string,WalletAlertDraft>={};
+  for(const raw of addresses){
+    const saved=state?.rules.wallets?.[raw];
+    const rule=Object.hasOwn(draft,raw)?draft[raw]:saved?{...saved,minimum:String(saved.minimum)}:null;
+    if(rule)rules[raw]=rule;
+  }
   useEffect(()=>{let live=true;let loading=false;async function refresh(){
     if(loading)return;loading=true;
     try{const status=await call("status");if(live)set(status)}catch(e){if(live)setError(errorText(e))}finally{loading=false}}
     void refresh();const timer=setInterval(refresh,4000);return()=>{live=false;clearInterval(timer)}},[]);
   async function act(action:string,value?:unknown){
     setBusy(true);setError("");feedbackSet("");
-    try{set(await call(action,value));if(action==="token")setToken("");if(action==="rules"){edit(null);setKinds(null)}if(action==="test")feedbackSet("Проверочное уведомление доставлено.")}
+    try{set(await call(action,value));if(action==="token")setToken("");if(action==="rules"){edit(null);setKinds(null);setDraft({})}if(action==="test")feedbackSet("Проверочное уведомление доставлено.")}
     catch(e){setError(errorText(e))}finally{setBusy(false)}
   }
   const configured = Boolean(state?.username);
-  const minimum = Number(threshold ?? state?.rules.minimum ?? 0);
-  const validMinimum = Number.isSafeInteger(minimum) && minimum >= 0 && minimum <= 1_000_000_000;
+  const minimum = threshold ?? String(state?.rules.minimum ?? 0);
+  const validMinimum = validThreshold(minimum) && Object.values(rules).every(rule=>!rule.kinds.includes("TonTransfer") || validThreshold(rule.minimum));
   return <>
     <div className="settings-panel-heading"><h2>Telegram</h2>
       <p>Уведомления Watchtower о событиях на выбранных адресах Mainnet.</p></div>
@@ -63,14 +73,20 @@ export default function TelegramSettings(){
         <Switch.Root aria-label="Автозапуск бота" className="settings-switch" disabled={busy} checked={state.autostart} onCheckedChange={v=>void act("autostart",v)}><Switch.Thumb/></Switch.Root></div>
       <div className="settings-control"><div><strong><label htmlFor="sentinel-minimum">Минимальный перевод GRAM</label></strong></div>
         <input className="settings-number" id="sentinel-minimum" type="number" min="0" max="1000000000" step="1" value={threshold??state.rules.minimum} onChange={e=>edit(e.target.value)}/></div>
-      {[["TonTransfer","GRAM"],["JettonTransfer","Jetton"],["NftItemTransfer","NFT"],["SmartContractExec","Вызовы контрактов"]].map(([kind,label])=>
+      {alertKinds.map(([kind,label])=>
         <div className="settings-control" key={kind}><div><strong>{label}</strong></div>
           <Switch.Root className="settings-switch" aria-label={label} checked={activeKinds.includes(kind)}
             onCheckedChange={checked=>setKinds(checked?[...activeKinds,kind]:activeKinds.filter(k=>k!==kind))}><Switch.Thumb/></Switch.Root></div>)}
+      <WalletAlertRules wallets={watched} rules={rules} selected={active} onSelect={setSelected}
+        defaults={{minimum,direction:"all",kinds:activeKinds}}
+        onChange={(raw,rule)=>setDraft(current=>({...current,[raw]:rule}))}/>
       <div className="settings-control"><div><strong>Правила уведомлений</strong>
         <span>Watchtower · {addresses.length} / {state.rules.addresses.length} в правилах</span></div>
         <button className="settings-secondary" disabled={busy||!validMinimum}
-          onClick={()=>void act("rules",{addresses,kinds:activeKinds,minimum})}>Применить</button></div>
+          onClick={()=>void act("rules",{addresses,kinds:activeKinds,minimum:Number(minimum),
+            labels:Object.fromEntries(watched.filter(w=>w.label).map(w=>[w.raw,w.label])),
+            wallets:Object.fromEntries(Object.entries(rules).map(([raw,rule])=>[raw,{...rule,
+              minimum:rule.kinds.includes("TonTransfer")?Number(rule.minimum):0}]))})}>Применить</button></div>
     </>}
     {feedback&&<p role="status" className="settings-status">{feedback}</p>}
     {error&&<p role="alert" className="error-box">{error}</p>}
